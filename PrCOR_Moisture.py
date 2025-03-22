@@ -324,6 +324,7 @@ for i in range(5):
     plt.errorbar(Thetaimplot_Omega[i], COR_theta_mean_Omega[i], yerr=COR_theta_std_Omega[i], fmt='o', capsize=5, label=f"$\\Omega$={Omega[i]}%",color=colors[i])
 plt.xlabel(r'$\theta_{im}$ [$\circ$]', fontsize=14)
 plt.ylabel(r'$e$ [-]', fontsize=14)
+plt.xlim(0,24)
 
 plt.figure()
 for i in range(5):
@@ -349,6 +350,48 @@ plt.plot(Omega, cor_values, '-')
 plt.xlabel(r'$\Omega$ [$\%$]')
 plt.ylabel(r'$e$ [-]')
  
+
+#compare with static-bed experiment of Ge (2024)
+#try filtering the CORs with Vim=4 m/s (80)
+Theta_Ge = [7, 9, 12, 19]
+COR_Ge = [0.62, 0.57, 0.49, 0.47]
+Theta_GeWet1 = [11, 14, 18]#1.45%
+COR_GeWet1 = [0.65, 0.625, 0.525]
+Theta_GeWet2 = [7, 13, 21]#22.79%
+COR_GeWet2 = [0.69, 0.67, 0.55]
+COR_test, COR_test_std, Theta_test = defaultdict(list), defaultdict(list), defaultdict(list)
+for i in [0,4]:
+    valid_indices = [j for j, val in enumerate(Vim_all_Omega[i]) if 3.5 <= val <= 4.5]
+    COR_test[i], COR_test_std[i], Theta_test[i] = BinThetaimCOR([Theta_all_Omega[i][j] for j in valid_indices], [exz_all_Omega[i][j] for j in valid_indices], 8)
+plt.figure(figsize=(7,6))
+for i in [0,4]:
+    plt.errorbar(Theta_test[i], COR_test[i], yerr=COR_test_std[i], fmt='o',capsize=5, label=f'$\Omega$={Omega[i]}% (this study)',color=colors[i])
+plt.plot(Theta_Ge, COR_Ge, 'dk', label=r'$\Omega$=0$\%$ (Ge et al., 2024)')
+# plt.plot(Theta_GeWet1, COR_GeWet1, '*k', label=r'$\Omega$=1.45$\%$ (Ge et al., 2024)')
+plt.plot(Theta_GeWet2, COR_GeWet2, 'sk', label=r'$\Omega$=22.79$\%$ (Ge et al., 2024)')
+plt.xlabel(r'$\theta_{im}$ [$\circ$]', fontsize=14)
+plt.ylabel(r'$e$ [-]', fontsize=14)
+plt.legend(fontsize=11)
+
+#try filtering the CORs with thetaim=11.5 degree
+U_Ge = [125, 225, 310]
+UE_Ge = [0.49, 0.52, 0.75]
+U_GeWet = [60, 145]#22.79%
+UE_GeWet = [0.7, 2.7]
+NE_test, UE_test, UE_test_std, U_testNE = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
+for i in [0,4]:
+    valid_indices = [j for j, val in enumerate(matched_Thetaim_Omega[i]) if 10 <= val <= 13]
+    NE_test[i], UE_test[i], UE_test_std[i], U_testNE[i] = get_ejection_ratios([matched_Vim_Omega[i][j] for j in valid_indices], [matched_NE_Omega[i][j] for j in valid_indices], [matched_UE_Omega[i][j] for j in valid_indices], 8)
+plt.figure(figsize=(7,6))
+for i in [0,4]:
+    plt.errorbar(U_testNE[i]/constant, UE_test[i]/constant, yerr=UE_test_std[i]/constant, fmt='o',capsize=5, label=f'$\Omega$={Omega[i]}% (this study)',color=colors[i])
+plt.plot(U_Ge, UE_Ge/np.sqrt(9.81*0.0003), 'dk', label=r'$\Omega$=0$\%$ (Ge et al., 2024)')
+plt.plot(U_GeWet, UE_GeWet/np.sqrt(9.81*0.0003), 'sk', label=r'$\Omega$=22.79$\%$ (Ge et al., 2024)')
+plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$\bar{U}_\mathrm{E}/\sqrt{gd}$ [-]', fontsize=14)
+plt.legend(fontsize=11)
+
+
 
 #distribution of CORs
 # exz_whole, exz_steady = defaultdict(list),defaultdict(list)
