@@ -512,33 +512,8 @@ plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
 plt.ylabel(r'$\bar{U}_\mathrm{E}/\sqrt{gd}$ [-]', fontsize=14)
 
 
-def match_Uim_thetaim(matched_Vim, matched_thetaim, num_bins):
-    if not matched_Vim:
-        mean_thetaim, std_thetaim, Uthetaplot =[],[],[]
-    else:
-        # Combine data into a DataFrame and sort by impact velocity
-        data = pd.DataFrame({'Vim': matched_Vim, 'thetaim': matched_thetaim})
-        data = data.sort_values(by='Vim').reset_index(drop=True)
-    
-        # Get bin edges using quantiles
-        quantiles = np.linspace(0, 1, num_bins + 1)
-        bin_edges = np.quantile(data['Vim'], quantiles)
-    
-        data['bin'] = pd.cut(data['Vim'], bins=bin_edges, include_lowest=True)
-    
-        #print(data.columns)  # 检查DataFrame的列名
-        # for name, group in data.groupby('bin'):
-        #     print(name, group['UE'].values)
-            
-        mean_thetaim = data.groupby('bin')['thetaim'].mean()
-        std_thetaim = data.groupby('bin')['thetaim'].std()
-        data['bin'] = data['bin'].astype(str)
-    
-        Uthetaplot = (bin_edges[:-1] + bin_edges[1:]) / 2
-    
-    return mean_thetaim, std_thetaim, Uthetaplot
 
-mean_thetaim, std_thetaim, Uthetaplot = match_Uim_thetaim(matched_Vim_Omega[0], matched_Thetaim_Omega[0], 8)
+mean_thetaim, std_thetaim, Uthetaplot = module.match_Uim_thetaim(matched_Vim_Omega[0], matched_Thetaim_Omega[0], 8)
 plt.figure()
 plt.errorbar(Uthetaplot/constant, mean_thetaim, yerr=std_thetaim, fmt='o', capsize=5)
 plt.xlabel('Uim')
@@ -893,3 +868,4 @@ plt.ylim(0,50)
 # # plt.ylabel('Normalized Frequency [-]', fontsize=14)
 # # plt.legend(fontsize=14)
 # # plt.show()      
+

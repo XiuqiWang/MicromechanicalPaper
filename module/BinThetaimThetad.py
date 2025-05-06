@@ -1,24 +1,25 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jan  2 15:46:26 2025
+Created on Tue Mar 25 16:13:49 2025
 
 @author: WangX3
 """
+
 import numpy as np
 
-def BinUimUd(impact_velocities,deposition_velocities,num_bins):
-    if not impact_velocities and not deposition_velocities:
-        Pr, Uplot = [],[]
+def BinThetaimThetad(impact_angles,deposition_angles,num_bins):
+    if not impact_angles and not deposition_angles:
+        Pr, Thetaplot = [],[]
     else:
         # Combine all velocities to determine the range
-        all_velocities = np.concatenate([impact_velocities, deposition_velocities])
+        all_angles = np.concatenate([impact_angles, deposition_angles])
 
         # Compute bin edges using quantiles
-        vel_bins = np.quantile(all_velocities, np.linspace(0, 1, num_bins + 1))
+        angle_bins = np.quantile(all_angles, np.linspace(0, 1, num_bins + 1))
 
         # Assign each velocity to a bin
-        impact_bins = np.digitize(impact_velocities, vel_bins, right=False)
-        deposition_bins = np.digitize(deposition_velocities, vel_bins, right=False)
+        impact_bins = np.digitize(impact_angles, angle_bins, right=False)
+        deposition_bins = np.digitize(deposition_angles, angle_bins, right=False)
 
         # Ensure bin indices stay within valid range
         impact_bins[impact_bins == num_bins + 1] = num_bins
@@ -35,12 +36,6 @@ def BinUimUd(impact_velocities,deposition_velocities,num_bins):
             out=np.full_like(impact_counts, np.nan, dtype=np.float64), 
             where=(deposition_counts + impact_counts) != 0)
     
-        Uplot = (vel_bins[:-1] + vel_bins[1:]) / 2
+        Thetaplot = (angle_bins[:-1] + angle_bins[1:]) / 2
     
-    return Pr, Uplot
-    
-    
-    
-    
-    
-    
+    return Pr, Thetaplot

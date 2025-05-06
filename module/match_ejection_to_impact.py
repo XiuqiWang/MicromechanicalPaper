@@ -7,6 +7,110 @@ Created on Sun Jan  5 19:34:57 2025
 import numpy as np
 import itertools
 
+def match_ejection_to_impact(impact_list, ejection_list, dt):#theta_all_i,
+    #impact_thetas = np.array(theta_all_i)
+    ejection_ids, ejection_positions, ejection_velocities, ejectionpar_ids, ejection_energy = ejection_list
+    impact_ids, rebound_ids, impact_positions, rebound_positions, Vimpacts, collision_positions, impactpar_ids, Thetaimpacts = impact_list
+    
+    impact_positions = np.array(impact_positions)
+    impact_ids = np.array(impact_ids)
+    rebound_positions = np.array(rebound_positions)
+    rebound_ids = np.array(rebound_ids)
+    Vimpacts = np.array(Vimpacts)
+    collision_positions = np.array(collision_positions)
+    Thetaimpacts = np.array(Thetaimpacts)
+    Xmax = 100*0.00025
+    thres_pos= 5*0.00025
+    #calculate how many times the impact particles crossed the domain before colliding
+    Ncycle = np.floor(collision_positions/Xmax)
+    collision_positions = collision_positions - Xmax*Ncycle
+    # initialize the result list to be equally long as the impact_list
+    result = [[[], [], []] for _ in range(len(impact_ids))]
+    
+    # loop over every ejection
+    for ejection_id, ejection_pos, ejection_vel, epar_id, ejection_ene in zip(ejection_ids, ejection_positions, ejection_velocities, ejectionpar_ids, ejection_energy):
+        mask = (
+            (impactpar_ids != epar_id) &
+            (impact_ids <= ejection_id) 
+            # (ejection_id <= rebound_ids) &
+            # (ejection_id <= impact_ids+100) &
+            # (ejection_pos >= collision_positions) &
+            # (np.abs(ejection_pos - collision_positions) <= thres_pos)
+            )
+        valid_indices = np.where(mask)[0]
+            #if there are found impacts
+        if len(valid_indices) > 0:
+            # 计算所有位置差值
+            position_differences = np.zeros(len(valid_indices))
+            for i in range(len(valid_indices)):
+                position_differences[i] = np.abs(ejection_pos - collision_positions[valid_indices[i]])
+            # 找到最小距离
+            min_pos_diff = np.min(position_differences)
+            # 获取所有具有相同最小空间距离的索引
+            min_pos_indices = np.where(position_differences == min_pos_diff)[0]
+
+            # 如果有多个最小空间距离，进一步比较 ID 差值（即时间）
+            if len(min_pos_indices) > 1:
+                id_differences = ejection_id - np.array([impact_ids[valid_indices[i]] for i in min_pos_indices])
+                closest_index = valid_indices[min_pos_indices[np.argmin(id_differences)]]
+            else:
+                closest_index = valid_indices[min_pos_indices[0]]
+                
+            result[closest_index][0].append(ejection_id)
+            result[closest_index][1].append(ejection_vel)
+            result[closest_index][2].append(ejection_ene)
+            # print('ejection_id:',ejection_id)
+            # print('impact_id:& rebound_id:',impact_ids[closest_index],rebound_ids[closest_index])
+            # print('ejection_pos:',ejection_pos/0.00025)
+            # print('impact_pos:& rebound_pos:',impact_positions[closest_index]/0.00025,rebound_positions[closest_index]/0.00025)
+            # print('impact particle id:', impactpar_ids[closest_index])
+            # print('impact_id:& rebound_id:',impact_ids[valid_indices],rebound_ids[valid_indices])
+            # print('position diff:',np.abs(ejection_pos - impact_positions[valid_indices]))
+            # print('closest_index:',impact_ids[closest_index])
+            # print('impact_positions[closest_index]', impact_positions[closest_index])
+    
+    impact_ejection_list = [[], [], [], [], []]
+    impact_ejection_list[0].extend(Vimpacts)
+    impact_ejection_list[1].extend(Thetaimpacts)
+    for sublist in result:
+        impact_ejection_list[2].append(len(sublist[0]))#NE
+        impact_ejection_list[3].append(sublist[1])#UE
+        impact_ejection_list[4].append(sublist[2])#EE
+    
+    return impact_ejection_list
+
+#  #if valid impacts are found, find the temporally closest impact 
+        # if len(valid_indices) > 0:
+        #     # 计算 id 差值
+        #     id_differences = ejection_id - impact_ids[valid_indices]
+        #     # 找到最小 id 差值
+        #     min_id_diff = np.min(id_differences)
+        #     # 获取所有具有相同最小 id 差值的索引
+        #     min_id_indices = np.where(id_differences == min_id_diff)[0]
+
+        #     # 如果有多个最小差值，进一步比较空间距离
+        #     # print('ejection pos:',ejection_pos)
+        #     # print('impact id:',impact_ids[valid_indices[min_id_indices]])
+        #     # print('impact pos:',impact_positions[valid_indices[min_id_indices]])
+        #     if len(min_id_indices) > 1:
+        #         position_differences = np.zeros(len(min_id_indices))
+        #         for i in range(len(min_id_indices)):
+        #             # if ((L[valid_indices[i]] < Xmax and impact_positions[valid_indices[i]]<rebound_positions[valid_indices[i]] and impact_positions[valid_indices[i]] < ejection_pos and ejection_pos < rebound_positions[valid_indices[i]])
+        #             # or (L[valid_indices[i]] <= Xmax and impact_positions[valid_indices[i]] >= rebound_positions[valid_indices[i]] and impact_positions[valid_indices[i]] <= ejection_pos)
+        #             # or (L[valid_indices[i]] > Xmax and impact_positions[valid_indices[i]] <= ejection_pos)):
+        #             position_differences[i] = np.abs(ejection_pos - collision_positions[valid_indices[i]])
+        #             # if (L[valid_indices[i]] <= Xmax and impact_positions[valid_indices[i]] >= rebound_positions[valid_indices[i]] and ejection_pos <= rebound_positions[valid_indices[i]])
+        #             # or (L[valid_indices[i]] > Xmax and ejection_pos < rebound_positions[valid_indices[i]]):
+        #             #     position_differences[i] = np.abs(ejection_pos + Xmax - impact_positions[valid_indices[i]])
+                
+        #         closest_index = valid_indices[min_id_indices[np.argmin(position_differences)]]
+        #     else:
+        #         closest_index = valid_indices[min_id_indices[0]]  # 只有一个最小值时直接取该索引
+    
+   
+
+
+
 # def match_ejection_to_impact(Vim_all_i, impact_list, ejection_list, vel_bins,dt):#theta_all_i,
 #     #impact_thetas = np.array(theta_all_i)
 #     ejection_ids, ejection_positions, ejection_velocities, ejectionpar_ids = ejection_list
@@ -59,110 +163,6 @@ import itertools
             
 #     return Uplot, NE_i,VE_i,VE_std_i,result
 
-
-
-def match_ejection_to_impact(impact_list, ejection_list, dt):#theta_all_i,
-    #impact_thetas = np.array(theta_all_i)
-    ejection_ids, ejection_positions, ejection_velocities, ejectionpar_ids = ejection_list
-    impact_ids, rebound_ids, impact_positions, rebound_positions, Vimpacts, collision_positions, impactpar_ids, Thetaimpacts = impact_list
-    
-    impact_positions = np.array(impact_positions)
-    impact_ids = np.array(impact_ids)
-    rebound_positions = np.array(rebound_positions)
-    rebound_ids = np.array(rebound_ids)
-    Vimpacts = np.array(Vimpacts)
-    collision_positions = np.array(collision_positions)
-    Thetaimpacts = np.array(Thetaimpacts)
-    Xmax = 100*0.00025
-    thres_pos = 7*0.00025
-    #calculate how many times the impact particles crossed the domain before colliding
-    Ncycle = np.floor(collision_positions/Xmax)
-    collision_positions = collision_positions - Xmax*Ncycle
-    # initialize the result list to be equally long as the impact_list
-    result = [[[], []] for _ in range(len(impact_ids))]
-    
-    # loop over every ejection
-    for ejection_id, ejection_pos, ejection_vel, epar_id in zip(ejection_ids, ejection_positions, ejection_velocities, ejectionpar_ids):
-        # find valid impact indices
-        # valid_indices = np.where(
-        #     (impactpar_ids != epar_id) &
-        #     ## impact ID should be smaller than or equal to ejection ID 
-        #     (impact_ids <= ejection_id) &
-        #     (ejection_id - impact_ids <= 0.03/dt) &
-        #     (((ejection_pos >= thre_pos) & (ejection_pos <= 100*0.00025-thre_pos) & (np.abs(ejection_pos - impact_positions) < thre_pos))
-        #     |  
-        #     ((ejection_pos < thre_pos) & (impact_positions < 50*0.00025) & (np.abs(ejection_pos - impact_positions) < thre_pos))
-        #     |   
-        #     ((ejection_pos < thre_pos) & (impact_positions >= 50*0.00025) & (np.abs(ejection_pos + 100 * 0.00025 - impact_positions) < thre_pos))
-        #     |
-        #     ((ejection_pos >= 100*0.00025-thre_pos) & (impact_positions > 50*0.00025) & (np.abs(ejection_pos - impact_positions) < thre_pos))
-        #     |
-        #     ((ejection_pos >= 100*0.00025-thre_pos) & (impact_positions <= 50*0.00025) & (np.abs(impact_positions + 100 * 0.00025 - ejection_pos) < thre_pos)))
-        # )[0]
-        mask = (
-            (impactpar_ids != epar_id) &
-            (impact_ids <= ejection_id) &
-            (ejection_id <= rebound_ids) &
-            # (ejection_id - impact_ids <= 0.01/dt) &
-            # (ejection_pos >= collision_positions) &
-            (np.abs(ejection_pos - collision_positions) <= thres_pos)
-            # ((impact_positions <= ejection_pos) & (rebound_positions >= ejection_pos))
-            # ( (impact_positions < rebound_positions) & (impact_positions <= ejection_pos) & (rebound_positions >= ejection_pos))
-            # |
-            # (((np.floor(L/Xmax) <= 1) & (impact_positions >= rebound_positions)) & ((ejection_pos >= impact_positions) | (ejection_pos < rebound_positions)))
-            # | 
-            # (((np.floor(L/Xmax) > 1)) & ((ejection_pos >= impact_positions) | (ejection_pos < rebound_positions))) 
-    )
-        valid_indices = np.where(mask)[0]
-        
-        #if valid impacts are found, find the temporally closest impact 
-        if len(valid_indices) > 0:
-            # 计算 id 差值
-            id_differences = ejection_id - impact_ids[valid_indices]
-            # 找到最小 id 差值
-            min_id_diff = np.min(id_differences)
-            # 获取所有具有相同最小 id 差值的索引
-            min_id_indices = np.where(id_differences == min_id_diff)[0]
-
-            # 如果有多个最小差值，进一步比较空间距离
-            # print('ejection pos:',ejection_pos)
-            # print('impact id:',impact_ids[valid_indices[min_id_indices]])
-            # print('impact pos:',impact_positions[valid_indices[min_id_indices]])
-            if len(min_id_indices) > 1:
-                position_differences = np.zeros(len(min_id_indices))
-                for i in range(len(min_id_indices)):
-                    # if ((L[valid_indices[i]] < Xmax and impact_positions[valid_indices[i]]<rebound_positions[valid_indices[i]] and impact_positions[valid_indices[i]] < ejection_pos and ejection_pos < rebound_positions[valid_indices[i]])
-                    # or (L[valid_indices[i]] <= Xmax and impact_positions[valid_indices[i]] >= rebound_positions[valid_indices[i]] and impact_positions[valid_indices[i]] <= ejection_pos)
-                    # or (L[valid_indices[i]] > Xmax and impact_positions[valid_indices[i]] <= ejection_pos)):
-                    position_differences[i] = np.abs(ejection_pos - collision_positions[valid_indices[i]])
-                    # if (L[valid_indices[i]] <= Xmax and impact_positions[valid_indices[i]] >= rebound_positions[valid_indices[i]] and ejection_pos <= rebound_positions[valid_indices[i]])
-                    # or (L[valid_indices[i]] > Xmax and ejection_pos < rebound_positions[valid_indices[i]]):
-                    #     position_differences[i] = np.abs(ejection_pos + Xmax - impact_positions[valid_indices[i]])
-                
-                closest_index = valid_indices[min_id_indices[np.argmin(position_differences)]]
-            else:
-                closest_index = valid_indices[min_id_indices[0]]  # 只有一个最小值时直接取该索引
-                
-            result[closest_index][0].append(ejection_id)
-            result[closest_index][1].append(ejection_vel)
-            # print('ejection_id:',ejection_id)
-            # print('impact_id:& rebound_id:',impact_ids[closest_index],rebound_ids[closest_index])
-            # print('ejection_pos:',ejection_pos/0.00025)
-            # print('impact_pos:& rebound_pos:',impact_positions[closest_index]/0.00025,rebound_positions[closest_index]/0.00025)
-            # print('impact particle id:', impactpar_ids[closest_index])
-            # print('impact_id:& rebound_id:',impact_ids[valid_indices],rebound_ids[valid_indices])
-            # print('position diff:',np.abs(ejection_pos - impact_positions[valid_indices]))
-            # print('closest_index:',impact_ids[closest_index])
-            # print('impact_positions[closest_index]', impact_positions[closest_index])
-    
-    impact_ejection_list = [[], [], [], []]
-    impact_ejection_list[0].extend(Vimpacts)
-    impact_ejection_list[1].extend(Thetaimpacts)
-    for sublist in result:
-        impact_ejection_list[2].append(len(sublist[0]))
-        impact_ejection_list[3].append(sublist[1])
-    
-    return impact_ejection_list
 
 
     ## 遍历每个ejection
@@ -224,5 +224,39 @@ def match_ejection_to_impact(impact_list, ejection_list, dt):#theta_all_i,
     # result = [[[], []] for _ in range(len(impact_ids))]  # 初始化结果列表
 
     
+    # # loop over every ejection
+    # for ejection_id, ejection_pos, ejection_vel, epar_id, ejection_ene in zip(ejection_ids, ejection_positions, ejection_velocities, ejectionpar_ids, ejection_energy):
+    #     # find valid impact indices
+    #     # valid_indices = np.where(
+    #     #     (impactpar_ids != epar_id) &
+    #     #     ## impact ID should be smaller than or equal to ejection ID 
+    #     #     (impact_ids <= ejection_id) &
+    #     #     (ejection_id - impact_ids <= 0.03/dt) &
+    #     #     (((ejection_pos >= thre_pos) & (ejection_pos <= 100*0.00025-thre_pos) & (np.abs(ejection_pos - impact_positions) < thre_pos))
+    #     #     |  
+    #     #     ((ejection_pos < thre_pos) & (impact_positions < 50*0.00025) & (np.abs(ejection_pos - impact_positions) < thre_pos))
+    #     #     |   
+    #     #     ((ejection_pos < thre_pos) & (impact_positions >= 50*0.00025) & (np.abs(ejection_pos + 100 * 0.00025 - impact_positions) < thre_pos))
+    #     #     |
+    #     #     ((ejection_pos >= 100*0.00025-thre_pos) & (impact_positions > 50*0.00025) & (np.abs(ejection_pos - impact_positions) < thre_pos))
+    #     #     |
+    #     #     ((ejection_pos >= 100*0.00025-thre_pos) & (impact_positions <= 50*0.00025) & (np.abs(impact_positions + 100 * 0.00025 - ejection_pos) < thre_pos)))
+    #     # )[0]
+    #     mask = (
+    #         (impactpar_ids != epar_id) &
+    #         (impact_ids <= ejection_id) 
+    #         # (ejection_id <= rebound_ids) &
+    #         # (ejection_id <= impact_ids+20) 
+    #         # (ejection_id - impact_ids <= 0.01/dt) &
+    #         # (ejection_pos >= collision_positions) &
+    #         # (np.abs(ejection_pos - collision_positions) <= thres_pos)
+    #         # ((impact_positions <= ejection_pos) & (rebound_positions >= ejection_pos))
+    #         # ( (impact_positions < rebound_positions) & (impact_positions <= ejection_pos) & (rebound_positions >= ejection_pos))
+    #         # |
+    #         # (((np.floor(L/Xmax) <= 1) & (impact_positions >= rebound_positions)) & ((ejection_pos >= impact_positions) | (ejection_pos < rebound_positions)))
+    #         # | 
+    #         # (((np.floor(L/Xmax) > 1)) & ((ejection_pos >= impact_positions) | (ejection_pos < rebound_positions))) 
+    #         )
     
+   
    
