@@ -92,18 +92,18 @@ for i in range (25):
     xcol = [value[5] for sublist in IM_vector_t[i][N_range[i]:] for value in sublist]
     Pim = [value[6] for sublist in IM_vector_t[i][N_range[i]:] for value in sublist]
     impact_list[i] = [IDim, IDre, xim, xre, Vim_all[i], xcol, Pim, Theta_all[i]]
-    IDD =  [value[2] for sublist in D_vector_t[i][N_range[i]:] for value in sublist]
-    xD = [value[3] for sublist in D_vector_t[i][N_range[i]:] for value in sublist]
-    PD = [value[4] for sublist in D_vector_t[i][N_range[i]:] for value in sublist]
-    ThetaD = [value[1] for sublist in D_vector_t[i][N_range[i]:] for value in sublist]
-    impact_deposition_list[i] = [IDim + IDD, xcol + xD, Vim_all[i] + VD_all[i], Pim + PD, Theta_all[i] + ThetaD_all[i]]
+    # IDD =  [value[2] for sublist in D_vector_t[i][N_range[i]:] for value in sublist]
+    # xD = [value[3] for sublist in D_vector_t[i][N_range[i]:] for value in sublist]
+    # PD = [value[4] for sublist in D_vector_t[i][N_range[i]:] for value in sublist]
+    # ThetaD = [value[1] for sublist in D_vector_t[i][N_range[i]:] for value in sublist]
+    # impact_deposition_list[i] = [IDim + IDD, xcol + xD, Vim_all[i] + VD_all[i], Pim + PD, Theta_all[i] + ThetaD_all[i]]
     vE = [value[0] for sublist in E_vector_t[i][N_range[i]:] for value in sublist]
     IDE = [value[1] for sublist in E_vector_t[i][N_range[i]:] for value in sublist]
     xE = [value[2] for sublist in E_vector_t[i][N_range[i]:] for value in sublist]
     PE = [value[3] for sublist in E_vector_t[i][N_range[i]:] for value in sublist]
     EE = [value[5] for sublist in E_vector_t[i][N_range[i]:] for value in sublist] #kinetic energy
     ThetaE_all[i] = [value[6] for sublist in E_vector_t[i][N_range[i]:] for value in sublist]
-    ejection_list[i] = [IDE, xE, vE, PE, EE]
+    ejection_list[i] = [IDE, xE, vE, PE, EE, ThetaE_all[i]]
     #print('Ne/Nim',len(IDE)/len(IDim))
 
 Vim_all_values = [value for sublist in Vim_all.values() for value in sublist]
@@ -114,7 +114,7 @@ Thetaimde_all_values = [value for sublist in Theta_all.values() for value in sub
 Thetaimde_bin = np.linspace(min(Thetaimde_all_values), max(Thetaimde_all_values), 10)
 Thetaim_all_values = [value for sublist in Theta_all.values() for value in sublist]
 Thetaim_bin = np.linspace(min(Thetaim_all_values), max(Thetaim_all_values), 10)
-matched_Vim, matched_thetaim, matched_NE, matched_UE, matched_EE = defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list)
+matched_Vim, matched_thetaim, matched_NE, matched_UE, matched_EE, matched_thetaE = defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list)
 for i in range (25):
     impact_ejection_list=module.match_ejection_to_impact(impact_list[i], ejection_list[i], dt)
     # impact_ejection_list=module.match_ejection_to_impactanddeposition(impact_deposition_list[i], ejection_list[i])
@@ -123,11 +123,13 @@ for i in range (25):
     matched_NE[i] = [element for element in impact_ejection_list[2]]
     matched_UE[i] = [element for element in impact_ejection_list[3]]
     matched_EE[i] = [element for element in impact_ejection_list[4]]
+    matched_thetaE[i] = [element for element in impact_ejection_list[5]]
     
 constant = np.sqrt(9.81*D)  
 #combine the values from all Shields numbers
 Vim_all_Omega, exz_all_Omega, Theta_all_Omega, Thetare_all_Omega, VD_all_Omega, ThetaD_all_Omega, matched_Vim_Omega, matched_Thetaim_Omega, matched_NE_Omega, matched_UE_Omega, matched_EE_Omega = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list),defaultdict(list),defaultdict(list)
 ThetaE_all_Omega = defaultdict(list)
+matched_thetaE_Omega = defaultdict(list)
 for i in range (5): #loop over Omega 0-20 %
     selected_indices = list(range(i, 25, 5))  # Get indices like [0,5,10,15,20], [1,6,11,16,21], etc.
     Vim_all_Omega[i] = np.concatenate([Vim_all[j] for j in selected_indices]).tolist()
@@ -142,21 +144,23 @@ for i in range (5): #loop over Omega 0-20 %
     matched_NE_Omega[i] = np.concatenate([matched_NE[j] for j in selected_indices]).tolist()
     matched_UE_Omega[i] = np.concatenate([matched_UE[j] for j in selected_indices]).tolist()
     matched_EE_Omega[i] = np.concatenate([matched_EE[j] for j in selected_indices]).tolist()
+    matched_thetaE_Omega[i] = np.concatenate([matched_thetaE[j] for j in selected_indices]).tolist()
 
 
 CORmean_Omega,CORstd_Omega,CORstderr_Omega,Uimplot_Omega = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
-COR_theta_mean_Omega, COR_theta_std_Omega, Thetaimplot_Omega = defaultdict(list), defaultdict(list), defaultdict(list)
+COR_theta_mean_Omega, COR_theta_std_Omega, Thetaremean_Omega, Thetarestderr_Omega, Thetaimplot_Omega = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
 Pr_Omega,Uplot_Omega, N_PrUre = defaultdict(list), defaultdict(list), defaultdict(list)
 Pr_theta_Omega,Theta_pr_Omega = defaultdict(list), defaultdict(list)
 NE_mean_Omega, UE_mean_Omega, UE_std_Omega, UE_stderr_Omega, Uplot_NE_Omega, N_Einbin = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list),
+ThetaE_mean_Omega, ThetaE_stderr_Omega = defaultdict(list), defaultdict(list)
 NE_theta_mean_Omega, UE_theta_mean_Omega, UE_theta_std_Omega, Thetaplot_NE_Omega = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
 EE_mean_Omega, EE_stderr_Omega = defaultdict(list), defaultdict(list)
 for i in range (5): #loop over Omega 0-20%
-    CORmean_Omega[i],CORstd_Omega[i],CORstderr_Omega[i],Uimplot_Omega[i] = module.BinUimCOR_equalbinsize(Vim_all_Omega[i],exz_all_Omega[i],Vim_bin)
+    CORmean_Omega[i],CORstd_Omega[i],CORstderr_Omega[i],Thetaremean_Omega[i],Thetarestderr_Omega[i],Uimplot_Omega[i] = module.BinUimCOR_equalbinsize(Vim_all_Omega[i],exz_all_Omega[i],Thetare_all_Omega[i],Vim_bin)
     # COR_theta_mean_Omega[i], COR_theta_std_Omega[i], Thetaimplot_Omega[i] = module.BinThetaimCOR_equalbinsize(Theta_all_Omega[i], exz_all_Omega[i], Thetaim_bin)
     Pr_Omega[i],Uplot_Omega[i],N_PrUre[i] = module.BinUimUd_equalbinsize(Vim_all_Omega[i],VD_all_Omega[i],Vimde_bin)   
     # Pr_theta_Omega[i],Theta_pr_Omega[i] = module.BinThetaimThetad_equalbinsize(Theta_all_Omega[i],ThetaD_all_Omega[i],Thetaimde_bin)   
-    NE_mean_Omega[i], UE_mean_Omega[i], UE_std_Omega[i], UE_stderr_Omega[i], Uplot_NE_Omega[i], N_Einbin[i]=module.get_ejection_ratios_equalbinsize(matched_Vim_Omega[i], VD_all_Omega[i], matched_NE_Omega[i], matched_UE_Omega[i], Vimde_bin)#matched_EE_Omega[i]
+    NE_mean_Omega[i], UE_mean_Omega[i], UE_std_Omega[i], UE_stderr_Omega[i], ThetaE_mean_Omega[i], ThetaE_stderr_Omega[i], Uplot_NE_Omega[i], N_Einbin[i]=module.get_ejection_ratios_equalbinsize(matched_Vim_Omega[i], VD_all_Omega[i], matched_NE_Omega[i], matched_UE_Omega[i], matched_thetaE_Omega[i], Vimde_bin)#matched_EE_Omega[i]
     # NE_theta_mean_Omega[i], UE_theta_mean_Omega[i], UE_theta_std_Omega[i], Thetaplot_NE_Omega[i]=module.get_ejection_theta_equalbinsize(matched_Thetaim_Omega[i], matched_NE_Omega[i], matched_UE_Omega[i], Thetaim_bin)
 
 #global mean NE and UE
@@ -255,40 +259,74 @@ print('r2_UE:',r2_UE)
 # plt.ylabel(r'$e$ [-]', fontsize=14)
 # plt.tight_layout()
 
-#deposition velocity
-def compute_percentiles_by_omega(data_dict, percentiles=[10, 25, 50, 75, 90]):
-    omega_values = sorted(data_dict.keys())
-    percentile_data = []
-    for omega in omega_values:
-        data = np.array(data_dict[omega])
-        percentiles_for_omega = [np.percentile(data, p) for p in percentiles]
-        percentile_data.append(percentiles_for_omega)
-    return percentile_data
-    
-VD_mean_glo = np.array([np.mean(v) for v in VD_all_Omega.values()])
-VD_std_glo = np.array([np.std(v) for v in VD_all_Omega.values()])
+#compare with static-bed experiment of Ge (2024)
+#try filtering the CORs with Vim=4 m/s (80)
+Theta_Ge = [7, 9, 12, 19]
+COR_Ge = [0.62, 0.57, 0.49, 0.47]
+Theta_GeWet1 = [11, 14, 18]#1.45%
+COR_GeWet1 = [0.65, 0.625, 0.525]
+Theta_GeWet2 = [7, 13, 21]#22.79%
+COR_GeWet2 = [0.69, 0.67, 0.55]
+# Select the Omegas you want to work with
+selected_indices = [0, 4]
+# Collect valid Vim values from both datasets
+Thetaim_validation = []
+for i in selected_indices:
+    Thetaim_validation += [v for v, t in zip(Theta_all_Omega[i],Vim_all_Omega[i]) if 3.5 <= t <= 4.5]
+# Define the validation range
+Thetaim_validation_range = np.linspace(min(Thetaim_validation), max(Thetaim_validation), 10)
+COR_test, COR_test_stderr, Theta_test = defaultdict(list), defaultdict(list), defaultdict(list)
+for i in selected_indices:
+    valid = [(theta, e) for theta, e, t in zip(Theta_all_Omega[i], exz_all_Omega[i], Vim_all_Omega[i]) if 3.5 <= t <= 4.5]
+    Thetaim_valid, e_valid = zip(*valid)
+    COR_test[i], COR_test_stderr[i], Theta_test[i] = module.BinThetaimCOR_equalbinsize(Thetaim_valid, e_valid, Thetaim_validation_range)
 
-percentiles=[10, 25, 50, 75, 90]
-VD_per = compute_percentiles_by_omega(VD_all_Omega, percentiles)
-percentile_VD = np.array(VD_per)
-p10_VD, p25_VD, p50_VD, p75_VD, p90_VD = percentile_VD.T
+#try filtering the CORs with thetaim=11.5 degree
+U_Ge = [125, 225, 310]
+UE_Ge = [0.49, 0.52, 0.75]
+U_GeWet = [60, 145]#22.79%
+UE_GeWet = [0.7, 2.7]
+NE_test, UE_test, UE_test_std, UE_test_stderr, U_testNE, N_EinbinTest = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
 
-plt.figure(figsize=(12, 5))
-# Plot PDF of U_im/sqrt(gd)
-plt.subplot(1, 2, 1)
-for i in range(5):
-    # Calculate histogram (density=True for probability density)
-    counts, bin_edges = np.histogram(VD_all_Omega[i], bins=50, density=True)
-    # Create the step plot
-    plt.step(bin_edges[:-1], counts, where='mid', color=colors[i], label=f"$\\Omega$={Omega[i]}%")
-plt.xlabel(r'$U_\mathrm{D}$ [m/s]', fontsize=14)
-plt.ylabel('Probability Density [-]', fontsize=14)
-# plt.ylim(-0.002, 0.03)
+# Collect valid Vim values from both datasets
+Vim_validation,VD_validation = [],[]
+for i in selected_indices:
+    Vim_validation += [v for v, t in zip(matched_Vim_Omega[i], matched_Thetaim_Omega[i]) if 10 <= t <= 13]
+    VD_validation += [v for v, t in zip(VD_all_Omega[i], ThetaD_all_Omega[i]) if 10 <= t <= 13]
+# Define the validation range
+Vim_validation_range = np.linspace(min(Vim_validation + VD_validation), max(Vim_validation + VD_validation), 10)
+# Compute NE_test, UE_test, UE_test_std, U_testNE for selected indices
+for i in selected_indices:
+    valid = [(vim, vD, ne, ue, thetae) for vim, vD, ne, ue, thetae, t in zip(matched_Vim_Omega[i], VD_all_Omega[i], matched_NE_Omega[i], matched_UE_Omega[i], matched_thetaE_Omega[i], matched_Thetaim_Omega[i]) if 10 <= t <= 13]
+    Vim_valid, VD_valid, NE_valid, UE_valid, ThetaE_valid = zip(*valid)
+    NE_test[i], UE_test[i], UE_test_std[i], UE_test_stderr[i], thetaEtest, thetaEtest_stderr,U_testNE[i], N_EinbinTest[i] = module.get_ejection_ratios_equalbinsize(Vim_valid, VD_valid, NE_valid, UE_valid, ThetaE_valid, Vim_validation_range)
+
+
+plt.figure(figsize=(12,5))
+plt.subplot(1,2,1)
+for i in selected_indices:
+    plt.errorbar(Theta_test[i], COR_test[i], yerr=COR_test_stderr[i], fmt='o',capsize=5, label=f'$\Omega$={Omega[i]}% (this study)',color=colors[i])
+plt.scatter(Theta_Ge, COR_Ge, marker='d', facecolors='none', edgecolors='k', s=100, label=r'$\Omega$=0$\%$ (Ge et al., 2024)')
+# plt.plot(Theta_GeWet1, COR_GeWet1, '*k', label=r'$\Omega$=1.45$\%$ (Ge et al., 2024)')
+plt.scatter(Theta_GeWet2, COR_GeWet2, marker='s', facecolors='none', edgecolors='k', s=100, label=r'$\Omega$=22.79$\%$ (Ge et al., 2024)')
+plt.xlabel(r'$\theta_{im}$ [$\circ$]', fontsize=14)
+plt.ylabel(r'$e$ [-]', fontsize=14)
+plt.ylim(0,1.2)
+plt.xlim(0, 27)
 plt.legend(fontsize=12)
-plt.subplot(1, 2, 2)
-plt.errorbar(Omega,p50_VD,yerr=[p50_VD - p25_VD, p75_VD - p50_VD],fmt='o',capsize=5, color='#3776ab')
-plt.xlabel(r'$\Omega$ [$\%$]', fontsize=14)
-plt.ylabel(r'$U_\mathrm{D}$ [m/s]', fontsize=14)
+plt.text(0.03, 0.92, '(a)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
+plt.subplot(1,2,2)
+for i in selected_indices:
+    plt.errorbar(U_testNE[i]/constant, UE_test[i]/constant, yerr=UE_test_stderr[i]/constant, fmt='o',capsize=5, label=f'$\Omega$={Omega[i]}% (this study)',color=colors[i])
+plt.scatter(U_Ge, UE_Ge/np.sqrt(9.81*0.0003), marker='d', facecolors='none', edgecolors='k', s=100, label=r'$\Omega$=0$\%$ (Ge et al., 2024)')
+plt.scatter(U_GeWet, UE_GeWet/np.sqrt(9.81*0.0003), marker='s', facecolors='none', edgecolors='k', s=100, label=r'$\Omega$=22.79$\%$ (Ge et al., 2024)')
+plt.plot(np.linspace(0,375,100), np.exp(-1.48+0.082*np.linspace(0,375,100)*constant-0.003*np.radians(11.5))/constant, 'k-', label=r'$\Omega$=0$\%$ (Chen et al., 2019)')
+plt.xlabel(r'$U_{inc}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$U_\mathrm{E}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylim(0,52)
+plt.xlim(0,375)
+plt.legend(fontsize=12)
+plt.text(0.03, 0.92, '(b)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
 plt.tight_layout()
 
 # theta = f(Uim)
@@ -392,8 +430,8 @@ for i in range(5):
 # Plot fitted hyperbolic curve
 for i in range(5):
     plt.plot(U_fit_new, np.degrees(Theta_fit_new[i]), '--', color=colors[i])
-plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylabel(r'$\theta_{im}$ [$\circ$]', fontsize=14)
+plt.xlabel(r'$U_\mathrm{im}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$\theta_\mathrm{im}$ [$\circ$]', fontsize=14)
 plt.xlim(0,225)
 plt.legend(fontsize=12)
 plt.tight_layout()
@@ -422,82 +460,44 @@ weight_theta_glo = np.concatenate(weight_theta_all)
 R2_theta = weighted_r2(y_theta_all, y_predtheta_all, weights=weight_theta_glo)
 print('R2_theta:',R2_theta)
 
-#compare with static-bed experiment of Ge (2024)
-#try filtering the CORs with Vim=4 m/s (80)
-Theta_Ge = [7, 9, 12, 19]
-COR_Ge = [0.62, 0.57, 0.49, 0.47]
-Theta_GeWet1 = [11, 14, 18]#1.45%
-COR_GeWet1 = [0.65, 0.625, 0.525]
-Theta_GeWet2 = [7, 13, 21]#22.79%
-COR_GeWet2 = [0.69, 0.67, 0.55]
-# Select the Omegas you want to work with
-selected_indices = [0, 4]
-# Collect valid Vim values from both datasets
-Thetaim_validation = []
-for i in selected_indices:
-    Thetaim_validation += [v for v, t in zip(Theta_all_Omega[i],Vim_all_Omega[i]) if 3.5 <= t <= 4.5]
-# Define the validation range
-Thetaim_validation_range = np.linspace(min(Thetaim_validation), max(Thetaim_validation), 10)
-COR_test, COR_test_stderr, Theta_test = defaultdict(list), defaultdict(list), defaultdict(list)
-for i in selected_indices:
-    valid = [(theta, e) for theta, e, t in zip(Theta_all_Omega[i], exz_all_Omega[i], Vim_all_Omega[i]) if 3.5 <= t <= 4.5]
-    Thetaim_valid, e_valid = zip(*valid)
-    COR_test[i], COR_test_stderr[i], Theta_test[i] = module.BinThetaimCOR_equalbinsize(Thetaim_valid, e_valid, Thetaim_validation_range)
+# distribution
+# deposition velocity
+def compute_percentiles_by_omega(data_dict, percentiles=[10, 25, 50, 75, 90]):
+    omega_values = sorted(data_dict.keys())
+    percentile_data = []
+    for omega in omega_values:
+        data = np.array(data_dict[omega])
+        percentiles_for_omega = [np.percentile(data, p) for p in percentiles]
+        percentile_data.append(percentiles_for_omega)
+    return percentile_data
+    
+VD_mean_glo = np.array([np.mean(v) for v in VD_all_Omega.values()])
+VD_std_glo = np.array([np.std(v) for v in VD_all_Omega.values()])
 
-#try filtering the CORs with thetaim=11.5 degree
-U_Ge = [125, 225, 310]
-UE_Ge = [0.49, 0.52, 0.75]
-U_GeWet = [60, 145]#22.79%
-UE_GeWet = [0.7, 2.7]
-NE_test, UE_test, UE_test_std, UE_test_stderr, U_testNE, N_EinbinTest = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
+percentiles=[10, 25, 50, 75, 90]
+VD_per = compute_percentiles_by_omega(VD_all_Omega, percentiles)
+percentile_VD = np.array(VD_per)
+p10_VD, p25_VD, p50_VD, p75_VD, p90_VD = percentile_VD.T
 
-# Collect valid Vim values from both datasets
-Vim_validation,VD_validation = [],[]
-for i in selected_indices:
-    Vim_validation += [v for v, t in zip(matched_Vim_Omega[i], matched_Thetaim_Omega[i]) if 10 <= t <= 13]
-    VD_validation += [v for v, t in zip(VD_all_Omega[i], ThetaD_all_Omega[i]) if 10 <= t <= 13]
-# Define the validation range
-Vim_validation_range = np.linspace(min(Vim_validation + VD_validation), max(Vim_validation + VD_validation), 10)
-# Compute NE_test, UE_test, UE_test_std, U_testNE for selected indices
-for i in selected_indices:
-    valid = [(vim, vD, ne, ue) for vim, vD, ne, ue, t in zip(matched_Vim_Omega[i], VD_all_Omega[i], matched_NE_Omega[i], matched_UE_Omega[i], matched_Thetaim_Omega[i]) if 10 <= t <= 13]
-    Vim_valid, VD_valid, NE_valid, UE_valid = zip(*valid)
-    NE_test[i], UE_test[i], UE_test_std[i], UE_test_stderr[i], U_testNE[i], N_EinbinTest[i] = module.get_ejection_ratios_equalbinsize(Vim_valid, VD_valid, NE_valid, UE_valid, Vim_validation_range)
-
-
-plt.figure(figsize=(12,5))
-plt.subplot(1,2,1)
-for i in selected_indices:
-    plt.errorbar(Theta_test[i], COR_test[i], yerr=COR_test_stderr[i], fmt='o',capsize=5, label=f'$\Omega$={Omega[i]}% (this study)',color=colors[i])
-plt.scatter(Theta_Ge, COR_Ge, marker='d', facecolors='none', edgecolors='k', s=100, label=r'$\Omega$=0$\%$ (Ge et al., 2024)')
-# plt.plot(Theta_GeWet1, COR_GeWet1, '*k', label=r'$\Omega$=1.45$\%$ (Ge et al., 2024)')
-plt.scatter(Theta_GeWet2, COR_GeWet2, marker='s', facecolors='none', edgecolors='k', s=100, label=r'$\Omega$=22.79$\%$ (Ge et al., 2024)')
-plt.xlabel(r'$\theta_{im}$ [$\circ$]', fontsize=14)
-plt.ylabel(r'$e$ [-]', fontsize=14)
-plt.ylim(0,1.2)
-plt.xlim(0, 27)
+plt.figure(figsize=(12, 5))
+# Plot PDF of U_im/sqrt(gd)
+plt.subplot(1, 2, 1)
+for i in range(5):
+    # Calculate histogram (density=True for probability density)
+    counts, bin_edges = np.histogram(VD_all_Omega[i], bins=50, density=True)
+    # Create the step plot
+    plt.step(bin_edges[:-1], counts, where='mid', color=colors[i], label=f"$\\Omega$={Omega[i]}%")
+plt.xlabel(r'$U_\mathrm{D}$ [m/s]', fontsize=14)
+plt.ylabel('Probability Density [-]', fontsize=14)
+# plt.ylim(-0.002, 0.03)
 plt.legend(fontsize=12)
-plt.text(0.03, 0.92, '(a)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
-plt.subplot(1,2,2)
-for i in selected_indices:
-    plt.errorbar(U_testNE[i]/constant, UE_test[i]/constant, yerr=UE_test_stderr[i]/constant, fmt='o',capsize=5, label=f'$\Omega$={Omega[i]}% (this study)',color=colors[i])
-plt.scatter(U_Ge, UE_Ge/np.sqrt(9.81*0.0003), marker='d', facecolors='none', edgecolors='k', s=100, label=r'$\Omega$=0$\%$ (Ge et al., 2024)')
-plt.scatter(U_GeWet, UE_GeWet/np.sqrt(9.81*0.0003), marker='s', facecolors='none', edgecolors='k', s=100, label=r'$\Omega$=22.79$\%$ (Ge et al., 2024)')
-plt.plot(np.linspace(0,375,100), np.exp(-1.48+0.082*np.linspace(0,375,100)*constant-0.003*np.radians(11.5))/constant, 'k-', label=r'$\Omega$=0$\%$ (Chen et al., 2019)')
-plt.xlabel(r'$U_{inc}/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylabel(r'$U_\mathrm{E}/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylim(0,52)
-plt.xlim(0,375)
-plt.legend(fontsize=12)
-plt.text(0.03, 0.92, '(b)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
+plt.subplot(1, 2, 2)
+plt.errorbar(Omega,p50_VD,yerr=[p50_VD - p25_VD, p75_VD - p50_VD],fmt='o',capsize=5, color='#3776ab')
+plt.xlabel(r'$\Omega$ [$\%$]', fontsize=14)
+plt.ylabel(r'$U_\mathrm{D}$ [m/s]', fontsize=14)
 plt.tight_layout()
 
-
-#distribution of theta and Uim
-# Vim_mean_glo = np.array([np.mean(v) for v in Vim_all_Omega.values()])
-# Vim_std_glo = np.array([np.std(v) for v in Vim_all_Omega.values()])
-# Thetaim_mean_glo = np.array([np.mean(v) for v in Theta_all_Omega.values()])
-# Thetaim_std_glo = np.array([np.std(v) for v in Theta_all_Omega.values()])
+# distribution of theta and Uim
 
 percentiles=[10, 25, 50, 75, 90]
 Vim_per = compute_percentiles_by_omega(Vim_all_Omega, percentiles)
@@ -595,6 +595,30 @@ print(f'UD is {np.mean(p50_VD/p50_Vim):.2f} of Uim')
 # plt.ylim(22, 75)
 # plt.xlabel(r'$\Omega$ [$\%$]', fontsize=14)
 # plt.ylabel(r'$\theta_\mathrm{E}$ [$\circ$]', fontsize=14)
+# plt.text(0.03, 0.94, '(b)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
+# plt.tight_layout()
+# plt.show()
+
+# ThetaD_per = compute_percentiles_by_omega(ThetaD_all_Omega, percentiles)
+# percentile_thetaD = np.array(ThetaD_per)
+# p10_thetaD, p25_thetaD, p50_thetaD, p75_thetaD, p90_thetaD = percentile_thetaD.T
+
+# plt.figure(figsize=(12, 5))
+# plt.subplot(1, 2, 1)
+# for i in range(5):
+#     # Calculate histogram (density=True for probability density)
+#     counts, bin_edges = np.histogram(ThetaD_all_Omega[i], bins=50, density=True)
+#     # Create the step plot
+#     plt.step(bin_edges[:-1], counts, where='mid', color=colors[i], label=f"$\\Omega$={Omega[i]}%")
+# # plt.ylim(-0.01,0.13)
+# plt.xlabel(r'$\theta_\mathrm{D}$ [$^\circ$]', fontsize=14)
+# plt.ylabel('Probability Density [-]', fontsize=14)
+# plt.text(0.03, 0.94, '(a)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
+# plt.subplot(1, 2, 2)
+# plt.errorbar(Omega,p50_thetaD,yerr=[p50_thetaD - p25_thetaD, p75_thetaD - p50_thetaD],fmt='o',capsize=5, color='#3776ab')
+# # plt.ylim(22, 75)
+# plt.xlabel(r'$\Omega$ [$\%$]', fontsize=14)
+# plt.ylabel(r'$\theta_\mathrm{D}$ [$\circ$]', fontsize=14)
 # plt.text(0.03, 0.94, '(b)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
 # plt.tight_layout()
 # plt.show()
@@ -702,21 +726,6 @@ e_fit_new = defaultdict()
 for i in range(5):
     e_fit_new[i] = moist_correction_model(Ue_fit_new, A0[i], mu, sigma)
 
-plt.figure(figsize=(6,5))
-for i in range(5):
-    plt.errorbar(Uimplot_Omega[i]/constant, CORmean_Omega[i], yerr=CORstderr_Omega[i], fmt='o', capsize=5,color=colors[i], label=f"$\\Omega$={Omega[i]}%")
-    plt.plot(Ue_fit_new, e_fit_new[i], '--', color=colors[i])
-plt.plot(U_fitdry, e_fitdry, '--', color=colors[0])
-# plt.plot(Ue_fit_new, 0.7469*np.exp(0.1374*1.5)*Ue_fit_new**(-0.0741*np.exp(0.2140*1.5)), 'k-', label='Jiang et al. (2024)')
-plt.xlim(0,225)
-plt.ylim(0, 1.4)
-plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylabel(r'$e$ [-]', fontsize=14) 
-plt.legend(fontsize=12)
-plt.tight_layout()
-plt.show()
-
-
 #calculate R^2
 e_all, e_fit_resampled_all, weight_e_all = [],[],[]
 for i in range(5):
@@ -736,11 +745,105 @@ for i in range(5):
 y_e_all = np.concatenate(e_all)
 y_prede_all = np.concatenate(e_fit_resampled_all)
 weight_e_glo = np.concatenate(weight_e_all)
-y_meane_weighted = np.average(y_e_all, weights=weight_e_glo)
 # Now compute R²
 R2_e = weighted_r2(y_e_all, y_prede_all, weights=weight_e_glo)
 print('R2_e:',R2_e)
 
+#fit theta_re
+def arcsinlinear(U, a, b):
+    return np.arcsin(a * U + b)
+
+Uthetare_fit, thetare_fit = defaultdict(list),defaultdict(list)
+a_thetare, b_thetare = np.zeros(5), np.zeros(5)
+for i in range(5):
+    # --- Remove NaN values before fitting ---
+    valid_indices = ~np.isnan(Thetaremean_Omega[i])  # Get boolean mask where theta_all is NOT NaN
+    U_clean = Uimplot_Omega[i][valid_indices]/constant       # Keep only valid U values
+    thetare_clean = np.radians(Thetaremean_Omega[i])[valid_indices] # Keep only valid theta values
+    stderr = np.radians(Thetarestderr_Omega[i])[valid_indices]
+    popt, _ = curve_fit(arcsinlinear, U_clean, thetare_clean, p0=[-0.001,1], sigma=stderr, absolute_sigma=True)
+    a_thetare[i], b_thetare[i] = popt 
+    # Generate fitted curve
+    Uthetare_fit[i] = np.linspace(min(U_clean), max(U_clean), 200)
+    thetare_fit[i] = arcsinlinear(Uthetare_fit[i], *popt)
+    thetare_fit_dis = arcsinlinear(U_clean, *popt)
+    R2 = weighted_r2(thetare_clean, thetare_fit_dis, weights=1/(stderr**2))
+    print('R2_NE:', R2)
+
+plt.figure()
+for i in range(5):
+    plt.errorbar(Uimplot_Omega[i]/constant, Thetaremean_Omega[i], yerr=Thetarestderr_Omega[i], fmt='o', capsize=5, color=colors[i])
+    plt.plot(Uthetare_fit[i], np.degrees(thetare_fit[i]), '--', color=colors[i])
+plt.xlabel(r'$U_{im}/\sqrt{gd}$ []')
+plt.ylabel(r'$\theta_{re}$ [$^\circ$]')
+
+paramsthetarea, _ = curve_fit(power_law, Omega_tbfit, a_thetare)
+a_thetare_fit_smooth = power_law(Omega_smooth, *paramsthetarea)
+A_thetare, B_thetare, n_thetare = paramsthetarea
+
+plt.figure()
+plt.plot(Omega_tbfit, a_thetare, 'o')
+plt.plot(Omega_smooth, a_thetare_fit_smooth, '--', label='Power-law fit')
+plt.xlabel('Omega')
+plt.ylabel('a_thetare')
+
+athetare_fit = A_thetare - B_thetare*Omega_tbfit**n_thetare
+print(f"athetare_fit = {A_thetare:.4f} - {B_thetare:.4f}*Omega_tbfit**{n_thetare:.2f}")
+bthetare_fit = np.mean(b_thetare)
+print(f"bthetare_fit = {bthetare_fit:.2f}")
+
+Uthetare_fit_new = np.linspace(0, max(Uimplot_Omega[0]/constant), 100)
+thetare_fit_new = defaultdict()
+# Loop over each element in alpha and multiply with U_fit_new
+for i in range(5):
+    thetare_fit_new[i] = arcsinlinear(Uthetare_fit_new, athetare_fit[i], bthetare_fit)
+    
+#calculate R^2
+all_thetare_clean = []
+all_thetare_fit_resampled = []
+all_weights_thetare = []
+
+for i in range(5):
+    # Create interpolator from 100-point fit
+    interpolator = interp1d(Uthetare_fit_new, thetare_fit_new[i], kind='linear', fill_value='extrapolate')
+    # Remove NaNs
+    valid_indices = ~np.isnan(Thetaremean_Omega[i])
+    U_clean = Uimplot_Omega[i][valid_indices]/constant       # Keep only valid U values
+    thetare_clean = np.radians(Thetaremean_Omega[i])[valid_indices]  # Keep only valid theta values
+    stderr = np.radians(Thetarestderr_Omega[i])[valid_indices]
+    thetare_fit_resampled = interpolator(U_clean)
+    # Store for global R²
+    all_thetare_clean.append(thetare_clean)
+    all_thetare_fit_resampled.append(thetare_fit_resampled)
+    all_weights_thetare.append(1/(stderr**2))
+    
+y_thetare_all = np.concatenate(all_thetare_clean)
+y_predthetare_all = np.concatenate(all_thetare_fit_resampled)
+weight_thetare_glo = np.concatenate(all_weights_thetare)
+# Now compute R²
+R2_thetare = weighted_r2(y_thetare_all, y_predthetare_all, weights=weight_thetare_glo)
+print('R2_thetare:',R2_thetare)
+
+plt.figure(figsize=(12,5))
+plt.subplot(1,2,1)
+for i in range(5):
+    plt.errorbar(Uimplot_Omega[i]/constant, CORmean_Omega[i], yerr=CORstderr_Omega[i], fmt='o', capsize=5,color=colors[i], label=f"$\\Omega$={Omega[i]}%")
+    plt.plot(Ue_fit_new, e_fit_new[i], '--', color=colors[i])
+plt.plot(U_fitdry, e_fitdry, '--', color=colors[0])
+# plt.plot(Ue_fit_new, 0.7469*np.exp(0.1374*1.5)*Ue_fit_new**(-0.0741*np.exp(0.2140*1.5)), 'k-', label='Jiang et al. (2024)')
+plt.xlim(0,225)
+plt.ylim(0, 1.4)
+plt.xlabel(r'$U_\mathrm{im}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$e$ [-]', fontsize=14) 
+plt.legend(fontsize=12)
+plt.subplot(1,2,2)
+for i in range(5):
+    plt.errorbar(Uimplot_Omega[i]/constant, Thetaremean_Omega[i], yerr=Thetarestderr_Omega[i], fmt='o', capsize=5, color=colors[i])
+    plt.plot(Uthetare_fit[i], np.degrees(thetare_fit[i]), '--', color=colors[i])
+plt.xlabel(r'$U_\mathrm{im}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$\theta_\mathrm{re}$ [$^\circ$]', fontsize=14)
+plt.tight_layout()
+plt.show()
 
 #fit Pr with gompertz
 def gompertz(x, L, a, b):
@@ -796,14 +899,14 @@ plt.plot(Uimpr_fit, Pr_fit, 'k--', label='Gompertz fit')
 plt.plot(Uprdrybin/constant, Pr_drybin, 'o', color='gray', ms=5, label='Equal-count binning')
 plt.xlim(0,210)
 plt.ylim(0, 1.1)
-plt.xlabel(r'$U_{inc}/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylabel(r'$P_\mathrm{r}$ [-]', fontsize=14)
+plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$Pr$ [-]', fontsize=14)
 plt.legend(fontsize=12)
 plt.tight_layout()
 plt.show()
 
 
-#fit NE & UE
+# Ejection
 def linear(U, a):
     return a*U
 
@@ -837,7 +940,7 @@ for i in range(5):
     plt.plot(U_NEfit[i], NE_fit[i], '--', color=colors[i])
 plt.xlim(0,225)
 plt.ylim(0, 5.75)
-plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
+plt.xlabel(r'$U_\mathrm{im}/\sqrt{gd}$ [-]', fontsize=14)
 plt.ylabel(r'$\bar{N}_\mathrm{E}$ [-]', fontsize=14)
 plt.legend(loc='upper left', fontsize=12)
 
@@ -927,7 +1030,7 @@ for i in range(5):
     plt.plot(U_UEfit[i], UE_fit[i], '--', color=colors[i])
 plt.xlim(0,225)
 plt.ylim(0, 14.5)
-plt.xlabel(r'$U_{inc}/\sqrt{gd}$ [-]', fontsize=14)
+plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
 plt.ylabel(r'$U_\mathrm{E}/\sqrt{gd}$ [-]', fontsize=14)
 
 def linearincrease(Omega, a, b):
@@ -993,27 +1096,44 @@ weightsue_all = np.concatenate(all_weights_UE)
 r2_ue = weighted_r2(y_ue_all, y_predue_all, weightsue_all)
 print(f'Global R² (all groups combined): {r2_ue:.3f}')
 
-plt.figure(figsize=(12,5.5))
-plt.subplot(1,2,1)
+
+#thetaE
+plt.figure(figsize=(18,5.5))
+plt.subplot(1,3,1)
 for i in range(5):
     plt.scatter(Uplot_NE_Omega[i]/constant, NE_mean_Omega[i], s=np.sqrt(N_Einbin[i])*5, label=f"$\\Omega$={Omega[i]}%",color=colors[i])
     plt.plot(UNE_fit_new, NE_fit_new[i], '--', color=colors[i])
 plt.xlim(0,225)
 plt.ylim(0, 5.75)
-plt.xlabel(r'$U_{inc}/\sqrt{gd}$ [-]', fontsize=14)
+plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
 plt.ylabel(r'$\bar{N}_\mathrm{E}$ [-]', fontsize=14)
 plt.text(0.03, 0.93, '(a)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
 plt.legend(loc='upper left', bbox_to_anchor=(0.12, 0.99), fontsize=12)
-plt.subplot(1,2,2)
+plt.subplot(1,3,2)
 for i in range(5):
     plt.errorbar(Uplot_NE_Omega[i]/constant, UE_mean_Omega[i]/constant, yerr=UE_stderr_Omega[i]/constant, fmt='o', capsize=5, label=f"$\\Omega$={Omega[i]}%",color=colors[i])
     plt.plot(UUE_fit_new, UE_fit_new[i], '--', color=colors[i])
 plt.xlim(0,225)
 plt.ylim(0, 14.5)
-plt.xlabel(r'$U_{inc}/\sqrt{gd}$ [-]', fontsize=14)
+plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
 plt.ylabel(r'$U_\mathrm{E}/\sqrt{gd}$ [-]', fontsize=14)
 plt.text(0.03, 0.93, '(b)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
+plt.subplot(1,3,3)
+for i in range(5):
+    plt.errorbar(Uplot_NE_Omega[i]/constant, ThetaE_mean_Omega[i], yerr=ThetaE_stderr_Omega[i], fmt='o', capsize=5, label=f"$\\Omega$={Omega[i]}%",color=colors[i])
+    # plt.plot(UNE_fit_new, NE_fit_new[i], '--', color=colors[i])
+plt.xlim(0,225)
+plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$\bar{\theta}_\mathrm{E}$ [$^\circ$]', fontsize=14)
+plt.text(0.03, 0.93, '(c)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
 plt.tight_layout()
+
+thetaEmean = np.zeros(5)
+for i in range(5):
+    mask = ~np.isnan(np.array(ThetaE_mean_Omega[i]))
+    thetaEmean[i] = np.average(np.array(ThetaE_mean_Omega[i])[mask], weights=np.array(ThetaE_stderr_Omega[i])[mask])
+print('thetaE:', thetaEmean)
+print('global mean:', np.mean(thetaEmean))
 
 # plt.figure()
 # for i in range(5):
