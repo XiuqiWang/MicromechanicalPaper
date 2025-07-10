@@ -102,7 +102,7 @@ def store_sal_id_data(data, ID_Particle, coe_h, dt, N_inter, D):
         if Thetaim_t[i]:
             Thetaim_mean_t[i] = np.sum(Thetaim_t[i])/Mp[i]
             
-    return Par, VZ, exz_mean_t, ez_mean_t, Vim_mean_t, Thetaim_mean_t, RIM, exz_vector_t,IM_vector_t#ez_t, exz_t, Vim_t, Thetaim_t #E
+    return Par, VZ, exz_mean_t, ez_mean_t, Vim_mean_t, Thetaim_mean_t, RIM, exz_vector_t,IM_vector_t #, VX#ez_t, exz_t, Vim_t, Thetaim_t #E
 
 # Helper function 1: findSaltationID
 def findSaltationID(e, Vxi, Vzi, Zi, thre_e, dt):

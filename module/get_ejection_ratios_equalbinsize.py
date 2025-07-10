@@ -8,13 +8,14 @@ import numpy as np
 import pandas as pd
 import itertools
 
-def get_ejection_ratios_equalbinsize(matched_Vim_all, VD_all, matched_NE_all, matched_UE_all, velimde_bins):#matched_EE_all
+def get_ejection_ratios_equalbinsize(matched_Vim_all, VD_all, matched_NE_all, matched_UE_all, matched_ThetaE_all, velimde_bins):#matched_EE_all
         # Convert to numpy arrays for easier manipulation
         impact_velocities = np.array(matched_Vim_all)
         deposition_velocities = np.array(VD_all)
         ejection_numbers = np.array(matched_NE_all)
         ejection_velocities = np.array(matched_UE_all)
         # ejection_energy = np.array(matched_EE_all)
+        ejection_angles = np.array(matched_ThetaE_all)
         
         # Create a mask where ejection_numbers is non-zero
         #non_zero_mask = ejection_numbers != 0
@@ -28,6 +29,7 @@ def get_ejection_ratios_equalbinsize(matched_Vim_all, VD_all, matched_NE_all, ma
         number = []
         impact_num, deposition_num = [],[]
         EE_mean = []
+        thetaEmean, thetaEstd = [],[]
         for i in range(len(velimde_bins)-1):
             # Find the indices of the velocities within the current bin range
             bin_mask = (impact_velocities >= velimde_bins[i]) & (impact_velocities < velimde_bins[i + 1])
@@ -44,6 +46,9 @@ def get_ejection_ratios_equalbinsize(matched_Vim_all, VD_all, matched_NE_all, ma
                 # flattened_EE = list(itertools.chain.from_iterable(ejection_energy[bin_mask]))
                 # EE_mean.append(np.mean(flattened_EE)/(np.sum(bin_mask) + np.sum(bin_mask_de)))
                 number.append(np.size(flattened_elements))
+                flatened_thetaE = list(itertools.chain.from_iterable(ejection_angles[bin_mask]))
+                thetaEmean.append(np.mean(flatened_thetaE))
+                thetaEstd.append(np.std(flatened_thetaE))
             else:
                 ejection_ratio_mean = np.NAN
                 impact_num.append(0)
@@ -52,16 +57,20 @@ def get_ejection_ratios_equalbinsize(matched_Vim_all, VD_all, matched_NE_all, ma
                 VE_std.append(np.NAN)
                 # EE_mean.append(np.NAN)
                 number.append(0)
+                thetaEmean.append(np.nan)
+                thetaEstd.append(np.nan)
+                
             ejection_ratios.append(ejection_ratio_mean)#, impact_num])#, ejection_ratio_std])
         
         Uplot = (velimde_bins[:-1] + velimde_bins[1:]) / 2 
         
         # print('number of impact:', impact_num)
         # print('number of deposition:', deposition_num)
-        # print('number of incidence:', [a+b for a,b in zip(impact_num,deposition_num)])
+        print('number of incidence:', [a+b for a,b in zip(impact_num,deposition_num)])
         print('number of ejections:', number)
-        std_error = [a/np.sqrt(b) for a,b in zip(VE_std, number)]
+        UEstd_error = [a/np.sqrt(b) for a,b in zip(VE_std, number)]
         # print('standard error', std_error)
+        ThetaEstd_error = [a/np.sqrt(b) for a,b in zip(thetaEstd, number)]
         
         
-        return ejection_ratios, VE_mean, VE_std, std_error, Uplot, number
+        return ejection_ratios, VE_mean, VE_std, UEstd_error, thetaEmean, ThetaEstd_error,Uplot, number
