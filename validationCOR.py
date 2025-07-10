@@ -28,6 +28,7 @@ t_inter = np.linspace(0,5,N_inter+1)
 Omega = [0, 1, 5, 10, 20]
 colors = plt.cm.viridis(np.linspace(0, 1, 5))  # 5 colors
 t_ver = np.linspace(dt, 5, 500)
+constant = np.sqrt(9.81*D)
 
 #initialize
 EDindices = defaultdict(list)
@@ -46,6 +47,7 @@ VIM_mean_t,ThetaIM_mean_t = defaultdict(list), defaultdict(list)
 RIM = defaultdict(list)
 Par = defaultdict(list)
 VZ = defaultdict(list)
+VX = defaultdict(list)
 
 X,Z = defaultdict(list),defaultdict(list)
 for i in range(5):
@@ -134,6 +136,18 @@ plt.text(0.02, 0.92, '(c)', transform=plt.gca().transAxes, fontsize=16, fontweig
 plt.tight_layout()
 plt.show()
 
+# plt.figure()
+# plt.subplot(2,1,1)
+# plt.plot(t_ver, Z[3][:,287], linestyle='-', marker='.', color='k', markersize=3, linewidth=1)
+# plt.xlabel(r'$t$ [s]',fontsize=14)
+# plt.ylabel(r'$Z_p$ [m]',fontsize=14)
+# plt.subplot(2,1,2)
+# plt.plot(t_ver, VX[3][287], linestyle='-', marker='.', color='k', markersize=3, linewidth=1)
+# plt.xlabel(r'$t$ [s]',fontsize=14)
+# plt.ylabel(r'$U_\mathrm{x}$ [m/s]',fontsize=14)
+# plt.tight_layout()
+# plt.show()
+
 #get the quantities from the steady state
 exz_all,Vim_all,VD_all,ThetaD_all,Theta_all,zE_all,impact_list,ejection_list = defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list)
 Thetare_all, ThetaE_all = defaultdict(list),defaultdict(list)
@@ -166,9 +180,9 @@ impact_ejection_list = defaultdict(list)
 for i in range (5):
     impact_ejection_list[i]=module.match_ejection_to_impact(impact_list[i], ejection_list[i], dt)
 Vim_all_values = [value for sublist in Vim_all.values() for value in sublist]
-Vim_bin = np.linspace(min(Vim_all_values), max(Vim_all_values), 7)
+Vim_bin = np.linspace(0, max(Vim_all_values)+1, 7) #make sure the range covers all the events
 Vimde_all_values = [value for sublist in Vim_all.values() for value in sublist] + [value for sublist in VD_all.values() for value in sublist]
-Vimde_bin = np.linspace(min(Vimde_all_values), max(Vimde_all_values), 7)   
+Vimde_bin = np.linspace(0, max(Vimde_all_values)+1, 7)   
 
 #global means and stds at all the wind conditions   
 exz_all_values = [value for sublist in exz_all.values() for value in sublist]
@@ -183,14 +197,13 @@ matched_thetaE_all = [element for key in impact_ejection_list for element in imp
 CORmean_glo,CORstd_glo,CORstderr_glo,Thetare_mean_glo, Thetare_stderr_glo, Uimplot = module.BinUimCOR_equalbinsize(Vim_all_values,exz_all_values,Thetare_all_values, Vim_bin)
 Pr_glo,Uplot,N_PrUre = module.BinUimUd_equalbinsize(Vim_all_values,VD_all_values,Vimde_bin)
 NEmean_glo, UEmean_glo, UEstd_glo, UEstderr_glo, ThetaEmean_glo, ThetaEstderr_glo, Uplot_NE, N_Einbin = module.get_ejection_ratios_equalbinsize(matched_Vim_all, VD_all_values, matched_NE_all, matched_UE_all, matched_thetaE_all, Vimde_bin)
-Nim = np.array([1221, 683, 233, 42, 16, 4])
+Nim = np.array([1257, 695, 203, 32, 9, 4])
 
-constant = np.sqrt(9.81*D)
 Thetaim_all_values = [value for sublist in Theta_all.values() for value in sublist]
 Theta_mean_all = np.nanmean(Thetaim_all_values) #mean theta_im in all cases
 #empirical data
 Hcr = 1.5
-UIM_UE_prin = np.linspace(0,160, 100)
+UIM_UE_prin = np.linspace(0,190, 100)
 thetaim_prin = np.arcsin(39.21/(UIM_UE_prin+105.73))
 NE_prin = (-0.001*Hcr + 0.012)*UIM_UE_prin
 VE_prin = (0.0538*Hcr + 1.0966)*np.sqrt(UIM_UE_prin)
@@ -242,7 +255,7 @@ plt.subplot(3,2,1)
 line1 = plt.errorbar(Uimplot/constant, CORmean_glo, yerr=CORstd_glo, fmt='o', capsize=5, label='This study', color='#3776ab')
 line2 = plt.errorbar(Unsexp, CORexp_mean, yerr=CORexp_std, fmt='x', capsize=5, label='Jiang et al. (2024)', color='k')
 line3 = plt.plot(UIM_UE_prin, COR_emp, 'k-', label='Jiang et al. (2024)')
-plt.xlim(0,160)
+plt.xlim(0,190)
 plt.ylim(-0.05,2.25)
 plt.xlabel(r'$U_\mathrm{im}/\sqrt{gd}$ [-]', fontsize=14)
 plt.ylabel(r'$e$ [-]', fontsize=14)
@@ -254,7 +267,7 @@ line2 = plt.errorbar(Unsexp, thetareexp, yerr=thetareexp_std, fmt='x', capsize=5
 line3 = plt.plot(UIM_UE_prin, Thetare_emp, 'k-')
 line4 = plt.plot(UIM_UE_prin, thetare_Bel, 'k:', label='Beladijne et al. (2007)')
 plt.ylim(-10,100)
-plt.xlim(0,160)
+plt.xlim(0,190)
 plt.legend([line2[0],line3[0], line4[0], line1[0]],['Jiang et al. (2024)','Jiang et al. (2024)', 'Beladijne et al. (2007)', 'This study'], loc='upper left', bbox_to_anchor=(0.08, 0.99), fontsize=12)
 plt.xlabel(r'$U_\mathrm{im}/\sqrt{gd}$ [-]', fontsize=14)
 plt.ylabel(r'$\theta_\mathrm{re}$ [$^\circ$]', fontsize=14)
@@ -266,7 +279,7 @@ plt.plot(UIM_UE_prin, Pr_emp, label='Jiang et al. (2024)',color='k')
 plt.plot(Unsexp, Prexp, 'x', label='Jiang et al. (2024)', color='k')
 plt.plot(UIM_UE_prin, Pr_and, 'k-.', label='Anderson & Haff (1991)')
 plt.ylim(0,1.05)
-plt.xlim(0,160)
+plt.xlim(0,190)
 plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
 plt.ylabel(r'$Pr$ [-]', fontsize=14)
 plt.legend(fontsize=12)
@@ -279,7 +292,7 @@ plt.plot(Unsexp, Nsexp,'x', label='Jiang et al. (2024)',color='k')
 plt.plot(UNE_Selmani, NE_Selmani, 'dk', label='Selmani et al. (2024)')
 plt.plot(UIM_UE_prin, NE_Chen, 'k-.', label='Chen et al. (2019)')
 plt.ylim(0,14)
-plt.xlim(0,160)
+plt.xlim(0,190)
 plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
 plt.ylabel(r'$\bar{N}_\mathrm{E}$ [-]', fontsize=14)
 plt.legend(loc='upper left', bbox_to_anchor=(0.08, 0.99), fontsize=12)
@@ -292,7 +305,7 @@ line3 = plt.plot(UIM_UE_prin, VE_prin, 'k-')
 line4 = plt.plot(UIM_UE_prin, VE_Chen, 'k-.')
 line5 = plt.plot(UIM_UE_prin, VE_Bel, 'k:', label='Beladijne et al. (2007)')
 plt.ylim(0,22.5)
-plt.xlim(0,160)
+plt.xlim(0,190)
 plt.legend([line2[0],line3[0], line4[0], line5[0], line1[0]],['Jiang et al. (2024)','Jiang et al. (2024)', 'Chen et al. (2019)', 'Beladijne et al. (2007)', 'This study'], loc='upper left', bbox_to_anchor=(0.08, 0.99), fontsize=12)
 plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
 plt.ylabel(r'$U_\mathrm{E}/\sqrt{gd}$ [-]', fontsize=14)
@@ -303,7 +316,7 @@ line2 = plt.errorbar(Uvsexp, thetaEexp, yerr=thetaEexp_std, fmt='x', capsize=5, 
 line3 = plt.plot(UIM_UE_prin, ThetaE_emp, 'k-')
 line4 = plt.plot(UIM_UE_prin, thetaE_Bel, 'k:', label='Beladijne et al. (2007)')
 plt.ylim(0,140)
-plt.xlim(0,160)
+plt.xlim(0,190)
 plt.legend([line2[0],line3[0], line4[0], line1[0]],['Jiang et al. (2024)','Jiang et al. (2024)', 'Beladijne et al. (2007)', 'This study'], loc='upper left', bbox_to_anchor=(0.08, 0.99), fontsize=12)
 plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
 plt.ylabel(r'$\theta_\mathrm{E}$ [$^\circ$]', fontsize=14)
