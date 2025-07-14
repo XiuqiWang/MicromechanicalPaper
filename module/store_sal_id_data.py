@@ -89,7 +89,7 @@ def store_sal_id_data(data, ID_Particle, coe_h, dt, N_inter, D):
                 Mp[idx - 1] += mp #for counting the sum of particles' masses
                 RIM[idx - 1] += 1 / (5 / N_inter)
                 exz_vector_t[idx - 1].append(exzi[j])
-                IM_vector_t[idx - 1].append([Vi_i[j], IDim_i[j], IDre_i[j], xim_i[j], xre_i[j], x_col[j], i, theta_i[j], thetare_i[j], Eim_i[j]])
+                IM_vector_t[idx - 1].append([Vi_i[j], IDim_i[j], IDre_i[j], xim_i[j], xre_i[j], x_col[j], i, theta_i[j], thetare_i[j], Eim_i[j], Vr_i[j]])
     
     #mass-weighted avergae values in each output time step
     for i in range(N_inter):

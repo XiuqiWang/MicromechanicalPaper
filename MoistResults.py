@@ -76,11 +76,13 @@ for i in range(25):
  
     
 exz_all,Vim_all,VD_all,ThetaD_all,Theta_all,Thetare_all,impact_list,impact_deposition_list,ejection_list = defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list)
+Vre_all = defaultdict(list)
 ThetaE_all, UE_all = defaultdict(list), defaultdict(list)
 N_range = np.full(25, 0).astype(int)
 for i in range (25):
     exz_all[i] = [value for sublist in exz_vector_t[i][N_range[i]:] for value in sublist]
     Vim_all[i] = [value[0] for sublist in IM_vector_t[i][N_range[i]:] for value in sublist]
+    Vre_all[i] = [value[-1] for sublist in IM_vector_t[i][N_range[i]:] for value in sublist]
     VD_all[i] = [value[0] for sublist in D_vector_t[i][N_range[i]:] for value in sublist]
     ThetaD_all[i] = [value[1] for sublist in D_vector_t[i][N_range[i]:] for value in sublist]
     Theta_all[i] = [value[7] for sublist in IM_vector_t[i][N_range[i]:] for value in sublist]
@@ -127,12 +129,13 @@ for i in range (25):
     
 constant = np.sqrt(9.81*D)  
 #combine the values from all Shields numbers
-Vim_all_Omega, exz_all_Omega, Theta_all_Omega, Thetare_all_Omega, VD_all_Omega, ThetaD_all_Omega, matched_Vim_Omega, matched_Thetaim_Omega, matched_NE_Omega, matched_UE_Omega, matched_EE_Omega = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list),defaultdict(list),defaultdict(list)
+Vim_all_Omega, Vre_all_Omega, exz_all_Omega, Theta_all_Omega, Thetare_all_Omega, VD_all_Omega, ThetaD_all_Omega, matched_Vim_Omega, matched_Thetaim_Omega, matched_NE_Omega, matched_UE_Omega, matched_EE_Omega = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list),defaultdict(list),defaultdict(list)
 ThetaE_all_Omega, UE_all_Omega = defaultdict(list), defaultdict(list)
 matched_thetaE_Omega = defaultdict(list)
 for i in range (5): #loop over Omega 0-20 %
     selected_indices = list(range(i, 25, 5))  # Get indices like [0,5,10,15,20], [1,6,11,16,21], etc.
     Vim_all_Omega[i] = np.concatenate([Vim_all[j] for j in selected_indices]).tolist()
+    Vre_all_Omega[i] = np.concatenate([Vre_all[j] for j in selected_indices]).tolist()
     exz_all_Omega[i] = np.concatenate([exz_all[j] for j in selected_indices]).tolist()
     Theta_all_Omega[i] = np.concatenate([Theta_all[j] for j in selected_indices]).tolist()
     Thetare_all_Omega[i] = np.concatenate([Thetare_all[j] for j in selected_indices]).tolist()
@@ -148,6 +151,7 @@ for i in range (5): #loop over Omega 0-20 %
     matched_thetaE_Omega[i] = np.concatenate([matched_thetaE[j] for j in selected_indices]).tolist()
 
 CORmean_Omega,CORstd_Omega,CORstderr_Omega,Uimplot_Omega = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
+Uremean_Omega, Urestderr_Omega, Ure_Uim_Omega = defaultdict(list), defaultdict(list), defaultdict(list)
 COR_theta_mean_Omega, COR_theta_std_Omega, Thetaremean_Omega, Thetarestderr_Omega, Thetaimplot_Omega = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
 Pr_Omega,Uplot_Omega, N_PrUre = defaultdict(list), defaultdict(list), defaultdict(list)
 Pr_theta_Omega,Theta_pr_Omega = defaultdict(list), defaultdict(list)
@@ -156,7 +160,7 @@ ThetaE_mean_Omega, ThetaE_stderr_Omega = defaultdict(list), defaultdict(list)
 NE_theta_mean_Omega, UE_theta_mean_Omega, UE_theta_std_Omega, Thetaplot_NE_Omega = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
 EE_mean_Omega, EE_stderr_Omega = defaultdict(list), defaultdict(list)
 for i in range (5): #loop over Omega 0-20%
-    CORmean_Omega[i],CORstd_Omega[i],CORstderr_Omega[i],Thetaremean_Omega[i],Thetarestderr_Omega[i],Uimplot_Omega[i] = module.BinUimCOR_equalbinsize(Vim_all_Omega[i],exz_all_Omega[i],Thetare_all_Omega[i],Vim_bin)
+    CORmean_Omega[i],CORstd_Omega[i],CORstderr_Omega[i],Uremean_Omega[i], Urestderr_Omega[i], Thetaremean_Omega[i],Thetarestderr_Omega[i],Ure_Uim_Omega[i],Uimplot_Omega[i] = module.BinUimCOR_equalbinsize(Vim_all_Omega[i],Vre_all_Omega[i], exz_all_Omega[i],Thetare_all_Omega[i],Vim_bin)
     # COR_theta_mean_Omega[i], COR_theta_std_Omega[i], Thetaimplot_Omega[i] = module.BinThetaimCOR_equalbinsize(Theta_all_Omega[i], exz_all_Omega[i], Thetaim_bin)
     Pr_Omega[i],Uplot_Omega[i],N_PrUre[i] = module.BinUimUd_equalbinsize(Vim_all_Omega[i],VD_all_Omega[i],Vimde_bin)   
     # Pr_theta_Omega[i],Theta_pr_Omega[i] = module.BinThetaimThetad_equalbinsize(Theta_all_Omega[i],ThetaD_all_Omega[i],Thetaimde_bin)   
@@ -766,6 +770,38 @@ for i in range (5): #loop over Omega 0-20%
 # # Now compute R²
 # R2_e = weighted_r2(y_e_all, y_prede_all, weights=weight_e_glo)
 # print('R2_e:',R2_e)
+
+## Ure - Uim
+plt.figure()
+for i in range(5):
+    plt.errorbar(Uimplot_Omega[i]/constant, Uremean_Omega[i]/constant, yerr=Urestderr_Omega[i]/constant, fmt='o', capsize=5,color=colors[i], label=f"$\\Omega$={Omega[i]}%")
+    # plt.plot(Ue_fit[i], e_fit[i], '--', color=colors[i])
+# plt.xlim(0,210)
+# plt.ylim(0, 1.4)
+plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$U_{re}/\sqrt{gd}$ [-]', fontsize=14) 
+plt.legend(fontsize=12)
+
+plt.figure(figsize=(12,5))
+plt.subplot(1,2,1)
+for i in range(5):
+    plt.errorbar(Uimplot_Omega[i]/constant, CORmean_Omega[i], yerr=CORstderr_Omega[i], fmt='o', capsize=5,color=colors[i], label=f"$\\Omega$={Omega[i]}%")
+plt.xlim(0,210)
+plt.ylim(0, 1.4)
+plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$e$ [-]', fontsize=14) 
+plt.legend(loc='upper right', fontsize=12)
+plt.subplot(1,2,2)
+for i in range(5):
+    plt.plot(Uimplot_Omega[i]/constant, Ure_Uim_Omega[i], 'o', color=colors[i], label=f"$\\Omega$={Omega[i]}%")
+    # plt.plot(Ue_fit[i], e_fit[i], '--', color=colors[i])
+plt.xlim(left=0)
+plt.ylim(0, 1.4)
+plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$\bar{U}_{re}/\bar{U}_{im}$ [-]', fontsize=14) 
+plt.tight_layout()
+
+
 
 # #fit theta_re
 # def arcsinlinear(U, a, b):
