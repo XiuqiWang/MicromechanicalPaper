@@ -136,26 +136,36 @@ plt.text(0.02, 0.92, '(c)', transform=plt.gca().transAxes, fontsize=16, fontweig
 plt.tight_layout()
 plt.show()
 
-# plt.figure()
-# plt.subplot(2,1,1)
-# plt.plot(t_ver, Z[3][:,287], linestyle='-', marker='.', color='k', markersize=3, linewidth=1)
-# plt.xlabel(r'$t$ [s]',fontsize=14)
-# plt.ylabel(r'$Z_p$ [m]',fontsize=14)
-# plt.subplot(2,1,2)
-# plt.plot(t_ver, VX[3][287], linestyle='-', marker='.', color='k', markersize=3, linewidth=1)
-# plt.xlabel(r'$t$ [s]',fontsize=14)
-# plt.ylabel(r'$U_\mathrm{x}$ [m/s]',fontsize=14)
-# plt.tight_layout()
-# plt.show()
+# check the moments where particle is at the top of the trjectory
+plt.figure()
+plt.subplot(2,1,1)
+plt.plot(t_ver, Z[4][:,id_p], linestyle='-', marker='.', color='k', markersize=3, linewidth=1)
+plt.plot(t_ver[Par[4][id_p][3]], Z[4][:,id_p][Par[4][id_p][3]], 'rx',markerfacecolor='none')
+plt.plot(t_ver[EDindices[4][id_p][2]], Z[4][EDindices[4][id_p][2],id_p], 'ob', label='Reptations', markerfacecolor='none')
+plt.xlabel(r'$t$ [s]',fontsize=14)
+plt.ylabel(r'$Z_p$ [m]',fontsize=14)
+plt.subplot(2,1,2)
+plt.plot(t_ver, VZ[4][id_p], linestyle='-', marker='.', color='k', markersize=3, linewidth=1)
+plt.plot(t_ver[Par[4][id_p][3]], VZ[4][id_p][Par[4][id_p][3]], 'rx',markerfacecolor='none')
+plt.xlabel(r'$t$ [s]',fontsize=14)
+plt.ylabel(r'$U_\mathrm{z}$ [m/s]',fontsize=14)
+plt.tight_layout()
+plt.show()
+
 
 #get the quantities from the steady state
 exz_all,Vim_all,VD_all,ThetaD_all,Theta_all,zE_all,impact_list,ejection_list = defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list)
 Thetare_all, ThetaE_all = defaultdict(list),defaultdict(list)
+Vre_all, Vsal_all = defaultdict(list),defaultdict(list)
+Vrep_all = defaultdict(list)
 for i in range (5):
     N_range = 0#int((3 / 5) * N_inter) #after 3s for dry case
     exz_all[i] = [value for sublist in exz_vector_t[i][N_range:] for value in sublist]
     Vim_all[i] = [value[0] for sublist in IM_vector_t[i][N_range:] for value in sublist]
+    Vre_all[i] = [value[10] for sublist in IM_vector_t[i][N_range:] for value in sublist]
+    Vsal_all[i] = [value[11] for sublist in IM_vector_t[i][N_range:] for value in sublist]
     VD_all[i] = [value[0] for sublist in D_vector_t[i][N_range:] for value in sublist]
+    Vrep_all[i] = [value[-1] for sublist in D_vector_t[i][N_range:] for value in sublist]
     ThetaD_all[i] = [value[1] for sublist in D_vector_t[i][N_range:] for value in sublist]
     Theta_all[i] = [value[7] for sublist in IM_vector_t[i][N_range:] for value in sublist]
     Thetare_all[i] = [value[8] for sublist in IM_vector_t[i][N_range:] for value in sublist]
@@ -180,6 +190,9 @@ impact_ejection_list = defaultdict(list)
 for i in range (5):
     impact_ejection_list[i]=module.match_ejection_to_impact(impact_list[i], ejection_list[i], dt)
 Vim_all_values = [value for sublist in Vim_all.values() for value in sublist]
+Vre_all_values = [value for sublist in Vre_all.values() for value in sublist]
+Vsal_all_values = [value for sublist in Vsal_all.values() for value in sublist]
+Vrep_all_values = [value for sublist in Vrep_all.values() for value in sublist]
 Vim_bin = np.linspace(0, max(Vim_all_values)+1, 7) #make sure the range covers all the events
 Vimde_all_values = [value for sublist in Vim_all.values() for value in sublist] + [value for sublist in VD_all.values() for value in sublist]
 Vimde_bin = np.linspace(0, max(Vimde_all_values)+1, 7)   
@@ -188,13 +201,16 @@ Vimde_bin = np.linspace(0, max(Vimde_all_values)+1, 7)
 exz_all_values = [value for sublist in exz_all.values() for value in sublist]
 VD_all_values = [value for sublist in VD_all.values() for value in sublist]
 Thetare_all_values = [value for sublist in Thetare_all.values() for value in sublist]
+Thetaim_all_values = [value for sublist in Theta_all.values() for value in sublist]
+ThetaD_all_values = [value for sublist in ThetaD_all.values() for value in sublist]
 matched_Vim_all = [element for key in impact_ejection_list for element in impact_ejection_list[key][0]]
 # matched_thetaim_all = [element for key in impact_ejection_list for element in impact_ejection_list[key][1]]
 matched_NE_all = [element for key in impact_ejection_list for element in impact_ejection_list[key][2]]
 matched_UE_all = [element for key in impact_ejection_list for element in impact_ejection_list[key][3]]
 matched_thetaE_all = [element for key in impact_ejection_list for element in impact_ejection_list[key][5]]
 #get the global NE, UE from all impacts and matched ejections 
-CORmean_glo,CORstd_glo,CORstderr_glo,Thetare_mean_glo, Thetare_stderr_glo, Uimplot = module.BinUimCOR_equalbinsize(Vim_all_values,exz_all_values,Thetare_all_values, Vim_bin)
+CORmean_glo,CORstd_glo,CORstderr_glo,Ure_mean, Ure_stderr, Thetare_mean_glo, Thetare_stderr_glo, Ure_Uim_mean, Usalim_mean, Uimplot, Uimxplot = module.BinUimCOR_equalbinsize(Vim_all_values,Vre_all_values, Vsal_all_values, exz_all_values,Thetare_all_values,Thetaim_all_values,Vim_bin)
+Usal_mean, Uincxplot = module.BinUincUsal(Vim_all_values, VD_all_values, Vsal_all_values, Vrep_all_values, Thetaim_all_values, ThetaD_all_values, Vimde_bin)
 Pr_glo,Uplot,N_PrUre = module.BinUimUd_equalbinsize(Vim_all_values,VD_all_values,Vimde_bin)
 NEmean_glo, UEmean_glo, UEstd_glo, UEstderr_glo, ThetaEmean_glo, ThetaEstderr_glo, Uplot_NE, N_Einbin = module.get_ejection_ratios_equalbinsize(matched_Vim_all, VD_all_values, matched_NE_all, matched_UE_all, matched_thetaE_all, Vimde_bin)
 Nim = np.array([1257, 695, 203, 32, 9, 4])
@@ -324,6 +340,18 @@ plt.text(0.02, 0.92, '(f)', transform=plt.gca().transAxes, fontsize=16, fontweig
 plt.tight_layout()
 plt.show()
 
+# Usal - Uim*cos(thetaim)
+plt.figure()
+plt.scatter(Uimxplot/constant, Usalim_mean/constant, label='This study', color='#3776ab')
+plt.xlabel(r'$U_\mathrm{im}cos(\theta_\mathrm{im})/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$U_\mathrm{sal}/\sqrt{gd}$ [-]', fontsize=14)
+plt.tight_layout()
+# Usal - Uinc*cos(thetainc)
+plt.figure()
+plt.scatter(Uincxplot/constant, Usal_mean/constant, label='This study', color='#3776ab')
+plt.xlabel(r'$U_\mathrm{inc}cos(\theta_\mathrm{inc})/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$U_\mathrm{sal}/\sqrt{gd}$ [-]', fontsize=14)
+plt.tight_layout()
 
 #sensitivity analysis of dx on global mean NE
 NE_lim = 2.42

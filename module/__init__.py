@@ -29,3 +29,4 @@ from .BinThetaimThetad_equalbinsize import BinThetaimThetad_equalbinsize
 from .get_ejection_ratios_equalbinsize import get_ejection_ratios_equalbinsize
 from .get_ejection_theta_equalbinsize import get_ejection_theta_equalbinsize
 from .match_Uim_thetaim import match_Uim_thetaim
+from .BinUincUsal import BinUincUsal

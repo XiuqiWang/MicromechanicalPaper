@@ -59,10 +59,10 @@ def store_sal_id_data(data, ID_Particle, coe_h, dt, N_inter, D):
         mp = Vp[0, i] * 2650
         
         # Call findSaltationID function
-        Moms_coli, IDmobile_vec, IDvzri_vec, ezi, exzi, Vi_i, Vr_i, dxim_i, theta_i, thetare_i = findSaltationID(e, Vx, Vz, z, thre_e, dt)
+        Moms_coli, IDmobile_vec, IDvzri_vec, IDsal_vec, ezi, exzi, Vi_i, Vr_i, Vsal_i, dxim_i, theta_i, thetare_i = findSaltationID(e, Vx, Vz, z, thre_e, dt)
         
         # Collect the global vectors
-        Par.append([Moms_coli, IDmobile_vec, IDvzri_vec])
+        Par.append([Moms_coli, IDmobile_vec, IDvzri_vec, IDsal_vec])
         VX.append(Vx)
         VZ.append(Vz)
         E.append(e)
@@ -89,7 +89,7 @@ def store_sal_id_data(data, ID_Particle, coe_h, dt, N_inter, D):
                 Mp[idx - 1] += mp #for counting the sum of particles' masses
                 RIM[idx - 1] += 1 / (5 / N_inter)
                 exz_vector_t[idx - 1].append(exzi[j])
-                IM_vector_t[idx - 1].append([Vi_i[j], IDim_i[j], IDre_i[j], xim_i[j], xre_i[j], x_col[j], i, theta_i[j], thetare_i[j], Eim_i[j], Vr_i[j]])
+                IM_vector_t[idx - 1].append([Vi_i[j], IDim_i[j], IDre_i[j], xim_i[j], xre_i[j], x_col[j], i, theta_i[j], thetare_i[j], Eim_i[j], Vr_i[j], Vsal_i[j]])
     
     #mass-weighted avergae values in each output time step
     for i in range(N_inter):
@@ -111,7 +111,8 @@ def findSaltationID(e, Vxi, Vzi, Zi, thre_e, dt):
     exz_vector = []
     IDmobile = []
     IDvzri_vec = []
-    Vi_vec,Vr_vec = [],[]
+    IDsal_vec = []
+    Vi_vec,Vr_vec,Vsal_vec = [],[],[]
     dxim_vec = []
     Thetai_vec,Thetare_vec = [],[]
     
@@ -142,6 +143,8 @@ def findSaltationID(e, Vxi, Vzi, Zi, thre_e, dt):
         if len(IDvzri) > 0:
             Vz_im = Vzi[IDvzri[:, 0]]
             Vz_re,Vx_re = Vzi[IDvzri[:, 1]],Vxi[IDvzri[:, 1]]
+            IDsal = IDvzri[:, 2]
+            Vx_sal = Vxi[IDsal]
             
             #calculate the horizontal travel distance of the impact particle before collision
             dh_im = Zi[IDvzri[:,0]]-12*0.00025 #vertical distance between the impact particle and the bed surface
@@ -200,13 +203,15 @@ def findSaltationID(e, Vxi, Vzi, Zi, thre_e, dt):
             ez_vector.extend(ez)
             exz_vector.extend(exz)
             IDvzri_vec.extend(IDvzri)
+            IDsal_vec.extend(IDsal)
             Vi_vec.extend(Vxzi_imnew) # Vxzi[IDvzri[:, 0]]#impact velocity and angle are corrected at 1.5D height
             Vr_vec.extend(Vxzi_renew)
+            Vsal_vec.extend(Vx_sal)
             dxim_vec.extend(dx_im)
             Thetai_vec.extend(Thetaii)
             Thetare_vec.extend(Thetarei)
     
-    return Moments_col, np.array(IDmobile), np.array(IDvzri_vec), np.array(ez_vector), np.array(exz_vector), np.array(Vi_vec), np.array(Vr_vec), np.array(dxim_vec), np.array(Thetai_vec), np.array(Thetare_vec)
+    return Moments_col, np.array(IDmobile), np.array(IDvzri_vec), np.array(IDsal_vec), np.array(ez_vector), np.array(exz_vector), np.array(Vi_vec), np.array(Vr_vec), np.array(Vsal_vec), np.array(dxim_vec), np.array(Thetai_vec), np.array(Thetare_vec)
 
 # Helper function 2: OutputMobileInterval
 def OutputMobileInterval(e, thre_e):
@@ -234,6 +239,7 @@ def Findez(ID_next, Vzi, Vxzi, Zi, thre_e):
     IDvzr = []
     IDvzi = []
     IDvzri = []
+    IDsal = []
     
     #search for the maximum Vz and minimum Vz to calculate the COR
     for i in range(len(ID_next)-1):
@@ -261,11 +267,12 @@ def Findez(ID_next, Vzi, Vxzi, Zi, thre_e):
           
             IDvzr.extend(ID_range[np.where(local_maxima)[0]+1])
             IDvzi.extend(ID_range[np.where(local_minima)[0]+1])
+            IDsal.append(ID_range[0])
     
     # print('IDvzi:',IDvzi)
     # print('IDvzr:',IDvzr)
     
-    IDvzri = np.array([IDvzi, IDvzr]).T
+    IDvzri = np.array([IDvzi, IDvzr, IDsal]).T
         
     if IDvzri.size > 0:
         IDvzri = IDvzri[Vzi[IDvzri[:, 0]] < 0]#impact velocity should be negative

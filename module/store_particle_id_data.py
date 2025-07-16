@@ -51,7 +51,6 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
         d_h = coe_h * D
         thre_e = g * d_h
         ID_Ei, ID_Di = output_id(e, thre_e, dt)
-        EDindices.append((ID_Ei+1, ID_Di-1))
 
         # Correct Vx when an ejected particle crosses the boundary
         # Index_neg = np.where(Vx < -Lx * 0.25 / dt)[0]
@@ -97,6 +96,20 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
             ThetaDi_radian = np.arctan(np.abs(VDzi/VDxi))
             ThetaDi = np.degrees(ThetaDi_radian)
             
+            reptop_indices = []
+            for start, end in zip(ID_Eafter, ID_Dbefore):
+                Vz_rep = Vz[start:end]
+                crossing_indice = np.where((Vz_rep[:-1] >= 0) & (Vz_rep[1:] < 0))[0]
+                if len(crossing_indice)>0:
+                    reptop_indices.append(start + crossing_indice[-1])
+                elif len(Vz_rep)<3:
+                    reptop_indices.append(end)
+                else:
+                    reptop_indices.append(end-1)
+            
+            IDrepi = reptop_indices
+            Vrepxi = Vx[reptop_indices]
+            
             xEi = x[ID_Ei+1]
             zEi = z[ID_Ei+1]
             IDEi = ID_Ei + 1
@@ -128,9 +141,14 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
                 MD[interval - 1] += 1 / (5 / N_inter)
                 # MoD[interval - 1] += np.sum(mp*VDxzi[j]) / (5 / N_inter) / A
                 MpD[interval - 1] += mp
-                D_vector_t[interval-1].append([VDxzi[j], ThetaDi[j], IDDi[j], xDi[j], i])
+                D_vector_t[interval-1].append([VDxzi[j], ThetaDi[j], IDDi[j], xDi[j], i, Vrepxi[j]])
                 #Mass_tot = [ME_tot, MD_tot]
                 #E, VX, VExVector, VEzVector, Mass_tot
+            
+        else:
+            IDrepi = []
+                
+        EDindices.append((ID_Ei+1, ID_Di-1, np.array(IDrepi)))
     
     for i in range(N_inter):
         if VExz_t[i]:
