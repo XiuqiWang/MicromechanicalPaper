@@ -156,10 +156,10 @@ for i in range (5): #loop over Omega 0-20 %
     matched_EE_Omega[i] = np.concatenate([matched_EE[j] for j in selected_indices]).tolist()
     matched_thetaE_Omega[i] = np.concatenate([matched_thetaE[j] for j in selected_indices]).tolist()
 
-CORmean_Omega,CORstd_Omega,CORstderr_Omega,Uimplot_Omega = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
+CORmean_Omega,N_COR_Omega,Uimplot_Omega = defaultdict(list), defaultdict(list), defaultdict(list)
 Uremean_Omega, Urestderr_Omega, Ure_Uim_Omega, Usal_Omega, Uimxplot_Omega = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
 COR_theta_mean_Omega, COR_theta_std_Omega, Thetaremean_Omega, Thetarestderr_Omega, Thetaimplot_Omega = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
-Usal_mean_Omega, Uincxplot = defaultdict(list), defaultdict(list)
+Usal_mean_Omega, Usal_stderr_Omega, Uincxplot, Uincplot = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
 Pr_Omega,Uplot_Omega, N_PrUre = defaultdict(list), defaultdict(list), defaultdict(list)
 Pr_theta_Omega,Theta_pr_Omega = defaultdict(list), defaultdict(list)
 NE_mean_Omega, UE_mean_Omega, UE_std_Omega, UE_stderr_Omega, Uplot_NE_Omega, N_Einbin = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list),
@@ -167,9 +167,9 @@ ThetaE_mean_Omega, ThetaE_stderr_Omega = defaultdict(list), defaultdict(list)
 NE_theta_mean_Omega, UE_theta_mean_Omega, UE_theta_std_Omega, Thetaplot_NE_Omega = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
 EE_mean_Omega, EE_stderr_Omega = defaultdict(list), defaultdict(list)
 for i in range (5): #loop over Omega 0-20%
-    CORmean_Omega[i],CORstd_Omega[i],CORstderr_Omega[i],Uremean_Omega[i], Urestderr_Omega[i], Thetaremean_Omega[i],Thetarestderr_Omega[i],Ure_Uim_Omega[i],Usal_Omega[i],Uimplot_Omega[i],Uimxplot_Omega[i] = module.BinUimCOR_equalbinsize(Vim_all_Omega[i],Vre_all_Omega[i], Vsal_all_Omega[i], exz_all_Omega[i],Thetare_all_Omega[i],Thetaim_all_Omega[i],Vim_bin)
+    CORmean_Omega[i], N_COR_Omega[i], Thetaremean_Omega[i], Thetarestderr_Omega[i],Uimplot_Omega[i] = module.BinUimCOR_equalbinsize(Vim_all_Omega[i],Vre_all_Omega[i],Thetare_all_Omega[i],Vim_bin)
     # COR_theta_mean_Omega[i], COR_theta_std_Omega[i], Thetaimplot_Omega[i] = module.BinThetaimCOR_equalbinsize(Theta_all_Omega[i], exz_all_Omega[i], Thetaim_bin)
-    Usal_mean_Omega[i], Uincxplot[i] = module.BinUincUsal(Vim_all_Omega[i], VD_all_Omega[i], Vsal_all_Omega[i], Vrep_all_Omega[i], Thetaim_all_Omega[i], ThetaD_all_Omega[i], Vimde_bin)
+    Usal_mean_Omega[i], Usal_stderr_Omega[i], Uincxplot[i], Uincplot[i] = module.BinUincUsal(Vim_all_Omega[i], VD_all_Omega[i], Vsal_all_Omega[i], Vrep_all_Omega[i], Thetaim_all_Omega[i], ThetaD_all_Omega[i], Vimde_bin)
     Pr_Omega[i],Uplot_Omega[i],N_PrUre[i] = module.BinUimUd_equalbinsize(Vim_all_Omega[i],VD_all_Omega[i],Vimde_bin)   
     # Pr_theta_Omega[i],Theta_pr_Omega[i] = module.BinThetaimThetad_equalbinsize(Theta_all_Omega[i],ThetaD_all_Omega[i],Thetaimde_bin)   
     NE_mean_Omega[i], UE_mean_Omega[i], UE_std_Omega[i], UE_stderr_Omega[i], ThetaE_mean_Omega[i], ThetaE_stderr_Omega[i], Uplot_NE_Omega[i], N_Einbin[i]=module.get_ejection_ratios_equalbinsize(matched_Vim_Omega[i], VD_all_Omega[i], matched_NE_Omega[i], matched_UE_Omega[i], matched_thetaE_Omega[i], Vimde_bin)#matched_EE_Omega[i]
@@ -210,7 +210,7 @@ for i in range (5): #loop over Omega 0-20%
 # def power_law(Omega, A, B, n):
 #     return A - B * Omega **n
 # # Fit the power law model to the data
-# Omega_tbfit = np.array(Omega, dtype=float)*0.01
+Omega_tbfit = np.array(Omega, dtype=float)*0.01
 # params, covariance = curve_fit(power_law, Omega_tbfit, NE_mean_glo, p0=[1, 1, 0.5])
 # a, b, n = params
 # print(f'NE={a:.2f} - {b:.2f}*Omega**{n:.2f}')
@@ -225,8 +225,8 @@ for i in range (5): #loop over Omega 0-20%
 # r2_NE = r2_score(NE_mean_glo, NE_fit_resampled)
 # print('r2_NE:',r2_NE)
 
-# def saturating_exp(x, A, B, C):
-#     return A * (1 - np.exp(-B * x)) + C
+def saturating_exp(x, A, B, C):
+    return A * (1 - np.exp(-B * x)) + C
 # # Fit the curve
 # params, _ = curve_fit(saturating_exp, Omega_tbfit, UE_mean_glo/constant, bounds=(0, np.inf))
 # A, B, C = params
@@ -341,6 +341,40 @@ for i in range (5): #loop over Omega 0-20%
 # plt.text(0.03, 0.92, '(b)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
 # plt.tight_layout()
 
+#fitting functions
+def power_fit(U, a, b):
+    return a*U**b
+# # def fit_sin_theta(Uim_over_sqrtgd, A, B):
+# #     return A / (Uim_over_sqrtgd - B)
+# def fit_arcsin(Uim_over_sqrtgd, A, B):
+#     return np.arcsin(A / (Uim_over_sqrtgd + B))
+# def log(Omega, a_A0, b_A0):
+#     return a_A0 * np.log(1 + b_A0 * Omega)
+def log(U, a, b):
+    return a*np.log(b*U + 1)
+
+def exp(U, a, b):
+    return a*(1 - np.exp(-b*U))
+
+#weighted_R2 functions
+def weighted_r2(y_true, y_pred, weights):
+    y_avg = np.average(y_true, weights=weights)
+    ss_res = np.sum(weights * (y_true - y_pred)**2)
+    ss_tot = np.sum(weights * (y_true - y_avg)**2)
+    return 1 - ss_res / ss_tot
+
+def weighted_r2_N(y_true, y_pred, N):
+    # 计算加权平均值
+    w = 1 / np.sqrt(N)
+    weighted_mean = np.sum(w * y_true) / np.sum(w)
+    # 计算加权残差平方和
+    weighted_residual_sum_of_squares = np.sum(w * (y_true - y_pred)**2)
+    # 计算加权总变差
+    weighted_total_sum_of_squares = np.sum(w * (y_true - weighted_mean)**2)
+    # 计算加权R^2
+    r2 = 1 - (weighted_residual_sum_of_squares / weighted_total_sum_of_squares)
+    return r2
+
 # # theta = f(Uim)
 mean_thetaim, stderr_thetaim, Uthetaplot, N_Uim = defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list)
 mean_thetainc, stderr_thetainc, Uthetaincplot, N_Uinc = defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list)
@@ -349,17 +383,6 @@ for i in range(5):
     Vimde_Omega = np.array(Vim_all_Omega[i] + VD_all_Omega[i])
     Thetaimde_Omega = np.array(Thetaim_all_Omega[i] + ThetaD_all_Omega[i])
     mean_thetainc[i], stderr_thetainc[i], Uthetaincplot[i], N_Uinc[i] = module.match_Uim_thetaim(Vimde_Omega, Thetaimde_Omega, Vimde_bin)
-
-# # def fit_sin_theta(Uim_over_sqrtgd, A, B):
-# #     return A / (Uim_over_sqrtgd - B)
-# def fit_arcsin(Uim_over_sqrtgd, A, B):
-#     return np.arcsin(A / (Uim_over_sqrtgd + B))
-
-# def weighted_r2(y_true, y_pred, weights):
-#     y_avg = np.average(y_true, weights=weights)
-#     ss_res = np.sum(weights * (y_true - y_pred)**2)
-#     ss_tot = np.sum(weights * (y_true - y_avg)**2)
-#     return 1 - ss_res / ss_tot
 
 # theta_rad = {key: np.radians(value) for key, value in mean_thetaim.items()}
 # theta_rad_stderr = {key: np.radians(value) for key, value in stderr_thetaim.items()}
@@ -398,12 +421,12 @@ for i in range(5):
 # a_fit_new = np.delete(a_fit, 1)
 # b_fit_new = np.delete(b_fit, 1)
 # #fit a_fit=f(omega)
-# Omega_tbfit = np.array(Omega, dtype=float)*0.01
-# Omega_tbfit_new = np.delete(Omega_tbfit, 1)
+Omega_tbfit = np.array(Omega, dtype=float)*0.01
+Omega_tbfit_new = np.delete(Omega_tbfit, 1)
 
 # params1, _ = curve_fit(power_law, Omega_tbfit_new, a_fit_new, p0=[65, 20, 0.5])
 # # Generate smooth curve for plotting
-# Omega_smooth = np.linspace(min(Omega_tbfit_new), max(Omega_tbfit_new), 100)
+Omega_smooth = np.linspace(min(Omega_tbfit_new), max(Omega_tbfit_new), 100)
 # a_fit_smooth = power_law(Omega_smooth, *params1)
 # A1_opt, B1_opt, n1_opt = params1
 
@@ -476,26 +499,67 @@ for i in range(5):
 # R2_theta = weighted_r2(y_theta_all, y_predtheta_all, weights=weight_theta_glo)
 # print('R2_theta:',R2_theta)
 
-#Usal - Uinc,x
+# # Uinc - thetainc
+# plt.figure(figsize=(6,5))
+# for i in range(5):
+#     plt.errorbar(Uthetaincplot[i]/constant, mean_thetainc[i], yerr=stderr_thetainc[i], 
+#                   fmt='o', capsize=5, label=rf'$\Omega$={Omega[i]}%', color=colors[i])
+# plt.xlabel(r'$U_{inc}/\sqrt{gd}$ [-]', fontsize=14)
+# plt.ylabel(r'$\theta_{inc}$ [-]', fontsize=14)
+# plt.legend(fontsize=12)
+# plt.tight_layout()
+# plt.show()     
+
+#Usal - Uinc
 plt.figure(figsize=(6,5))
 for i in range(5):
-    plt.scatter(Uincxplot[i]/constant, Usal_mean_Omega[i]/constant, label=rf'$\Omega$={Omega[i]}%', color=colors[i])
-plt.xlabel(r'$U_\mathrm{inc}cos(\theta_\mathrm{inc})/\sqrt{gd}$ [-]', fontsize=14)
+    plt.errorbar(Uincplot[i]/constant, Usal_mean_Omega[i]/constant, yerr=Usal_stderr_Omega[i]/constant, 
+                 fmt='o', capsize=5, label=rf'$\Omega$={Omega[i]}%', color=colors[i])
+plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
 plt.ylabel(r'$U_\mathrm{sal}/\sqrt{gd}$ [-]', fontsize=14)
 plt.legend(fontsize=12)
+plt.xlim(left=0)
+plt.ylim(bottom=0)
 plt.tight_layout()
 plt.show()     
 
-# Uinc - thetainc
+Usal_tbfit = list(chain.from_iterable(Usal_mean_Omega.values()))
+Uinc_tbfit = list(chain.from_iterable(Uincplot.values()))
+valid_indices = ~np.isnan(np.array(Usal_tbfit))
+Uinc_tbfit_new = np.array(Uinc_tbfit)[valid_indices]/constant
+Usal_tbfit_new = np.array(Usal_tbfit)[valid_indices]/constant
+Usalstderr_tbfit = list(chain.from_iterable(Usal_stderr_Omega.values()))
+Usalstderr_tbfit_new = np.array(Usalstderr_tbfit)[valid_indices]/constant
+valid_mask = Usalstderr_tbfit_new != 0
+Uinc_tbfit_new = Uinc_tbfit_new[valid_mask]
+Usal_tbfit_new = Usal_tbfit_new[valid_mask]
+Usalstderr_tbfit_new = Usalstderr_tbfit_new[valid_mask]
+params_usal, _ = curve_fit(power_fit, Uinc_tbfit_new, Usal_tbfit_new, p0=[1,1], sigma=Usalstderr_tbfit_new, absolute_sigma=True)
+A_usal, B_usal = params_usal
+print(f'A_usal={A_usal:.4f} B_usal={B_usal:.4f}')
+
+Uinc_fit = np.linspace(0, max(Uinc_tbfit_new), 100) #for the fit
+Usal_fit = power_fit(Uinc_fit, *params_usal)
+
+#calculate R^2
+interpolator = interp1d(Uinc_fit, Usal_fit, kind='linear', fill_value='extrapolate')
+Usal_fit_resampled = interpolator(Usal_tbfit_new)
+# Now compute R²
+r2_usal = weighted_r2(Usal_tbfit_new, Usal_fit_resampled, weights=1/Usalstderr_tbfit_new**2)
+print('r2_usal:',r2_usal)
+
 plt.figure(figsize=(6,5))
 for i in range(5):
-    plt.errorbar(Uthetaincplot[i]/constant, mean_thetainc[i], yerr=stderr_thetainc[i], 
-                  fmt='o', capsize=5, label=rf'$\Omega$={Omega[i]}%', color=colors[i])
-plt.xlabel(r'$U_{inc}/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylabel(r'$\theta_{inc}$ [-]', fontsize=14)
+    plt.errorbar(Uincplot[i]/constant, Usal_mean_Omega[i]/constant, yerr=Usal_stderr_Omega[i]/constant, 
+                 fmt='o', capsize=5, label=rf'$\Omega$={Omega[i]}%', color=colors[i])
+plt.plot(Uinc_fit, Usal_fit, 'k--', label='Power-law fit')
+plt.xlim(left=0)
+plt.ylim(bottom=0)
+plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$U_\mathrm{sal}/\sqrt{gd}$ [-]', fontsize=14)
 plt.legend(fontsize=12)
 plt.tight_layout()
-plt.show()     
+plt.show()
 
 
 # # distribution
@@ -681,76 +745,71 @@ plt.show()
 
 
 # #4 terms with Uim
-# # 主趋势函数（干燥情况）
-# def dry_model(U, a, b):
-#     return a * U**(-b)
+# 主趋势函数（干燥情况）
+def dry_model(U, a, b):
+    return a * U**(-b)
 
-# # 获取干燥条件数据
-# U_dry = np.array(Uimplot_Omega[0])/constant   
-# e_dry = np.array(CORmean_Omega[0])
-# stderr_dry = np.array(CORstderr_Omega[0])
-# # --- Remove NaN values before fitting ---
-# valid_indices = ~np.isnan(e_dry)  # Get boolean mask where theta_all is NOT NaN
-# U_dryclean = U_dry[valid_indices]  # Keep only valid U values
-# e_dryclean = e_dry[valid_indices] # Keep only valid theta values
-# stderr_dryclean = stderr_dry[valid_indices]
+# 获取干燥条件数据
+U_dry = np.array(Uimplot_Omega[0])/constant   
+e_dry = np.array(CORmean_Omega[0])
+# --- Remove NaN values before fitting ---
+valid_indices = ~np.isnan(e_dry)  # Get boolean mask where theta_all is NOT NaN
+U_dryclean = U_dry[valid_indices]  # Keep only valid U values
+e_dryclean = e_dry[valid_indices] # Keep only valid theta values
 
-# # 拟合（使用标准误差作为 sigma）
-# popt_dry, pcov_dry = curve_fit(dry_model, U_dryclean, e_dryclean,sigma=stderr_dryclean, absolute_sigma=True,p0=[10, 1], maxfev=10000)
+# 拟合（使用标准误差作为 sigma）
+popt_dry, pcov_dry = curve_fit(dry_model, U_dryclean, e_dryclean,sigma=1/np.sqrt(N_COR_Omega[0][valid_indices]), absolute_sigma=True,p0=[10, 1], maxfev=10000)
 
-# # 拟合结果
-# a_cordry, b_cordry = popt_dry
-# print(f"Fitted parameters: a_cordry = {a_cordry:.2f}, b_cordry = {b_cordry:.2f}")
+# 拟合结果
+a_cordry, b_cordry = popt_dry
+print(f"Fitted parameters: a_cordry = {a_cordry:.2f}, b_cordry = {b_cordry:.2f}")
 
-# # 绘图
-# U_fitdry = np.linspace(min(U_dryclean), max(U_dryclean), 200)
-# e_fitdry = dry_model(U_fitdry, *popt_dry)
+# 绘图
+U_fitdry = np.linspace(min(U_dryclean), max(U_dryclean), 200)
+e_fitdry = dry_model(U_fitdry, *popt_dry)
 
-# plt.figure(figsize=(6,5))
-# for i in range(5):
-#     plt.errorbar(Uimplot_Omega[i]/constant, CORmean_Omega[i], yerr=CORstderr_Omega[i], fmt='o', capsize=5,color=colors[i], label=f"$\\Omega$={Omega[i]}%")
-# plt.plot(U_fitdry, e_fitdry, '--', color=colors[0])
-# # plt.xlim(0,210)
-# # plt.ylim(0, 1.4)
-# plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
-# plt.ylabel(r'$e$ [-]', fontsize=14) 
-# plt.legend(fontsize=12)
+plt.figure(figsize=(6,5))
+for i in range(5):
+    plt.scatter(Uimplot_Omega[i]/constant, CORmean_Omega[i], s=np.sqrt(N_COR_Omega[i])*5,color=colors[i], label=f"$\\Omega$={Omega[i]}%")
+plt.plot(U_fitdry, e_fitdry, '--', color=colors[0])
+# plt.xlim(0,210)
+# plt.ylim(0, 1.4)
+plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$e$ [-]', fontsize=14) 
+plt.legend(fontsize=12)
 
-# def moist_correction_model(U, A0, mu, sigma):
-#     base = dry_model(U, a_cordry, b_cordry)
-#     correction = A0 * np.exp(-(U - mu)**2 / (2 * sigma**2)) #
-#     return base + correction   
+def moist_correction_model(U, A0, mu, sigma):
+    base = dry_model(U, a_cordry, b_cordry)
+    correction = A0 * np.exp(-(U - mu)**2 / (2 * sigma**2)) #
+    return base + correction   
 
-# A0_fit, mu_fit, sigma_fit = np.zeros(4),np.zeros(4),np.zeros(4)
-# Ue_fit, e_fit = defaultdict(list), defaultdict(list)
-# for i in range(1,5):
-#     # --- Remove NaN values before fitting ---
-#     valid_indices = ~np.isnan(CORmean_Omega[i])  # Get boolean mask where theta_all is NOT NaN
-#     U_clean = Uimplot_Omega[i][valid_indices]/constant       # Keep only valid U values
-#     e_clean = np.array(CORmean_Omega[i])[valid_indices]# Keep only valid theta values
-#     stderr = np.array(CORstderr_Omega[i])[valid_indices]
-#     initial_guess = [0.2, 150, 30] 
-#     popt_full, pcov_full = curve_fit(moist_correction_model, U_clean, e_clean, p0=initial_guess, sigma=stderr, absolute_sigma=True)
-#     A0_fit[i-1], mu_fit[i-1], sigma_fit[i-1] = popt_full 
-#     # Generate fitted curve
-#     Ue_fit[i] = np.linspace(min(U_clean), max(U_clean), 200)
-#     e_fit[i] = moist_correction_model(Ue_fit[i], *popt_full)
-#     e_fit_dis = moist_correction_model(U_clean, *popt_full)
-#     R2_cor = weighted_r2(e_clean, e_fit_dis, weights=1 / (stderr ** 2))
-#     print('R2_cor:', R2_cor)
+A0_fit, mu_fit, sigma_fit = np.zeros(4),np.zeros(4),np.zeros(4)
+Ue_fit, e_fit = defaultdict(list), defaultdict(list)
+for i in range(1,5):
+    # --- Remove NaN values before fitting ---
+    valid_indices = ~np.isnan(CORmean_Omega[i])  # Get boolean mask where theta_all is NOT NaN
+    U_clean = Uimplot_Omega[i][valid_indices]/constant       # Keep only valid U values
+    e_clean = np.array(CORmean_Omega[i])[valid_indices]# Keep only valid theta values
+    initial_guess = [0.2, 150, 30] 
+    weights = 1/np.sqrt(N_COR_Omega[i][valid_indices])
+    popt_full, pcov_full = curve_fit(moist_correction_model, U_clean, e_clean, p0=initial_guess, sigma=weights, absolute_sigma=True)
+    A0_fit[i-1], mu_fit[i-1], sigma_fit[i-1] = popt_full 
+    # Generate fitted curve
+    Ue_fit[i] = np.linspace(min(U_clean), max(U_clean), 200)
+    e_fit[i] = moist_correction_model(Ue_fit[i], *popt_full)
+    e_fit_dis = moist_correction_model(U_clean, *popt_full)
+    R2_cor = weighted_r2_N(e_clean, e_fit_dis, N_COR_Omega[i][valid_indices])
+    print('R2_cor:', R2_cor)
      
-# plt.figure()
-# for i in range(5):
-#     plt.errorbar(Uimplot_Omega[i]/constant, CORmean_Omega[i], yerr=CORstderr_Omega[i], fmt='o', capsize=5,color=colors[i], label=f"$\\Omega$={Omega[i]}%")
-#     plt.plot(Ue_fit[i], e_fit[i], '--', color=colors[i])
-# # plt.xlim(0,210)
-# # plt.ylim(0, 1.4)
-# plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
-# plt.ylabel(r'$e$ [-]', fontsize=14) 
-# plt.legend(fontsize=12)
-
-# def log(Omega, a_A0, b_A0):
-#     return a_A0 * np.log(1 + b_A0 * Omega)
+plt.figure()
+for i in range(5):
+    plt.scatter(Uimplot_Omega[i]/constant, CORmean_Omega[i], s=np.sqrt(N_COR_Omega[i])*5, color=colors[i], label=f"$\\Omega$={Omega[i]}%")
+    plt.plot(Ue_fit[i], e_fit[i], '--', color=colors[i])
+# plt.xlim(0,210)
+# plt.ylim(0, 1.4)
+plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$e$ [-]', fontsize=14) 
+plt.legend(fontsize=12)
 
 # paramsA0, _ = curve_fit(log, Omega_tbfit[1:], A0_fit, p0=[1, 1])
 # # Generate smooth curve for plotting
@@ -792,50 +851,147 @@ plt.show()
 #     valid_indices = ~np.isnan(CORmean_Omega[i])  # Get boolean mask where theta_all is NOT NaN
 #     U_clean = Uimplot_Omega[i][valid_indices]/constant       # Keep only valid U values
 #     e_clean = np.array(CORmean_Omega[i])[valid_indices]# Keep only valid theta values
-#     stderr = np.array(CORstderr_Omega[i])[valid_indices]
 #     e_fit_resampled = interpolator(U_clean)
 #     e_all.append(e_clean)
 #     e_fit_resampled_all.append(e_fit_resampled)
-#     weight_e_all.append(1/(stderr**2))
+#     weight_e_all.append(N_COR_Omega[i][valid_indices])
     
 # y_e_all = np.concatenate(e_all)
 # y_prede_all = np.concatenate(e_fit_resampled_all)
 # weight_e_glo = np.concatenate(weight_e_all)
 # # Now compute R²
-# R2_e = weighted_r2(y_e_all, y_prede_all, weights=weight_e_glo)
+# R2_e = weighted_r2_N(y_e_all, y_prede_all, weight_e_glo)
 # print('R2_e:',R2_e)
 
-## Ure - Uim
-plt.figure()
-for i in range(5):
-    plt.errorbar(Uimplot_Omega[i]/constant, Uremean_Omega[i]/constant, yerr=Urestderr_Omega[i]/constant, fmt='o', capsize=5,color=colors[i], label=f"$\\Omega$={Omega[i]}%")
-    # plt.plot(Ue_fit[i], e_fit[i], '--', color=colors[i])
-# plt.xlim(0,210)
-# plt.ylim(0, 1.4)
-plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylabel(r'$U_{re}/\sqrt{gd}$ [-]', fontsize=14) 
-plt.legend(fontsize=12)
+# plt.figure()
+# for i in range(5):
+#     plt.scatter(Uimplot_Omega[i]/constant, CORmean_Omega[i], s=np.sqrt(N_COR_Omega[i])*5, color=colors[i], label=f"$\\Omega$={Omega[i]}%")
+#     plt.plot(Ue_fit_new, e_fit_new[i], '--', color=colors[i])
+# # plt.xlim(0,210)
+# # plt.ylim(0, 1.4)
+# plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
+# plt.ylabel(r'$e$ [-]', fontsize=14) 
+# plt.legend(fontsize=12)
 
-plt.figure(figsize=(12,5))
-plt.subplot(1,2,1)
+## Ure - Uim
+plt.figure(figsize=(6,5.5))
 for i in range(5):
-    plt.errorbar(Uimplot_Omega[i]/constant, CORmean_Omega[i], yerr=CORstderr_Omega[i], fmt='o', capsize=5,color=colors[i], label=f"$\\Omega$={Omega[i]}%")
-plt.xlim(0,210)
-plt.ylim(0, 1.4)
-plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylabel(r'$e$ [-]', fontsize=14) 
-plt.legend(loc='upper right', fontsize=12)
-plt.subplot(1,2,2)
-for i in range(5):
-    plt.plot(Uimplot_Omega[i]/constant, Ure_Uim_Omega[i], 'o', color=colors[i], label=f"$\\Omega$={Omega[i]}%")
-    # plt.plot(Ue_fit[i], e_fit[i], '--', color=colors[i])
+    plt.scatter(Uimplot_Omega[i]/constant,CORmean_Omega[i], s=np.sqrt(N_COR_Omega[i])*5, color=colors[i], label=f"$\\Omega$={Omega[i]}%")
 plt.xlim(left=0)
-plt.ylim(0, 1.4)
+plt.ylim(0,1)
+plt.legend(fontsize=12)
 plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylabel(r'$\bar{U}_{re}/\bar{U}_{im}$ [-]', fontsize=14) 
+plt.ylabel(r'$\bar{e}$ [-]', fontsize=14) 
 plt.tight_layout()
 
+def GaussianBell(U, a, b, A0, mu, sigma):
+    e = a*U**(-b) + A0 * np.exp(-(U - mu)**2 / (2 * sigma**2)) #
+    return e
 
+def MonotonicSaturation(Omega, c):
+    return 1 - np.exp(-c * Omega)
+
+UCOR_fit, COR_fit = defaultdict(list),defaultdict(list)
+a_COR, b_COR, A0_COR, mu_COR, sigma_COR = np.zeros(5), np.zeros(5), np.zeros(5), np.zeros(5), np.zeros(5)
+for i in range(5):
+    # --- Remove NaN values before fitting ---
+    valid_indices = ~np.isnan(CORmean_Omega[i])  # Get boolean mask where theta_all is NOT NaN
+    U_clean = Uimplot_Omega[i][valid_indices]/constant       # Keep only valid U values
+    COR_clean = CORmean_Omega[i][valid_indices] # Keep only valid COR values
+    weights = 1/np.sqrt(N_COR_Omega[i][valid_indices])
+    popt, _ = curve_fit(GaussianBell, U_clean, COR_clean, p0=[3,0.6,0.2,150,30], sigma=weights, absolute_sigma=True)
+    a_COR[i], b_COR[i], A0_COR[i], mu_COR[i], sigma_COR[i] = popt 
+    # Generate fitted curve
+    UCOR_fit[i] = np.linspace(min(U_clean), max(U_clean), 200)
+    COR_fit[i] = GaussianBell(UCOR_fit[i], *popt)
+    COR_fit_dis = GaussianBell(U_clean, *popt)
+    R2 = weighted_r2_N(COR_clean, COR_fit_dis, N_COR_Omega[i][valid_indices])
+    print('R2_NE:', R2)
+
+plt.figure(figsize=(6,5.5))
+for i in range(5):
+    plt.scatter(Uimplot_Omega[i]/constant,CORmean_Omega[i], s=np.sqrt(N_COR_Omega[i])*5, color=colors[i], label=f"$\\Omega$={Omega[i]}%")
+    plt.plot(UCOR_fit[i], COR_fit[i], '--', color=colors[i])
+plt.xlim(left=0)
+plt.ylim(0,1)
+plt.legend(fontsize=12)
+plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$\bar{e}$ [-]', fontsize=14) 
+plt.tight_layout()
+
+plt.figure()
+plt.plot(Omega, a_COR, 'o')
+plt.xlabel('omega')
+plt.ylabel('a_COR')
+a = np.mean(a_COR)
+
+plt.figure()
+plt.plot(Omega, b_COR, 'o')
+b = np.mean(b_COR)
+
+Omega_tbfit_COR = np.delete(Omega_tbfit,2)
+paramsA0, _ = curve_fit(log, Omega_tbfit_COR, np.delete(A0_COR,2), p0=[1, 1])
+# Generate smooth curve for plotting
+A0_fit_smooth = log(Omega_smooth, *paramsA0)
+a_A0_opt, b_A0_opt = paramsA0
+
+plt.figure()
+plt.plot(Omega_tbfit, A0_COR, 'o', label= 'Original data')
+plt.plot(Omega_smooth, A0_fit_smooth, '--', label='Power-law fit')
+plt.xlabel('omega')
+plt.ylabel('A0_COR')
+
+A0 = a_A0_opt * np.log(1 + b_A0_opt*Omega_tbfit)
+print(rf"$A0$ = {a_A0_opt:.2f} * log(1 + {b_A0_opt:.2f}*Omega)")
+    
+plt.figure()
+plt.plot(Omega, mu_COR, 'o')
+mu = np.mean(mu_COR)
+
+plt.figure()
+plt.plot(Omega, sigma_COR, 'o')
+sigma = np.mean(sigma_COR)
+
+# 展示拟合结果
+# Combine all data from the 5 moisture levels
+Ue_fit_new = np.linspace(min(Uimplot_Omega[0]/constant), max(Uimplot_Omega[0]/constant), 100)
+e_fit_new = defaultdict()
+# Loop over each element in alpha and multiply with U_fit_new
+for i in range(5):
+    e_fit_new[i] = GaussianBell(Ue_fit_new, a_COR[0], b_COR[0], A0[i], mu, sigma)
+
+#calculate R^2
+e_all, e_fit_resampled_all, weight_e_all = [],[],[]
+for i in range(5):
+    # Create interpolator from 100-point fit
+    interpolator = interp1d(Ue_fit_new, e_fit_new[i], kind='linear', fill_value='extrapolate')
+    # Evaluate fit at the same x-values as Uthetaplot
+    # --- Remove NaN values before fitting ---
+    valid_indices = ~np.isnan(CORmean_Omega[i])  # Get boolean mask where theta_all is NOT NaN
+    U_clean = Uimplot_Omega[i][valid_indices]/constant       # Keep only valid U values
+    e_clean = np.array(CORmean_Omega[i])[valid_indices]# Keep only valid theta values
+    e_fit_resampled = interpolator(U_clean)
+    e_all.append(e_clean)
+    e_fit_resampled_all.append(e_fit_resampled)
+    weight_e_all.append(N_COR_Omega[i][valid_indices])
+    
+y_e_all = np.concatenate(e_all)
+y_prede_all = np.concatenate(e_fit_resampled_all)
+weight_e_glo = np.concatenate(weight_e_all)
+# Now compute R²
+R2_e = weighted_r2_N(y_e_all, y_prede_all, weight_e_glo)
+print('R2_e:',R2_e)
+
+plt.figure(figsize=(6,5.5))
+for i in range(5):
+    plt.scatter(Uimplot_Omega[i]/constant,CORmean_Omega[i], s=np.sqrt(N_COR_Omega[i])*5, color=colors[i], label=f"$\\Omega$={Omega[i]}%")
+    plt.plot(Ue_fit_new, e_fit_new[i], '--', color=colors[i])
+plt.xlim(left=0)
+plt.ylim(0,1)
+plt.legend(fontsize=12)
+plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$\bar{e}$ [-]', fontsize=14) 
+plt.tight_layout()
 
 # #fit theta_re
 # def arcsinlinear(U, a, b):
@@ -856,7 +1012,7 @@ plt.tight_layout()
 #     thetare_fit[i] = arcsinlinear(Uthetare_fit[i], *popt)
 #     thetare_fit_dis = arcsinlinear(U_clean, *popt)
 #     R2 = weighted_r2(thetare_clean, thetare_fit_dis, weights=1/(stderr**2))
-#     print('R2_NE:', R2)
+#     print('R2_thetare:', R2)
 
 # plt.figure()
 # for i in range(5):
@@ -939,22 +1095,6 @@ plt.tight_layout()
 # def gompertz(x, L, a, b):
 #     return L * np.exp(-a*np.exp(-b*x))
 
-# def weighted_r2_N(y_true, y_pred, N):
-#     # 计算加权平均值
-#     w = 1 / np.sqrt(N)
-#     weighted_mean = np.sum(w * y_true) / np.sum(w)
-
-#     # 计算加权残差平方和
-#     weighted_residual_sum_of_squares = np.sum(w * (y_true - y_pred)**2)
-
-#     # 计算加权总变差
-#     weighted_total_sum_of_squares = np.sum(w * (y_true - weighted_mean)**2)
-
-#     # 计算加权R^2
-#     r2 = 1 - (weighted_residual_sum_of_squares / weighted_total_sum_of_squares)
-
-#     return r2
-
 # Pr_tbfit = list(chain.from_iterable(Pr_Omega.values()))
 # Upr_tbfit = list(chain.from_iterable(Uplot_Omega.values()))
 # valid_indices = ~np.isnan(np.array(Pr_tbfit))
@@ -999,12 +1139,6 @@ plt.tight_layout()
 # # Ejection
 # def linear(U, a):
 #     return a*U
-
-# def log(U, a, b):
-#     return a*np.log(b*U + 1)
-
-# def exp(U, a, b):
-#     return a*(1 - np.exp(-b*U))
 
 # U_NEfit, NE_fit = defaultdict(list),defaultdict(list)
 # a_NE = np.zeros(5)
@@ -1089,9 +1223,6 @@ plt.tight_layout()
 
 
 # #UE - Uinc
-# def power_fit(U, a, b):
-#     return a*U**b
-    
 # U_UEfit, UE_fit = defaultdict(list), defaultdict(list)
 # a_UE, b_UE = np.zeros(5), np.zeros(5)
 # for i in range(5):
