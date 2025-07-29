@@ -209,9 +209,9 @@ matched_NE_all = [element for key in impact_ejection_list for element in impact_
 matched_UE_all = [element for key in impact_ejection_list for element in impact_ejection_list[key][3]]
 matched_thetaE_all = [element for key in impact_ejection_list for element in impact_ejection_list[key][5]]
 #get the global NE, UE from all impacts and matched ejections 
-CORmean_glo,CORstd_glo,CORstderr_glo,Ure_mean, Ure_stderr, Thetare_mean_glo, Thetare_stderr_glo, Ure_Uim_mean, Usalim_mean, Uimplot, Uimxplot = module.BinUimCOR_equalbinsize(Vim_all_values,Vre_all_values, Vsal_all_values, exz_all_values,Thetare_all_values,Thetaim_all_values,Vim_bin)
-Usal_mean, Uincxplot = module.BinUincUsal(Vim_all_values, VD_all_values, Vsal_all_values, Vrep_all_values, Thetaim_all_values, ThetaD_all_values, Vimde_bin)
-Pr_glo,Uplot,N_PrUre = module.BinUimUd_equalbinsize(Vim_all_values,VD_all_values,Vimde_bin)
+CORmean_glo, N_COR, Thetare_mean_glo, Thetare_stderr_glo, Uimplot = module.BinUimCOR_equalbinsize(Vim_all_values,Vre_all_values,Thetare_all_values,Vim_bin)
+# Usal_mean, Uincxplot = module.BinUincUsal(Vim_all_values, VD_all_values, Vsal_all_values, Vrep_all_values, Thetaim_all_values, ThetaD_all_values, Vimde_bin)
+Pr_glo,Uplot,N_PrUre, Uiminbin, UDinbin = module.BinUimUd_equalbinsize(Vim_all_values,VD_all_values,Vimde_bin)
 NEmean_glo, UEmean_glo, UEstd_glo, UEstderr_glo, ThetaEmean_glo, ThetaEstderr_glo, Uplot_NE, N_Einbin = module.get_ejection_ratios_equalbinsize(matched_Vim_all, VD_all_values, matched_NE_all, matched_UE_all, matched_thetaE_all, Vimde_bin)
 Nim = np.array([1257, 695, 203, 32, 9, 4])
 
@@ -268,14 +268,14 @@ NE_Selmani = [0.5, 1, 3, 5, 10]
 plt.close("all")
 plt.figure(figsize=(12,13.5))
 plt.subplot(3,2,1)
-line1 = plt.errorbar(Uimplot/constant, CORmean_glo, yerr=CORstd_glo, fmt='o', capsize=5, label='This study', color='#3776ab')
+line1 = plt.scatter(Uimplot/constant, CORmean_glo, s=np.sqrt(N_COR)*5, label='This study', color='#3776ab')
 line2 = plt.errorbar(Unsexp, CORexp_mean, yerr=CORexp_std, fmt='x', capsize=5, label='Jiang et al. (2024)', color='k')
 line3 = plt.plot(UIM_UE_prin, COR_emp, 'k-', label='Jiang et al. (2024)')
 plt.xlim(0,190)
 plt.ylim(-0.05,2.25)
 plt.xlabel(r'$U_\mathrm{im}/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylabel(r'$e$ [-]', fontsize=14)
-plt.legend([line2[0],line3[0], line1[0]],['Jiang et al. (2024)','Jiang et al. (2024)', 'This study'], fontsize=12)
+plt.ylabel(r'$\bar{e}$ [-]', fontsize=14)
+plt.legend([line2[0],line3[0], line1],['Jiang et al. (2024)','Jiang et al. (2024)', 'This study'], fontsize=12)
 plt.text(0.02, 0.92, '(a)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
 plt.subplot(3,2,2)
 line1 = plt.errorbar(Uimplot/constant, Thetare_mean_glo, yerr=Thetare_stderr_glo*np.sqrt(Nim), fmt='o', capsize=5, label='This study', color='#3776ab')
@@ -339,19 +339,6 @@ plt.ylabel(r'$\theta_\mathrm{E}$ [$^\circ$]', fontsize=14)
 plt.text(0.02, 0.92, '(f)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
 plt.tight_layout()
 plt.show()
-
-# Usal - Uim*cos(thetaim)
-plt.figure()
-plt.scatter(Uimxplot/constant, Usalim_mean/constant, label='This study', color='#3776ab')
-plt.xlabel(r'$U_\mathrm{im}cos(\theta_\mathrm{im})/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylabel(r'$U_\mathrm{sal}/\sqrt{gd}$ [-]', fontsize=14)
-plt.tight_layout()
-# Usal - Uinc*cos(thetainc)
-plt.figure()
-plt.scatter(Uincxplot/constant, Usal_mean/constant, label='This study', color='#3776ab')
-plt.xlabel(r'$U_\mathrm{inc}cos(\theta_\mathrm{inc})/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylabel(r'$U_\mathrm{sal}/\sqrt{gd}$ [-]', fontsize=14)
-plt.tight_layout()
 
 #sensitivity analysis of dx on global mean NE
 NE_lim = 2.42
