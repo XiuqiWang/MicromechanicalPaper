@@ -206,7 +206,7 @@ def findSaltationID(e, Vxi, Vzi, Zi, thre_e, dt):
             IDsal_vec.extend(IDsal)
             Vi_vec.extend(Vxzi_imnew) # Vxzi[IDvzri[:, 0]]#impact velocity and angle are corrected at 1.5D height
             Vr_vec.extend(Vxzi_renew)
-            Vsal_vec.extend(Vx_sal)
+            Vsal_vec.extend(abs(Vx_sal))
             dxim_vec.extend(dx_im)
             Thetai_vec.extend(Thetaii)
             Thetare_vec.extend(Thetarei)

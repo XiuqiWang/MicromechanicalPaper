@@ -141,7 +141,7 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
                 MD[interval - 1] += 1 / (5 / N_inter)
                 # MoD[interval - 1] += np.sum(mp*VDxzi[j]) / (5 / N_inter) / A
                 MpD[interval - 1] += mp
-                D_vector_t[interval-1].append([VDxzi[j], ThetaDi[j], IDDi[j], xDi[j], i, Vrepxi[j]])
+                D_vector_t[interval-1].append([VDxzi[j], ThetaDi[j], IDDi[j], xDi[j], i, abs(Vrepxi[j])])
                 #Mass_tot = [ME_tot, MD_tot]
                 #E, VX, VExVector, VEzVector, Mass_tot
             
