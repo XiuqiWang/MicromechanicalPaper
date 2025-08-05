@@ -13,10 +13,8 @@ def BinUimCOR_equalbinsize(velocities_im,velocities_re,thetares,vel_bins):
     velocities_im = np.array(velocities_im)[sorted_indices]
     Ures = np.array(velocities_re)[sorted_indices]
     thetares = np.array(thetares)[sorted_indices]
-    # cors = np.array(cors)[sorted_indices]
-    # Usals = np.array(Vsals)[sorted_indices]
-    # thetaims = np.array(thetaims)[sorted_indices]
-    
+    Ures_x = Ures*np.cos(np.deg2rad(thetares))
+    Ures_z = Ures*np.sin(np.deg2rad(thetares))
     
     # Allocate CORs into velocity ranges
     cor_num = []
@@ -24,7 +22,7 @@ def BinUimCOR_equalbinsize(velocities_im,velocities_re,thetares,vel_bins):
     # cor_stds = []
     # cor_stderrs = []
     Ure_mean, Ure_stderr = [],[]
-    thetare_mean, thetare_stderr = [],[]
+    thetare_mean = []
     # Usal_mean,Uimx_mean = [],[]
     for i in range(len(vel_bins)-1):
         # Find indices of velocities within the current range
@@ -32,15 +30,15 @@ def BinUimCOR_equalbinsize(velocities_im,velocities_re,thetares,vel_bins):
         if np.any(indices):  # Check if there are elements in this range
             Uim_in_bin = velocities_im[indices]
             Ure_in_bin = Ures[indices]
-            thetare_in_bin = thetares[indices]
-            # cor_in_bin = cors[indices]
-            # Usal_in_bin = Usals[indices]
-            # thetaim_in_bin = thetaims[indices]
+            # thetare_in_bin = thetares[indices]
+            Urex_in_bin = Ures_x[indices]
+            Urez_in_bin = Ures_z[indices]
             cor_num.append(len(Uim_in_bin))
             Ure_mean.append(np.mean(Ure_in_bin))
             Ure_stderr.append(np.std(Ure_in_bin)/np.sqrt(len(Ure_in_bin)))
-            thetare_mean.append(np.mean(thetare_in_bin))
-            thetare_stderr.append(np.std(thetare_in_bin)/np.sqrt(len(thetare_in_bin)))
+            thetare = np.arctan(np.mean(Urez_in_bin)/np.mean(Urex_in_bin))
+            thetare_mean.append(np.rad2deg(thetare))
+            # thetare_stderr.append(np.std(thetare_in_bin)/np.sqrt(len(thetare_in_bin)))
             cor_means.append(np.mean(Ure_in_bin)/np.mean(Uim_in_bin))
             # Usal_mean.append(np.mean(Usal_in_bin))
             # Uimx_mean.append(np.mean(Uim_in_bin*np.cos(thetaim_in_bin/180*np.pi)))
@@ -55,11 +53,11 @@ def BinUimCOR_equalbinsize(velocities_im,velocities_re,thetares,vel_bins):
             Ure_mean.append(np.nan)
             Ure_stderr.append(np.nan)
             thetare_mean.append(np.nan)
-            thetare_stderr.append(np.nan)
+            # thetare_stderr.append(np.nan)
             # Usal_mean.append(np.nan)
             # Uimx_mean.append(np.nan)
     
     Uplot = (vel_bins[:-1] + vel_bins[1:]) / 2 
     print('Nim:', cor_num)
     
-    return np.array(cor_means),np.array(cor_num),np.array(thetare_mean),np.array(thetare_stderr),Uplot
+    return np.array(cor_means),np.array(cor_num),np.array(thetare_mean),Uplot

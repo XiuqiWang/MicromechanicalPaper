@@ -29,7 +29,7 @@ def get_ejection_ratios_equalbinsize(matched_Vim_all, VD_all, matched_NE_all, ma
         number = []
         impact_num, deposition_num = [],[]
         EE_mean = []
-        thetaEmean, thetaEstd = [],[]
+        thetaEmean = []
         for i in range(len(velimde_bins)-1):
             # Find the indices of the velocities within the current bin range
             bin_mask = (impact_velocities >= velimde_bins[i]) & (impact_velocities < velimde_bins[i + 1])
@@ -46,9 +46,11 @@ def get_ejection_ratios_equalbinsize(matched_Vim_all, VD_all, matched_NE_all, ma
                 # flattened_EE = list(itertools.chain.from_iterable(ejection_energy[bin_mask]))
                 # EE_mean.append(np.mean(flattened_EE)/(np.sum(bin_mask) + np.sum(bin_mask_de)))
                 number.append(np.size(flattened_elements))
-                flatened_thetaE = list(itertools.chain.from_iterable(ejection_angles[bin_mask]))
-                thetaEmean.append(np.mean(flatened_thetaE))
-                thetaEstd.append(np.std(flatened_thetaE))
+                flattend_thetaE = list(itertools.chain.from_iterable(ejection_angles[bin_mask]))
+                UEx = flattened_elements*np.cos(np.deg2rad(flattend_thetaE))
+                UEz = flattened_elements*np.sin(np.deg2rad(flattend_thetaE))
+                thetaE = np.arctan(np.mean(UEz)/np.mean(UEx))
+                thetaEmean.append(np.mean(np.rad2deg(thetaE)))
             else:
                 ejection_ratio_mean = np.NAN
                 impact_num.append(0)
@@ -58,7 +60,6 @@ def get_ejection_ratios_equalbinsize(matched_Vim_all, VD_all, matched_NE_all, ma
                 # EE_mean.append(np.NAN)
                 number.append(0)
                 thetaEmean.append(np.nan)
-                thetaEstd.append(np.nan)
                 
             ejection_ratios.append(ejection_ratio_mean)#, impact_num])#, ejection_ratio_std])
         
@@ -69,8 +70,10 @@ def get_ejection_ratios_equalbinsize(matched_Vim_all, VD_all, matched_NE_all, ma
         print('number of incidence:', [a+b for a,b in zip(impact_num,deposition_num)])
         print('number of ejections:', number)
         UEstd_error = [a/np.sqrt(b) for a,b in zip(VE_std, number)]
+        UEstd_error = np.array(UEstd_error, dtype=float)
+        UEstd_error[UEstd_error == 0] = np.nan
         # print('standard error', std_error)
-        ThetaEstd_error = [a/np.sqrt(b) for a,b in zip(thetaEstd, number)]
+        # ThetaEstd_error = [a/np.sqrt(b) for a,b in zip(thetaEstd, number)]
         
         
-        return ejection_ratios, VE_mean, VE_std, UEstd_error, thetaEmean, ThetaEstd_error,Uplot, number
+        return ejection_ratios, VE_mean, VE_std, UEstd_error, thetaEmean, Uplot, number

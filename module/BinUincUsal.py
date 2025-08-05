@@ -26,12 +26,12 @@ def BinUincUsal(velocities_im,velocities_dep,Vsals,Vreps,thetaims,thetaDs,velsal
         idx = np.where(indices)[0]
         idx = np.array(idx)
         # print('indices', indices)
-        print('length idx', len(idx))
+        # print('length idx', len(idx))
         if np.any(idx):  # Check if there are elements in this range
             # Uinc_in_bin = velocities_inc[indices]
             indices_in_im = idx[idx < len(velocities_im)]
             # print('indices_in_im:', indices_in_im)
-            print('length indices_in_im', len(indices_in_im))
+            # print('length indices_in_im', len(indices_in_im))
             Uim_in_bin = velocities_im[indices_in_im]
             # thetaim_in_bin = thetaims[indices_in_im]
             indices_in_D = idx[idx >= len(velocities_im)] - len(velocities_im)
