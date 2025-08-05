@@ -9,12 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from collections import defaultdict
 import h5py
-from module import store_sal_id_data
-from module import store_particle_id_data
-from module import BinUimCOR
-from module import BinUimUd
-from module import match_ejection_to_impact
-from module import get_ejection_ratios
+import module
 
 # Load the data from the mat data
 # File paths for the .mat files
@@ -67,7 +62,7 @@ labels = ['500 steps','5000 steps','50000 steps']
 EDindices = defaultdict(list)
 ME,MD,MoE,MoD = defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list)
 VExz_mean_t, VDxz_mean_t= defaultdict(list), defaultdict(list)
-E_vector_t,VD_vector_t= defaultdict(list),defaultdict(list)
+E_vector_t,D_vector_t= defaultdict(list),defaultdict(list)
 
 exz_mean_t,ez_mean_t = defaultdict(list),defaultdict(list)
 # ez_t = defaultdict(list)
@@ -90,52 +85,70 @@ for i in range(3):
     ParticleID_int = ParticleID.astype(int)
     #cal erosion and deposition properties for each Omega
     #EDindices, E, VX, VExVector, VEzVector, VEx, VEz, ME, MD
-    EDindices[i], ME[i], MD[i], VExz_mean_t[i], VDxz_mean_t[i], VD_vector_t[i], E_vector_t[i]=store_particle_id_data(data,ParticleID_int,coe_h,dt[i],N_inter,D)
+    EDindices[i], ME[i], MD[i], VExz_mean_t[i], VDxz_mean_t[i], D_vector_t[i], E_vector_t[i]=module.store_particle_id_data(data,ParticleID_int,coe_h,dt[i],N_inter,D)
     ParticleID_sal=np.linspace(num_p-310,num_p-1,310)
     ParticleID_salint = ParticleID_sal.astype(int)
     X[i] = np.array([[time_step['Position'][i][0] for i in ParticleID_salint] for time_step in data])
     Z[i] = np.array([[time_step['Position'][i][2] for i in ParticleID_salint] for time_step in data])
-    Par[i], VZ[i], exz_mean_t[i], ez_mean_t[i], VIM_mean_t[i], ThetaIM_mean_t[i], RIM[i], exz_vector_t[i], IM_vector_t[i], Thetaim_vector_t[i]=store_sal_id_data(data,ParticleID_salint, coe_sal_h, dt[i], N_inter, D)
+    Par[i], VZ[i], exz_mean_t[i], ez_mean_t[i], VIM_mean_t[i], ThetaIM_mean_t[i], RIM[i], exz_vector_t[i], IM_vector_t[i]=module.store_sal_id_data(data,ParticleID_salint, coe_sal_h, dt[i], N_inter, D)
 
 
-exz_all,Vim_all,VD_all,Theta_all,impact_list,ejection_list = defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list)
+#get the quantities from the steady state
+exz_all,Vim_all,VD_all,ThetaD_all,Theta_all,Thetare_all,impact_list,impact_deposition_list,ejection_list = defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list)
+Vre_all, Vsal_all = defaultdict(list), defaultdict(list)
+Vrep_all = defaultdict(list)
+ThetaE_all, UE_all = defaultdict(list), defaultdict(list)
+N_range = np.full(3, 0).astype(int)
 for i in range (3):
-    N_range = int((3.5 / 5) * N_inter)
-    exz_all[i] = [value for sublist in exz_vector_t[i][N_range:] for value in sublist]
-    Vim_all[i] = [value[0] for sublist in IM_vector_t[i][N_range:] for value in sublist]
-    VD_all[i] = [value for sublist in VD_vector_t[i][N_range:] for value in sublist]
-    Theta_all[i] = [value for sublist in Thetaim_vector_t[i][N_range:] for value in sublist]
-    IDim = [value[1] for sublist in IM_vector_t[i][N_range:] for value in sublist]
-    IDre = [value[2] for sublist in IM_vector_t[i][N_range:] for value in sublist]
-    xim = [value[3] for sublist in IM_vector_t[i][N_range:] for value in sublist]
-    xre = [value[4] for sublist in IM_vector_t[i][N_range:] for value in sublist]
-    xcol = [value[5] for sublist in IM_vector_t[i][N_range:] for value in sublist]
-    Pim = [value[6] for sublist in IM_vector_t[i][N_range:] for value in sublist]
-    impact_list[i] = [IDim, IDre, xim, xre, Vim_all[i], xcol, Pim]
-    vE = [value[0] for sublist in E_vector_t[i][N_range:] for value in sublist]
-    IDE = [value[1] for sublist in E_vector_t[i][N_range:] for value in sublist]
-    xE = [value[2] for sublist in E_vector_t[i][N_range:] for value in sublist]
-    PE = [value[3] for sublist in E_vector_t[i][N_range:] for value in sublist]
-    ejection_list[i] = [IDE, xE, vE, PE]
-    print('Ne/Nim',len(IDE)/len(IDim))
+    exz_all[i] = [value for sublist in exz_vector_t[i][N_range[i]:] for value in sublist]
+    Vim_all[i] = [value[0] for sublist in IM_vector_t[i][N_range[i]:] for value in sublist]
+    Vre_all[i] = [value[10] for sublist in IM_vector_t[i][N_range[i]:] for value in sublist]
+    Vsal_all[i] = [value[11] for sublist in IM_vector_t[i][N_range[i]:] for value in sublist]
+    VD_all[i] = [value[0] for sublist in D_vector_t[i][N_range[i]:] for value in sublist]
+    Vrep_all[i] = [value[-1] for sublist in D_vector_t[i][N_range[i]:] for value in sublist]
+    ThetaD_all[i] = [value[1] for sublist in D_vector_t[i][N_range[i]:] for value in sublist]
+    Theta_all[i] = [value[7] for sublist in IM_vector_t[i][N_range[i]:] for value in sublist]
+    Thetare_all[i] = [value[8] for sublist in IM_vector_t[i][N_range[i]:] for value in sublist]
+    IDim = [value[1] for sublist in IM_vector_t[i][N_range[i]:] for value in sublist]
+    IDre = [value[2] for sublist in IM_vector_t[i][N_range[i]:] for value in sublist]
+    xim = [value[3] for sublist in IM_vector_t[i][N_range[i]:] for value in sublist]
+    xre = [value[4] for sublist in IM_vector_t[i][N_range[i]:] for value in sublist]
+    xcol = [value[5] for sublist in IM_vector_t[i][N_range[i]:] for value in sublist]
+    Pim = [value[6] for sublist in IM_vector_t[i][N_range[i]:] for value in sublist]
+    impact_list[i] = [IDim, IDre, xim, xre, Vim_all[i], xcol, Pim, Theta_all[i]]
+    IDE = [value[1] for sublist in E_vector_t[i][N_range[i]:] for value in sublist]
+    xE = [value[2] for sublist in E_vector_t[i][N_range[i]:] for value in sublist]
+    PE = [value[3] for sublist in E_vector_t[i][N_range[i]:] for value in sublist]
+    EE = [value[5] for sublist in E_vector_t[i][N_range[i]:] for value in sublist] #kinetic energy
+    ThetaE_all[i] = [value[6] for sublist in E_vector_t[i][N_range[i]:] for value in sublist]
+    UE_all[i] = [value[0] for sublist in E_vector_t[i][N_range[i]:] for value in sublist]
+    ejection_list[i] = [IDE, xE, UE_all[i], PE, EE, ThetaE_all[i]]
+    #print('Ne/Nim',len(IDE)/len(IDim))
 
+
+Vim_all_values = [value for sublist in Vim_all.values() for value in sublist]
+Vim_bin = np.linspace(0, max(Vim_all_values)+1, 10)
+VD_all_values = [value for sublist in VD_all.values() for value in sublist]
+Vde_bin = np.linspace(0, max(VD_all_values)+1, 15)
 Vimde_all_values = [value for sublist in Vim_all.values() for value in sublist] + [value for sublist in VD_all.values() for value in sublist]
-Vimde_bin = np.linspace(min(Vimde_all_values), max(Vimde_all_values), 8)    
-CORmean,CORstd,Uimplot=defaultdict(list),defaultdict(list),defaultdict(list)
-Pr,Uplot=defaultdict(list),defaultdict(list)
-impact_ejection_list = defaultdict(list)
-matched_Vim, matched_NE, matched_UE = defaultdict(list),defaultdict(list),defaultdict(list)
-NE_mean,UE_mean,UE_std, Uplot_NE=defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list)
+Vimde_bin = np.linspace(0, max(Vimde_all_values)+1, 10)
+matched_Vim, matched_thetaim, matched_NE, matched_UE, matched_EE, matched_thetaE = defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list)
 for i in range (3):
-    impact_ejection_list=match_ejection_to_impact(impact_list[i], ejection_list[i], dt[i])
+    impact_ejection_list=module.match_ejection_to_impact(impact_list[i], ejection_list[i], dt)
+    # impact_ejection_list=module.match_ejection_to_impactanddeposition(impact_deposition_list[i], ejection_list[i])
     matched_Vim[i] = [element for element in impact_ejection_list[0]]
-    matched_NE[i] = [element for element in impact_ejection_list[1]]
-    matched_UE[i] = [element for element in impact_ejection_list[2]]
+    matched_thetaim[i] = [element for element in impact_ejection_list[1]]
+    matched_NE[i] = [element for element in impact_ejection_list[2]]
+    matched_UE[i] = [element for element in impact_ejection_list[3]]
+    matched_thetaE[i] = [element for element in impact_ejection_list[5]]
 
+CORmean, N_COR = defaultdict(list), defaultdict(list)
+Pr, N_PrUre = defaultdict(list), defaultdict(list)
+NE_mean, UE_mean, UE_std, UE_stderr, N_E = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
 for i in range (3):
-    NE_mean[i], UE_mean[i], UE_std[i], Uplot_NE[i] = get_ejection_ratios(matched_Vim[i], matched_NE[i], matched_UE[i], 8)
-    CORmean[i],CORstd[i],Uimplot[i] = BinUimCOR(Vim_all[i],exz_all[i], 8)
-    Pr[i],Uplot[i] = BinUimUd(Vim_all[i],VD_all[i],Vimde_bin)
+    CORmean[i],N_COR[i],Thetare, Uimplot = module.BinUimCOR_equalbinsize(Vim_all[i],Vre_all[i], Thetare_all[i], Vim_bin)
+    Pr[i], Uplot_Pr, N_PrUre[i], Uim_meaninbin, UD_meaninbin = module.BinUimUd_equalbinsize(Vim_all[i],VD_all[i],Vimde_bin)
+    NE_mean[i], UE_mean[i], UE_std[i], UE_stderr[i], ThetaE_mean, Uplot_NE, N_E[i] = module.get_ejection_ratios_equalbinsize(matched_Vim[i], VD_all[i], matched_NE[i], matched_UE[i], matched_thetaE[i], Vimde_bin)
  
 constant = np.sqrt(9.81*D)
 # plt.figure()
@@ -148,44 +161,55 @@ constant = np.sqrt(9.81*D)
 # plt.legend()
 
 
-#plot \bar{NE} - Uim
-plt.figure(figsize=(10, 10))
+#plot splash terms
+plt.figure(figsize=(12, 9))
+plt.subplot(2,2,1)
 for i in range(3):
-    plt.plot(Uplot_NE[i]/constant, NE_mean[i], 'o', label=labels[i])
-plt.xlabel(r'$U_{IM}/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylabel(r'$\bar{N}_\mathrm{E}$ [-]', fontsize=14)
-plt.legend(fontsize=14)
-plt.show()
-
-#plot \bar{UE} - Uim
-plt.figure(figsize=(10, 10))
-for i in range(3):
-    plt.errorbar(Uplot_NE[i]/constant, UE_mean[i]/constant, yerr=UE_std[i]/constant, fmt='o', capsize=5, label=labels[i])
-plt.xlabel(r'$U_{IM}/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylabel(r'$\bar{U}_\mathrm{E}/\sqrt{gd}$ [-]', fontsize=14)
-plt.legend(fontsize=14)
-plt.show()
-
-#plot COR - Uim
-plt.figure(figsize=(10, 10))
-for i in range(3):
-    plt.errorbar(Uimplot[i]/constant, CORmean[i], yerr=CORstd[i], fmt='o', capsize=5, label=labels[i])
+    plt.scatter(Uimplot/constant, CORmean[i], s=np.sqrt(N_COR[i])*5,label=labels[i])
 plt.xlabel(r'$U_{IM}/\sqrt{gd}$ [-]', fontsize=14)
 plt.ylabel(r'$\bar{e}_\mathrm{xz,steady}$ [-]', fontsize=14)
 plt.legend(fontsize=14)
-plt.show()
-
-#plot Pr - Uim 
-plt.figure(figsize=(10, 10))
+plt.subplot(2,2,2)
 for i in range(3):
-    plt.plot(Uplot[i]/constant, Pr[i], 'o', label=labels[i])
+    plt.scatter(Uplot_Pr/constant, Pr[i], s=np.sqrt(N_PrUre[i])*5, label=labels[i])
 plt.xlabel(r'$U_{IM}/\sqrt{gd}$ [-]', fontsize=14)
 plt.ylabel(r'$P_\mathrm{r}$ [-]', fontsize=14)
+plt.subplot(2,2,3)
+for i in range(3):
+    plt.scatter(Uplot_NE/constant, NE_mean[i], s=np.sqrt(N_E[i])*5, label=labels[i])
+plt.xlabel(r'$U_{IM}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$\bar{N}_\mathrm{E}$ [-]', fontsize=14)
+plt.subplot(2,2,4)
+for i in range(3):
+    plt.errorbar(Uplot_NE/constant, UE_mean[i]/constant, yerr=UE_stderr[i]/constant, fmt='o', capsize=5, label=labels[i])
+plt.xlabel(r'$U_{IM}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$\bar{U}_\mathrm{E}/\sqrt{gd}$ [-]', fontsize=14)
 plt.legend(fontsize=14)
+plt.tight_layout()
+plt.show()
+
+plt.figure(figsize=(12, 5))
+plt.subplot(1,2,1)
+for i in range(3):
+    plt.scatter(Uplot_Pr/constant, Pr[i], s=np.sqrt(N_PrUre[i])*5, label=labels[i])
+plt.xlabel(r'$U_{inc}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$P_\mathrm{r}$ [-]', fontsize=14)
+plt.ylim(bottom=0)
+plt.xlim(left=0)
+plt.text(0.02, 0.92, '(a)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
+plt.legend(fontsize=14)
+plt.subplot(1,2,2)
+for i in range(3):
+    plt.scatter(Uplot_NE/constant, NE_mean[i], s=np.sqrt(N_E[i])*5, label=labels[i])
+plt.xlabel(r'$U_{inc}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$\bar{N}_\mathrm{E}$ [-]', fontsize=14)
+plt.ylim(bottom=0)
+plt.xlim(left=0)
+plt.text(0.02, 0.92, '(b)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
+plt.tight_layout()
 plt.show()
 
 #verify the detected impacts and rebounds
-
 plt.figure(figsize=(10, 15))
 for j in range(3):
     plt.subplot(3,1,j+1)

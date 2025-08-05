@@ -61,14 +61,17 @@ for i in range(5):
     Par[i], VZ[i], exz_mean_t[i], ez_mean_t[i], VIM_mean_t[i], ThetaIM_mean_t[i], RIM[i], exz_vector_t[i], IM_vector_t[i]=module.store_sal_id_data(data,ParticleID_salint, coe_sal_h, dt, N_inter, D)
 
 #get the quantities from the steady state
-exz_all,Vim_all,VD_all,ThetaD_all,Theta_all,zE_all,impact_list,ejection_list = defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list)
+exz_all,Vim_all,Vre_all,VD_all,ThetaD_all,Theta_all,zE_all,impact_list,ejection_list = defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list)
+Thetare_all, ThetaE_all = defaultdict(list),defaultdict(list)
 for i in range (5):
     N_range = 0
     exz_all[i] = [value for sublist in exz_vector_t[i][N_range:] for value in sublist]
     Vim_all[i] = [value[0] for sublist in IM_vector_t[i][N_range:] for value in sublist]
+    Vre_all[i] = [value[10] for sublist in IM_vector_t[i][N_range:] for value in sublist]
     VD_all[i] = [value[0] for sublist in D_vector_t[i][N_range:] for value in sublist]
     ThetaD_all[i] = [value[1] for sublist in D_vector_t[i][N_range:] for value in sublist]
     Theta_all[i] = [value[7] for sublist in IM_vector_t[i][N_range:] for value in sublist]
+    Thetare_all[i] = [value[8] for sublist in IM_vector_t[i][N_range:] for value in sublist]
     IDim = [value[1] for sublist in IM_vector_t[i][N_range:] for value in sublist]
     IDre = [value[2] for sublist in IM_vector_t[i][N_range:] for value in sublist]
     xim = [value[3] for sublist in IM_vector_t[i][N_range:] for value in sublist]
@@ -81,26 +84,31 @@ for i in range (5):
     xE = [value[2] for sublist in E_vector_t[i][N_range:] for value in sublist]
     PE = [value[3] for sublist in E_vector_t[i][N_range:] for value in sublist]
     EE = [value[4] for sublist in E_vector_t[i][N_range:] for value in sublist]
-    ejection_list[i] = [IDE, xE, vE, PE, EE]
+    ThetaE_all[i] = [value[6] for sublist in E_vector_t[i][N_range:] for value in sublist]
+    ejection_list[i] = [IDE, xE, vE, PE, EE, ThetaE_all[i]]
     
 impact_ejection_list = defaultdict(list)
 for i in range (5):
     impact_ejection_list[i]=module.match_ejection_to_impact(impact_list[i], ejection_list[i], dt)
 Vim_all_values = [value for sublist in Vim_all.values() for value in sublist]
-Vim_bin = np.linspace(min(Vim_all_values), max(Vim_all_values), 7)
+Vim_bin = np.linspace(0, max(Vim_all_values)+1, 7) #make sure the range covers all the events
+Vre_all_values = [value for sublist in Vre_all.values() for value in sublist]
 Vimde_all_values = [value for sublist in Vim_all.values() for value in sublist] + [value for sublist in VD_all.values() for value in sublist]
-Vimde_bin = np.linspace(min(Vimde_all_values), max(Vimde_all_values), 7)   
+Vimde_bin = np.linspace(0, max(Vimde_all_values)+1, 7)  
 
 #global means and stds at all the wind conditions   
 exz_all_values = [value for sublist in exz_all.values() for value in sublist]
 VD_all_values = [value for sublist in VD_all.values() for value in sublist]
+Thetare_all_values = [value for sublist in Thetare_all.values() for value in sublist]
 matched_Vim_all = [element for key in impact_ejection_list for element in impact_ejection_list[key][0]]
+# matched_thetaim_all = [element for key in impact_ejection_list for element in impact_ejection_list[key][1]]
 matched_NE_all = [element for key in impact_ejection_list for element in impact_ejection_list[key][2]]
 matched_UE_all = [element for key in impact_ejection_list for element in impact_ejection_list[key][3]]
+matched_thetaE_all = [element for key in impact_ejection_list for element in impact_ejection_list[key][5]]
 #get the global NE, UE from all impacts and matched ejections 
-CORmean_glo,CORstd_glo,CORstderr_glo,Uimplot = module.BinUimCOR_equalbinsize(Vim_all_values,exz_all_values,Vim_bin)
-Pr_glo,Uplot,N_PrUre = module.BinUimUd_equalbinsize(Vim_all_values,VD_all_values,Vimde_bin)
-NEmean_glo, UEmean_glo, UEstd_glo, UEstderr_glo, Uplot_NE, N_Einbin = module.get_ejection_ratios_equalbinsize(matched_Vim_all, VD_all_values, matched_NE_all, matched_UE_all, Vimde_bin)
+CORmean_glo,N_COR_glo,Thetare_mean_glo, Uimplot = module.BinUimCOR_equalbinsize(Vim_all_values,Vre_all_values,Thetare_all_values, Vim_bin)
+Pr_glo,Uplot,N_PrUre, Uiminbin, UDinbin = module.BinUimUd_equalbinsize(Vim_all_values,VD_all_values,Vimde_bin)
+NEmean_glo, UEmean_glo, UEstd_glo, UEstderr_glo, ThetaEmean_glo, Uplot_NE, N_Einbin = module.get_ejection_ratios_equalbinsize(matched_Vim_all, VD_all_values, matched_NE_all, matched_UE_all, matched_thetaE_all, Vimde_bin)
 
 constant = np.sqrt(9.81*D)
 #empirical data
@@ -160,24 +168,15 @@ UEstd_glo1 = [0.20336251996938237,
  0.07910517659465834,
  0.2651680593999378]
 #coe_sal_h = 17
-U2 = [0.81669995, 2.15809381, 3.49948767, 4.84088152, 6.18227538,
-       7.52366923]
-CORmean_glo2 = [0.9759709842381145,
- 0.5250315346428885,
- 0.39491516436069574,
- 0.3248297281694904,
- 0.3344450044307521,
- 0.22192864762170092]
-CORstd_glo2 = [0.9870135590030893,
- 0.29677966624739005,
- 0.20763868078976605,
- 0.20369267302315688,
- 0.2038620151622871,
- 0.08692174498511492]
-Upr2 = [0.68881508, 2.05346073, 3.41810639, 4.78275204, 6.14739769,
-       7.51204334]
-Pr_glo2 = [0.17791313, 0.85970819, 0.94444444, 0.96      , 0.84210526,
-       0.66666667]
+U2 = [0.76619718, 2.29859154, 3.8309859 , 5.36338026, 6.89577462, 8.42816898]
+CORmean_glo2 = [0.82130457, 0.50404946, 0.39235387, 0.29365181, 0.27984416,
+       0.32925208]
+N_COR2 = [1257,  695,  203,   32,    9,    4]
+Upr2 = [0.76619718, 2.29859154, 3.8309859 , 5.36338026, 6.89577462,
+       8.42816898]
+Pr_glo2 = [0.19561158, 0.88647959, 0.94418605, 0.91428571, 0.75      ,
+       1.        ]
+N_Pr2 = [1257,  695,  203,   32,    9,    4]
 NEmean_glo2 = [0.4093604744350056,
  2.1133557800224465,
  2.414814814814815,
@@ -234,6 +233,7 @@ UEstd_glo3 = [0.19893133690696568,
  0.09826383751204791,
  0.22823785565311747]
 
+plt.close('all')
 plt.figure(figsize=(12,9))
 plt.subplot(2,2,1)
 #plot COR - Uim
@@ -241,6 +241,8 @@ lines = [plt.errorbar(eval(f"U{i}/constant"), eval(f"CORmean_glo{i}"), yerr=eval
 # line2 = plt.errorbar(Unsexp, CORexp_mean, yerr=CORexp_std, fmt='x', capsize=5, label='Experiment (Jiang et al., 2024)', color='k')
 plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
 plt.ylabel(r'$e$ [-]', fontsize=14)
+plt.ylim(-1,4)
+plt.xlim(left=0)
 plt.text(0.02, 0.92, '(a)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
 plt.legend(lines, [r'$E_\mathrm{sal,cr}$=1.5$m_\mathrm{p}gd$', '$E_\mathrm{sal,cr}$=5$m_\mathrm{p}gd$', '$E_\mathrm{sal,cr}$=8$m_\mathrm{p}gd$'], fontsize=12)
 plt.subplot(2,2,2)
@@ -248,6 +250,7 @@ plt.subplot(2,2,2)
 lines = [plt.plot(eval(f"Upr{i}/constant"), eval(f"Pr_glo{i}"), 'o') for i in range(1, 4)]
 # plt.plot(Unsexp, Prexp, 'x', color='k')
 plt.ylim(0,1.05)
+plt.xlim(left=0)
 plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
 plt.ylabel(r'$P_\mathrm{r}$ [-]', fontsize=14)
 plt.text(0.02, 0.92, '(b)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
@@ -255,7 +258,8 @@ plt.subplot(2,2,3)
 #plot \bar{NE} - Uim
 lines = [plt.plot(eval(f"Upr{i}/constant"), eval(f"NEmean_glo{i}"), 'o') for i in range(1, 4)]
 # plt.plot(Unsexp, Nsexp,'x',color='k')
-# plt.ylim(0,1.3)
+plt.ylim(bottom=0)
+plt.xlim(left=0)
 plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
 plt.ylabel(r'$\bar{N}_\mathrm{E}$ [-]', fontsize=14)
 plt.text(0.02, 0.92, '(c)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
@@ -265,120 +269,58 @@ lines = [plt.errorbar(eval(f"Upr{i}/constant"), eval(f"UEmean_glo{i}/constant"),
 # plt.errorbar(Uvsexp, Usexp, yerr=Usexp_std, fmt='x', capsize=5, label='With wind (Jiang et al., 2024)', color='k')
 plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
 plt.ylabel(r'$U_\mathrm{E}/\sqrt{gd}$ [-]', fontsize=14)
+plt.xlim(left=0)
+plt.ylim(bottom=-1)
 plt.text(0.02, 0.92, '(d)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
 plt.tight_layout()
 plt.show()
 
 #h_midair = 20d
-Uh1 = [0.68864585, 1.7739315 , 2.85921715, 3.9445028 , 5.02978845,
-       6.1150741 ]
-CORmean_gloh1 = [1.0547278790842345,
- 0.5481677085630939,
- 0.4109509541016733,
- 0.34675254055795446,
- 0.2838405638898634,
- 0.40569028488274467]
-CORstd_gloh1 = [1.0736363148907826,
- 0.3482407721454709,
- 0.20844059484581792,
- 0.2093232355311031,
- 0.14314850890122416,
- 0.15768403097944814]
-Uprh1 = [0.58564852, 1.74396103, 2.90227355, 4.06058606, 5.21889858,
-       6.37721109]
-Pr_gloh1 = [0.14703411, 0.81958196, 0.89189189, 0.92207792, 0.83333333,
-       0.75      ]
-NEmean_gloh1 = [0.398924550495715,
- 2.2442244224422443,
- 2.7522522522522523,
- 2.4025974025974026,
- 2.611111111111111,
- 2.375]
-UEmean_gloh1 = [0.23851625771519683,
- 0.22921688292778417,
- 0.23872830137699289,
- 0.2453553377357668,
- 0.22650832801000953,
- 0.1857460745766891]
-UEstd_gloh1 = [0.20071441513525679,
- 0.19525404233189467,
- 0.20854571191932267,
- 0.18614796483644505,
- 0.15022420796324756,
- 0.0876945059375047]
+Uh1 = [0.63814308, 1.91442923, 3.19071538, 4.46700154, 5.74328769,
+       7.01957385]
+N_CORh1 = [994, 688, 168,  50,   9,   1]
+CORmean_gloh1 = [0.89082907, 0.50821117, 0.39824453, 0.31541028, 0.38427987,
+       0.41891818]
+Uprh1 = [0.66303061, 1.98909184, 3.31515306, 4.64121429, 5.96727551,
+       7.29333674]
+Pr_gloh1 = [0.16821214, 0.82920792, 0.90340909, 0.92857143, 0.7       ,
+       0.33333333]
+N_Prh1 = [1034,  670,  159,   39,    7,    1]
 
 #h_midair = 30d
-Uh2, CORmean_gloh2, CORstd_gloh2, Uprh2, Pr_gloh2, NEmean_gloh2, UEmean_gloh2, UEstd_gloh2 = U2, CORmean_glo2, CORstd_glo2, Upr2, Pr_glo2, NEmean_glo2, UEmean_glo2, UEstd_glo2
+Uh2, CORmean_gloh2, N_CORh2, Uprh2, Pr_gloh2, N_Prh2 = U2, CORmean_glo2, N_COR2, Upr2, Pr_glo2, N_Pr2
 
 #h_midair = 40d
-Uh3 = [0.81669995, 2.15809381, 3.49948767, 4.84088152, 6.18227538,
-       7.52366923]
-CORmean_gloh3 = [0.9773182476830321,
- 0.5488071426664187,
- 0.4221684563749771,
- 0.36505421341132704,
- 0.3577853135259619,
- 0.33306242434606653]
-CORstd_gloh3 = [0.9852736428934576,
- 0.3229656496782703,
- 0.2256352842578587,
- 0.21941711709999984,
- 0.23673641372709617,
- 0.23547224277415477]
-Uprh3 = [0.68881508, 2.05346073, 3.41810639, 4.78275204, 6.14739769,
-       7.51204334]
-Pr_gloh3 = [0.17857143, 0.86855941, 0.95283019, 0.97402597, 0.88888889,
-       0.71428571]
-NEmean_gloh3 = [0.379724535554132,
- 2.017875920084122,
- 2.3238993710691824,
- 2.207792207792208,
- 2.074074074074074,
- 2.5714285714285716]
-UEmean_gloh3 = [0.2388203896244559,
- 0.2296019805568729,
- 0.23270742620373636,
- 0.2569056653391436,
- 0.20306025159247104,
- 0.28668546261114636]
-UEstd_gloh3 = [0.20269856016812368,
- 0.1994840052013951,
- 0.18225639500472068,
- 0.21078600993717508,
- 0.10295320678819797,
- 0.22903409896613508]
+Uh3 = [0.76619718, 2.29859154, 3.8309859 , 5.36338026, 6.89577462,
+       8.42816898]
+CORmean_gloh3 = [0.82460168, 0.52769071, 0.41877799, 0.33674036, 0.37732142,
+       0.32925208]
+N_CORh3 = [1265,  765,  249,   55,   11,    4]
+Uprh3 = [0.76619718, 2.29859154, 3.8309859 , 5.36338026, 6.89577462,
+       8.42816898]
+Pr_gloh3 = [0.19661175, 0.89578454, 0.95402299, 0.94827586, 0.78571429,
+       1.        ]
+N_Prh3 = [1265,  765,  249,   55,   11,    4]
 
-plt.figure(figsize=(12,9))
-plt.subplot(2,2,1)
+plt.figure(figsize=(12,5))
+plt.subplot(1,2,1)
 #plot COR - Uim
-lines = [plt.errorbar(eval(f"Uh{i}/constant"), eval(f"CORmean_gloh{i}"), yerr=eval(f"CORstd_gloh{i}"), fmt='o', capsize=5) for i in range(1, 4)]
+lines = [plt.scatter(eval(f"Uh{i}/constant"), eval(f"CORmean_gloh{i}"), s=np.sqrt(eval(f"N_CORh{i}")) * 5) for i in range(1, 4)]
 # line2 = plt.errorbar(Unsexp, CORexp_mean, yerr=CORexp_std, fmt='x', capsize=5, label='Experiment (Jiang et al., 2024)', color='k')
 plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylabel(r'$e$ [-]', fontsize=14)
+plt.ylabel(r'$\bar{e}$ [-]', fontsize=14)
+plt.ylim(0,1)
+plt.xlim(left=0)
 plt.text(0.02, 0.92, '(a)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
 plt.legend(lines, [r'$Z_\mathrm{im,cr}$=20$d$', '$Z_\mathrm{im,cr}$=30$d$', '$Z_\mathrm{im,cr}$=40$d$'], fontsize=12)
-plt.subplot(2,2,2)
+plt.subplot(1,2,2)
 #plot Pr - Uim 
-lines = [plt.plot(eval(f"Uprh{i}/constant"), eval(f"Pr_gloh{i}"), 'o') for i in range(1, 4)]
+lines = [plt.scatter(eval(f"Uprh{i}/constant"), eval(f"Pr_gloh{i}"), s=np.sqrt(eval(f"N_Pr{i}")) * 5) for i in range(1, 4)]
 # plt.plot(Unsexp, Prexp, 'x', color='k')
-plt.ylim(0,1.05)
-plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylim(bottom=0)
+plt.xlim(left=0)
+plt.xlabel(r'$U_{inc}/\sqrt{gd}$ [-]', fontsize=14)
 plt.ylabel(r'$P_\mathrm{r}$ [-]', fontsize=14)
 plt.text(0.02, 0.92, '(b)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
-plt.subplot(2,2,3)
-#plot \bar{NE} - Uim
-lines = [plt.plot(eval(f"Uh{i}/constant"), eval(f"NEmean_gloh{i}"), 'o') for i in range(1, 4)]
-# plt.plot(Unsexp, Nsexp,'x',color='k')
-# plt.ylim(0,1.3)
-plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylabel(r'$\bar{N}_\mathrm{E}$ [-]', fontsize=14)
-plt.text(0.02, 0.92, '(c)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
-#plot \bar{UE} - Uim
-plt.subplot(2,2,4)
-lines = [plt.errorbar(eval(f"Uh{i}/constant"), eval(f"UEmean_gloh{i}/constant"), yerr=eval(f"UEstd_gloh{i}/constant"), fmt='o', capsize=5) for i in range(1, 4)]
-# plt.errorbar(Uvsexp, Usexp, yerr=Usexp_std, fmt='x', capsize=5, label='With wind (Jiang et al., 2024)', color='k')
-plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylabel(r'$U_\mathrm{E}/\sqrt{gd}$ [-]', fontsize=14)
-plt.text(0.02, 0.92, '(d)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
 plt.tight_layout()
 plt.show()
