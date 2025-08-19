@@ -5,7 +5,7 @@ Created on Wed Mar 26 10:35:12 2025
 @author: WangX3
 """
 import numpy as np
-import pandas as pd
+from .atan_ratio_stats import atan_ratio_stats
 
 def match_Uim_thetaim(Vim, thetaim, vel_bins):
     # Sort velocities and corresponding CORs
@@ -16,8 +16,7 @@ def match_Uim_thetaim(Vim, thetaim, vel_bins):
     Vz = velocities*np.sin(np.deg2rad(angles))
     
     # Allocate CORs into velocity ranges
-    mean_thetaim = []
-    std_thetaim = []
+    mean_thetaim, std_thetaim, stderr_thetaim = [],[],[]
     counts = []  # 新增：存储每个 bin 的数据点数量
     for i in range(len(vel_bins)-1):
         # Find indices of velocities within the current range
@@ -26,21 +25,21 @@ def match_Uim_thetaim(Vim, thetaim, vel_bins):
             theta_in_bin = angles[indices]
             Vx_in_bin = Vx[indices]
             Vz_in_bin = Vz[indices]
-            angle_mean_rad = np.arctan(np.mean(Vz_in_bin)/np.mean(Vx_in_bin))
-            mean_thetaim.append(np.rad2deg(angle_mean_rad))
-            # mean_thetaim.append(np.mean(theta_in_bin))
-            std_thetaim.append(np.std(theta_in_bin))
+            theta, theta_std, theta_se = atan_ratio_stats(Vz_in_bin, Vx_in_bin)
+            mean_thetaim.append(theta)
+            std_thetaim.append(theta_std)
+            stderr_thetaim.append(theta_se)
             counts.append(len(Vx_in_bin))  # number of data points in each bin
         else:
             mean_thetaim.append(np.nan)  # No data in this bin
             std_thetaim.append(np.nan)
+            stderr_thetaim.append(np.nan)
             counts.append(0)
     
     Uthetaplot = (vel_bins[:-1] + vel_bins[1:]) / 2 
     counts = np.array(counts)
-    # stderr = np.array(std_thetaim)/np.sqrt(counts)
     
-    return mean_thetaim, Uthetaplot, counts
+    return np.array(mean_thetaim), np.array(stderr_thetaim), counts, np.array(Uthetaplot)
     
     
     

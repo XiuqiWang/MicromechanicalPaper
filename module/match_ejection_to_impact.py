@@ -28,7 +28,7 @@ def match_ejection_to_impact(impact_list, ejection_list, dt):#theta_all_i,
     result = [[[], [], [], []] for _ in range(len(impact_ids))]
     
     # loop over every ejection
-    for ejection_id, ejection_pos, ejection_vel, epar_id, ejection_ene, ejection_ang in zip(ejection_ids, ejection_positions, ejection_velocities, ejectionpar_ids, ejection_energy, ejection_angles):
+    for ejection_id, ejection_pos, ejection_vel, epar_id, ejection_mass, ejection_ang in zip(ejection_ids, ejection_positions, ejection_velocities, ejectionpar_ids, ejection_energy, ejection_angles):
         mask = (
             (impactpar_ids != epar_id) &
             (impact_ids <= ejection_id) 
@@ -58,7 +58,7 @@ def match_ejection_to_impact(impact_list, ejection_list, dt):#theta_all_i,
                 
             result[closest_index][0].append(ejection_id)
             result[closest_index][1].append(ejection_vel)
-            result[closest_index][2].append(ejection_ene)
+            result[closest_index][2].append(ejection_mass)
             result[closest_index][3].append(ejection_ang)
             # print('ejection_id:',ejection_id)
             # print('impact_id:& rebound_id:',impact_ids[closest_index],rebound_ids[closest_index])
@@ -76,7 +76,7 @@ def match_ejection_to_impact(impact_list, ejection_list, dt):#theta_all_i,
     for sublist in result:
         impact_ejection_list[2].append(len(sublist[0]))#NE
         impact_ejection_list[3].append(sublist[1])#UE
-        impact_ejection_list[4].append(sublist[2])#EE
+        impact_ejection_list[4].append(sublist[2])#mE
         impact_ejection_list[5].append(sublist[3])#thetaE
     
     return impact_ejection_list

@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 """
+Created on Tue Aug 19 16:09:37 2025
+
+@author: WangX3
+"""
+
+# -*- coding: utf-8 -*-
+"""
 Created on Tue Mar 25 13:54:13 2025
 
 @author: WangX3
@@ -11,13 +18,16 @@ from .ratio_stats import ratio_stats
 from .atan_ratio_stats import atan_ratio_stats
 from .magnitude_stats import magnitude_stats
 
-def get_ejection_ratios_equalbinsize(matched_Vim_all, VD_all, matched_NE_all, matched_UE_all, matched_ThetaE_all, velimde_bins):#matched_EE_all
+def BinNEUEmass(matched_Vim_all, VD_all, msal, mrep, matched_NE_all, matched_UE_all, matched_ThetaE_all, mE, velimde_bins):
         # Convert to numpy arrays for easier manipulation
         impact_velocities = np.array(matched_Vim_all)
         deposition_velocities = np.array(VD_all)
+        msal = np.array(msal)
+        mrep = np.array(mrep)
         ejection_numbers = np.array(matched_NE_all)
         ejection_velocities = np.array(matched_UE_all)
         ejection_angles = np.array(matched_ThetaE_all)
+        mE = np.array(mE)
     
         ejection_ratios,UE_mean,UE_stds,UE_stderr = [],[],[],[]
         number = []
@@ -29,8 +39,8 @@ def get_ejection_ratios_equalbinsize(matched_Vim_all, VD_all, matched_NE_all, ma
             bin_mask_de = (deposition_velocities >= velimde_bins[i]) & (deposition_velocities < velimde_bins[i + 1])
             # Calculate the ejection ratio (ejection number / total impact number)
             if np.sum(bin_mask) > 0:
-                ejection_ratio_mean = np.sum(ejection_numbers[bin_mask]) / (np.sum(bin_mask) + np.sum(bin_mask_de))#np.mean(ejection_numbers[bin_mask])#
-                #ejection_ratio_std = np.std(ejection_numbers[bin_mask])
+                flatten_mE = list(itertools.chain.from_iterable(mE[bin_mask]))
+                ejection_ratio_mean = np.sum(flatten_mE) / (np.sum(msal[bin_mask]) + np.sum(mrep[bin_mask_de]))
                 impact_num.append(np.sum(bin_mask))
                 deposition_num.append(np.sum(bin_mask_de))
                 flattened_elements = list(itertools.chain.from_iterable(ejection_velocities[bin_mask]))

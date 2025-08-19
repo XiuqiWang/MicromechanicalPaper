@@ -7,6 +7,7 @@ Created on Wed Dec  4 14:32:32 2024
 
 import numpy as np
 import math
+from .hop_average_Usal import hop_average_Usal
 
 def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
     X = np.array([[time_step['Position'][i][0] for i in ID_Particle] for time_step in data])
@@ -35,6 +36,8 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
     Lx = D * 100
     Ly = 2 * D
     A = Lx * Ly
+    
+    t = np.linspace(dt, 5, int(5 / dt))
 
     for i in range(len(ID_Particle)):
         z = Z[:,i]
@@ -95,7 +98,7 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
             VDxzi = np.sqrt(VDxi**2+VDzi**2)
             ThetaDi_radian = np.arctan(np.abs(VDzi/VDxi))
             ThetaDi = np.degrees(ThetaDi_radian)
-            
+            # get the id at the top of the reptation hops
             reptop_indices = []
             for start, end in zip(ID_Eafter, ID_Dbefore):
                 Vz_rep = Vz[start:end]
@@ -107,8 +110,10 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
                 else:
                     reptop_indices.append(end-1)
             
-            IDrepi = reptop_indices
-            Vrepxi = Vx[reptop_indices]
+            IDdepai = np.maximum(-np.asarray(ID_Dbefore) + 2*np.asarray(reptop_indices), 0)
+            Vrepxi = hop_average_Usal(t, Vx, ID_Dbefore, IDdepai)
+            Trepi = (ID_Dbefore - IDdepai) * dt # reptation time
+            Tdepi =  (ID_Dbefore - ID_Eafter) * dt # residence time before depositing
             
             xEi = x[ID_Ei+1]
             zEi = z[ID_Ei+1]
@@ -132,7 +137,7 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
                 ME[interval - 1] += 1 / (5 / N_inter) 
                 # MoE[interval - 1] += np.sum(mp*VExzi[j]) / (5 / N_inter) / A
                 MpE[interval - 1] += mp
-                E_vector_t[interval - 1].append([VExzi[j], IDEi[j], xEi[j], i, zEi[j], EEi[j], ThetaEi[j]])
+                E_vector_t[interval - 1].append([VExzi[j], IDEi[j], xEi[j], i, zEi[j], EEi[j], ThetaEi[j], mp])
             for j, idx in enumerate(ID_Di):
                 interval = min(int(np.ceil((idx - 1) / (len(X[:, i]) / N_inter))), N_inter)
                 VDx[interval - 1].append(VDxi[j]*mp)
@@ -141,14 +146,14 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
                 MD[interval - 1] += 1 / (5 / N_inter)
                 # MoD[interval - 1] += np.sum(mp*VDxzi[j]) / (5 / N_inter) / A
                 MpD[interval - 1] += mp
-                D_vector_t[interval-1].append([VDxzi[j], ThetaDi[j], IDDi[j], xDi[j], i, abs(Vrepxi[j])])
+                D_vector_t[interval-1].append([VDxzi[j], ThetaDi[j], IDDi[j], xDi[j], i, abs(Vrepxi[j]), Trepi[j], Tdepi[j], mp])
                 #Mass_tot = [ME_tot, MD_tot]
                 #E, VX, VExVector, VEzVector, Mass_tot
             
         else:
-            IDrepi = []
+            IDdepai = []
                 
-        EDindices.append((ID_Ei+1, ID_Di-1, np.array(IDrepi)))
+        EDindices.append((ID_Ei+1, ID_Di-1, np.array(IDdepai)))
     
     for i in range(N_inter):
         if VExz_t[i]:
