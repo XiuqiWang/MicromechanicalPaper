@@ -6,6 +6,7 @@ Created on Thu Aug  7 11:37:51 2025
 """
 from .flux_weighted_mean_speed import flux_weighted_mean_speed
 import numpy as np
+from .magnitude_stats import magnitude_stats
 
 # derive Tsal-f(Uim)
 def BinTsalUim(velocities_im, theta_im, Tsals, mp_sals, vel_bins):
@@ -26,12 +27,14 @@ def BinTsalUim(velocities_im, theta_im, Tsals, mp_sals, vel_bins):
         if np.any(idx):  # Check if there are elements in this range
             Uimx_in_bin = velocities_imx[indices]
             Uimz_in_bin = velocities_imz[indices]
-            weightsim_in_bin = mp_sal[indices]/Tsals[indices]
-            Uim_m, uim_se, _, _ = flux_weighted_mean_speed(Uimx_in_bin, Uimz_in_bin, weightsim_in_bin)
-            Uim_mean.append(Uim_m)
+            # weightsim_in_bin = mp_sal[indices]/Tsals[indices]
+            # Uim_m, _, uim_se = magnitude_stats(Uimx_in_bin, Uimz_in_bin)
+            # Uim_mean.append(Uim_m)
             Tsal_in_bin = Tsals[indices]
             mp_in_bin = mp_sal[indices]
-            Tsal_m, Tsal_se = mass_weighted_mean_se_forT(Tsal_in_bin, mp_in_bin)
+            # Tsal_m, Tsal_se = mass_weighted_mean_se_forT(Tsal_in_bin, mp_in_bin)
+            Tsal_m = np.mean(Tsal_in_bin)
+            Tsal_se = np.std(Tsal_in_bin)/np.sqrt(len(Tsal_in_bin))
             Tsal_mean.append(Tsal_m)
             Tsal_stderr.append(Tsal_se)
         else:
@@ -41,7 +44,7 @@ def BinTsalUim(velocities_im, theta_im, Tsals, mp_sals, vel_bins):
             
     Uim_Tsal = (vel_bins[:-1] + vel_bins[1:]) / 2 
 
-    return np.array(Tsal_mean), np.array(Tsal_stderr), np.array(Uim_mean)
+    return np.array(Tsal_mean), np.array(Tsal_stderr), np.array(Uim_Tsal)
 
 def mass_weighted_mean_se_forT(T, m):
     T = np.asarray(T, dtype=float)
