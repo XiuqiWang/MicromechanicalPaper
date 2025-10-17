@@ -30,6 +30,8 @@ def magnitude_stats(A, B):
     """
     A = np.asarray(A)
     B = np.asarray(B)
+    mask = ~np.isnan(A) & ~np.isnan(B)
+    A, B = A[mask], B[mask]
 
     # Means of A and B
     A_mean = np.mean(A)

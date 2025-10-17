@@ -13,13 +13,15 @@ def atan_ratio_stats(A, B):
     """
     A = np.asarray(A)
     B = np.asarray(B)
+    mask = ~np.isnan(A) & ~np.isnan(B)
+    A, B = A[mask], B[mask]
     nA, nB = len(A), len(B)
 
-    A_mean = np.mean(A)
-    B_mean = np.mean(B)
+    A_mean = np.nanmean(A)
+    B_mean = np.nanmean(B)
 
-    std_A = np.std(A, ddof=1)
-    std_B = np.std(B, ddof=1)
+    std_A = np.nanstd(A, ddof=1)
+    std_B = np.nanstd(B, ddof=1)
 
     se_A = std_A / np.sqrt(nA)
     se_B = std_B / np.sqrt(nB)
