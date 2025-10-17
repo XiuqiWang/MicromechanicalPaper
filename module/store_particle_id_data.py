@@ -31,6 +31,7 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
     VDxz_mean_t = np.full(N_inter, np.nan)
     ME,MD,MoE,MoD,MpE,MpD = np.zeros(N_inter), np.zeros(N_inter), np.zeros(N_inter), np.zeros(N_inter), np.zeros(N_inter), np.zeros(N_inter)
     E_vector_t,D_vector_t = [[] for _ in range(N_inter)],[[] for _ in range(N_inter)]
+    VD_TD_vector_t = [[] for _ in range(N_inter)]
 
     g = 9.81
     Lx = D * 100
@@ -65,6 +66,7 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
 
         if ID_Ei.size > 0:
             ID_Eafter = ID_Ei + 1
+            ID_Eafter = np.clip(ID_Eafter, 0, len(Vx)-2)
             VExi,VEzi = Vx[ID_Eafter],Vz[ID_Eafter]
             #correct ejection velocities at the evaluation height by extrapolating
             high_Eindices = np.where(z[ID_Eafter] > d_h)
@@ -87,12 +89,12 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
             #renew the stored ejection velocities
             VExzi = np.sqrt(VExi**2+VEzi**2)
             
-            VDxi = Vx[ID_Di - 1]
-            VDzi = Vz[ID_Di - 1]
+            ID_Dbefore = ID_Di - 1
+            VDxi = Vx[ID_Dbefore]
+            VDzi = Vz[ID_Dbefore]
             #correct vertical deposition velocities at the evaluation height by extrapolating
-            high_Dindices = np.where(z[ID_Di-1] > d_h)
-            low_Dindices = np.where(z[ID_Di-1] < d_h)
-            ID_Dbefore = ID_Di -1
+            high_Dindices = np.where(z[ID_Dbefore] > d_h)
+            low_Dindices = np.where(z[ID_Dbefore] < d_h)
             VDzi[high_Dindices] = -np.sqrt(2*9.81*(z[ID_Dbefore[high_Dindices]]-d_h)+Vz[ID_Dbefore[high_Dindices]]**2)
             VDzi[low_Dindices] = -np.sqrt(Vz[ID_Dbefore[low_Dindices]]**2 - 2*9.81*(d_h-z[ID_Dbefore[low_Dindices]]))    
             VDxzi = np.sqrt(VDxi**2+VDzi**2)
@@ -100,7 +102,15 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
             ThetaDi = np.degrees(ThetaDi_radian)
             # get the id at the top of the reptation hops
             reptop_indices = []
-            for start, end in zip(ID_Eafter, ID_Dbefore):
+            if ID_Di[0] < ID_Ei[0]:
+                ID_Di_new = ID_Di[1:]     # remove the first element
+            else:
+                ID_Di_new = ID_Di.copy()  # keep the original array
+            if ID_Ei[-1] > ID_Di[-1]:
+                ID_Ei_new = ID_Ei[:-1]     # remove the last element
+            else:
+                ID_Ei_new = ID_Ei.copy()  # keep the original array
+            for start, end in zip(ID_Ei_new, ID_Di_new):
                 Vz_rep = Vz[start:end]
                 crossing_indice = np.where((Vz_rep[:-1] >= 0) & (Vz_rep[1:] < 0))[0]
                 if len(crossing_indice)>0:
@@ -110,17 +120,15 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
                 else:
                     reptop_indices.append(end-1)
             
-            IDdepai = np.maximum(-np.asarray(ID_Dbefore) + 2*np.asarray(reptop_indices), 0)
-            Vrepxi = hop_average_Usal(t, Vx, ID_Dbefore, IDdepai)
-            Trepi = (ID_Dbefore - IDdepai) * dt # reptation time
-            Tdepi =  (ID_Dbefore - ID_Eafter) * dt # residence time before depositing
+            IDdepai = np.maximum(-np.asarray(ID_Di_new) + 2*np.asarray(reptop_indices), 0)
+            Vrepxi = hop_average_Usal(t, Vx, ID_Di_new, IDdepai)
+            Trepi = (ID_Di_new - IDdepai) * dt # reptation time
+            Tdepi =  (ID_Di_new - ID_Ei_new) * dt # residence time before depositing
             
-            xEi = x[ID_Ei+1]
-            zEi = z[ID_Ei+1]
-            IDEi = ID_Ei + 1
+            xEi = x[ID_Ei]
+            zEi = z[ID_Ei]
             mp = Vp[0, i] * 2650
             xDi = x[ID_Di]
-            IDDi = ID_Di - 1
             EEi = 0.5*mp*VExzi**2
             ThetaEi_radian = np.arctan(np.abs(VEzi/VExi))
             ThetaEi = np.degrees(ThetaEi_radian)
@@ -134,26 +142,26 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
                 VEx[interval - 1].append(VExi[j]*mp)
                 VEz[interval - 1].append(VEzi[j]*mp)
                 VExz_t[interval - 1].append(VExzi[j]*mp)
-                ME[interval - 1] += 1 / (5 / N_inter) 
-                # MoE[interval - 1] += np.sum(mp*VExzi[j]) / (5 / N_inter) / A
+                ME[interval - 1] += mp / (5 / N_inter) / A
                 MpE[interval - 1] += mp
-                E_vector_t[interval - 1].append([VExzi[j], IDEi[j], xEi[j], i, zEi[j], EEi[j], ThetaEi[j], mp])
+                E_vector_t[interval - 1].append([VExzi[j], ID_Eafter[j], xEi[j], i, zEi[j], EEi[j], ThetaEi[j], mp])
             for j, idx in enumerate(ID_Di):
                 interval = min(int(np.ceil((idx - 1) / (len(X[:, i]) / N_inter))), N_inter)
                 VDx[interval - 1].append(VDxi[j]*mp)
                 VDz[interval - 1].append(VDzi[j]*mp)
                 VDxz_t[interval - 1].append(VDxzi[j]*mp)
-                MD[interval - 1] += 1 / (5 / N_inter)
-                # MoD[interval - 1] += np.sum(mp*VDxzi[j]) / (5 / N_inter) / A
+                MD[interval - 1] += mp / (5 / N_inter) / A
                 MpD[interval - 1] += mp
-                D_vector_t[interval-1].append([VDxzi[j], ThetaDi[j], IDDi[j], xDi[j], i, abs(Vrepxi[j]), Trepi[j], Tdepi[j], mp])
-                #Mass_tot = [ME_tot, MD_tot]
-                #E, VX, VExVector, VEzVector, Mass_tot
+                D_vector_t[interval-1].append([VDxzi[j], ThetaDi[j], ID_Dbefore[j], xDi[j], i, mp])
+            for j, dix in enumerate(ID_Di_new):
+                interval = min(int(np.ceil((idx - 1) / (len(X[:, i]) / N_inter))), N_inter)
+                VD_TD_vector_t[interval-1].append([VDxzi[j], abs(Vrepxi[j]), Trepi[j], Tdepi[j]])
+                
             
         else:
             IDdepai = []
                 
-        EDindices.append((ID_Ei+1, ID_Di-1, np.array(IDdepai)))
+        EDindices.append((ID_Ei + 1, ID_Di - 1, np.array(IDdepai)))
     
     for i in range(N_inter):
         if VExz_t[i]:
@@ -162,7 +170,7 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
             VDxz_mean_t[i] = np.sum(VDxz_t[i])/MpD[i]      
             
     #VExz_mean_t, VEz_mean_t
-    return EDindices, ME, MD, VExz_mean_t, VDxz_mean_t, D_vector_t, E_vector_t
+    return EDindices, ME, MD, VExz_mean_t, VDxz_mean_t, D_vector_t, E_vector_t, VD_TD_vector_t
 
 def output_id(e, thre_e, dt):
     ID_E, ID_D = [], []
@@ -170,7 +178,7 @@ def output_id(e, thre_e, dt):
     g = 9.81
 
     condition_indices = np.where(e <= thre_e)[0]
-    segments = []
+    segments = [] # static intervals
 
     if condition_indices.size > 0:
         start_idx = condition_indices[0]
@@ -179,18 +187,19 @@ def output_id(e, thre_e, dt):
             if (t[condition_indices[i]] - t[condition_indices[i - 1]]) > np.sqrt((thre_e / g - 12 * 0.00025) * 2 / g)*2:
                 end_idx = condition_indices[i - 1]
                 #set an interval between every ID_D and ID_E to avoid counting rebounds
+                # the particle has to be static over 0.02s between a deposition and an ejection
                 #for now use 2*0.01s from the coarsest output steps
                 if (t[end_idx] - t[start_idx]) > 0.02:
                     segments.append((start_idx, end_idx))
                 start_idx = condition_indices[i]
         if (t[condition_indices[-1]] - t[start_idx]) > 0.02:
             segments.append((start_idx, condition_indices[-1]))
-
+    
     if len(segments) > 1:
-        ID_E = [seg[1] for seg in segments[:-1]]
-        ID_D = [seg[0] for seg in segments[1:]]
+        ID_E = [seg[1] for seg in segments[:]]
+        ID_D = [seg[0] for seg in segments[:]]
         #delete the ID_D if it appears at the first time step and the ID_E if it appears at the last time step
         ID_D = [id_d for id_d in ID_D if id_d > 1]
-        ID_E = [id_e for id_e in ID_E if id_e < len(e)]
+        ID_E = [id_e for id_e in ID_E if id_e < len(e)-1]
 
     return np.array(ID_E), np.array(ID_D)
