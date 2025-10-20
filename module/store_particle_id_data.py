@@ -199,7 +199,7 @@ def output_id(e, thre_e, dt):
         ID_E = [seg[1] for seg in segments[:]]
         ID_D = [seg[0] for seg in segments[:]]
         #delete the ID_D if it appears at the first time step and the ID_E if it appears at the last time step
-        ID_D = [id_d for id_d in ID_D if id_d > 1]
+        ID_D = [id_d for id_d in ID_D if id_d > 0]
         ID_E = [id_e for id_e in ID_E if id_e < len(e)-1]
 
     return np.array(ID_E), np.array(ID_D)
