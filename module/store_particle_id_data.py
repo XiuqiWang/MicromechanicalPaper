@@ -69,24 +69,49 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
             ID_Eafter = np.clip(ID_Eafter, 0, len(Vx)-2)
             VExi,VEzi = Vx[ID_Eafter],Vz[ID_Eafter]
             #correct ejection velocities at the evaluation height by extrapolating
-            high_Eindices = np.where(z[ID_Eafter] > d_h)
-            low_Eindices = np.where(z[ID_Eafter] < d_h)
+            high_Eindices = np.where(z[ID_Eafter] > d_h)[0]
+            low_Eindices = np.where(z[ID_Eafter] < d_h)[0]
             VEzi[high_Eindices] = np.sqrt(2*9.81*(z[ID_Eafter[high_Eindices]]-d_h)+Vz[ID_Eafter[high_Eindices]]**2)
-            VEzi[low_Eindices] = np.sqrt(Vz[ID_Eafter[low_Eindices]]**2 - 2*9.81*(d_h-z[ID_Eafter[low_Eindices]]))  
+            
+            mask = np.where(Vz[ID_Eafter[low_Eindices]]**2 - 2*9.81*(d_h-z[ID_Eafter[low_Eindices]]) > 0)[0]
+            VEzi[low_Eindices[mask]] = np.sqrt(Vz[ID_Eafter[low_Eindices[mask]]]**2 - 2*9.81*(d_h-z[ID_Eafter[low_Eindices[mask]]]))  
+            # print('ID_Eafter', ID_Eafter,'low_Eindices',low_Eindices,'mask', mask)
+            # indices = ID_Eafter[low_Eindices[mask]].astype(int)
+            # VEzi[low_Eindices[mask]] = np.sqrt(Vz[indices]**2 - 2*9.81*(d_h - z[indices]))
+            
+            # if Vz[ID_Eafter[low_Eindices]]**2 - 2*9.81*(d_h-z[ID_Eafter[low_Eindices]]) > 0:
+            #     VEzi[low_Eindices] = np.sqrt(Vz[ID_Eafter[low_Eindices]]**2 - 2*9.81*(d_h-z[ID_Eafter[low_Eindices]]))  
             #correct horizontal ejection velocity by interpolating (for the ones lower than 1.5D)
             Vz1_low,Vx1_low,Vx2_low = Vz[ID_Eafter[low_Eindices]],Vx[ID_Eafter[low_Eindices]],Vx[ID_Eafter[low_Eindices]+1]
             z1_low = z[ID_Eafter[low_Eindices]]
-            dt_ratio_low = (2*Vz1_low + np.sqrt(4*Vz1_low**2 - 4*9.81*(2*d_h-2*z1_low))) / (2*9.81) /dt
-            newlow_Eindices = np.where(dt_ratio_low < 1)
-            VExi[low_Eindices[0][newlow_Eindices[0]]] = dt_ratio_low[newlow_Eindices[0]] * (Vx2_low[newlow_Eindices[0]]-Vx1_low[newlow_Eindices[0]]) + Vx1_low[newlow_Eindices[0]]
+            
+            mask = 4*Vz1_low**2 - 4*9.81*(2*d_h - 2*z1_low) > 0
+            dt_ratio_low = np.empty_like(Vz1_low)
+            dt_ratio_low[:] = np.nan  # optional initialization
+            dt_ratio_low[mask] = (2*Vz1_low[mask] + np.sqrt(4*Vz1_low[mask]**2 - 4*9.81*(2*d_h - 2*z1_low[mask]))) / (2*9.81*dt)
+            newlow_Eindices = np.where(dt_ratio_low < 1)[0]
+            VExi[low_Eindices[newlow_Eindices]] = dt_ratio_low[newlow_Eindices] * (Vx2_low[newlow_Eindices]-Vx1_low[newlow_Eindices]) + Vx1_low[newlow_Eindices]
+           
+            # if 4*Vz1_low**2 - 4*9.81*(2*d_h-2*z1_low) > 0:
+            #     dt_ratio_low = (2*Vz1_low + np.sqrt(4*Vz1_low**2 - 4*9.81*(2*d_h-2*z1_low))) / (2*9.81) /dt
+            #     newlow_Eindices = np.where(dt_ratio_low < 1)
+            #     VExi[low_Eindices[0][newlow_Eindices[0]]] = dt_ratio_low[newlow_Eindices[0]] * (Vx2_low[newlow_Eindices[0]]-Vx1_low[newlow_Eindices[0]]) + Vx1_low[newlow_Eindices[0]]
+           
             #for the ones higher than 1.5D
             Vx0_high, Vx1_high = Vx[ID_Eafter[high_Eindices]-1], Vx[ID_Eafter[high_Eindices]]
             Vz1_high = Vz[ID_Eafter[high_Eindices]]
             z1_high = z[ID_Eafter[high_Eindices]]
-            dt_ratio_high = (-2*Vz1_high + np.sqrt(4*Vz1_high**2 - 4*9.81*(2*d_h-2*z1_high))) / (2*9.81) / dt
-            newhigh_Eindices = np.where(dt_ratio_high < 1)
-            VExi[high_Eindices[0][newhigh_Eindices[0]]] = dt_ratio_high[newhigh_Eindices[0]] * (Vx0_high[newhigh_Eindices[0]]-Vx1_high[newhigh_Eindices[0]]) + Vx1_high[newhigh_Eindices[0]]
-            #renew the stored ejection velocities
+            
+            mask = 4*Vz1_high**2 - 4*9.81*(2*d_h-2*z1_high) > 0
+            dt_ratio_high = np.empty_like(Vz1_high)
+            newhigh_Eindices = np.where(dt_ratio_high < 1)[0]
+            VExi[high_Eindices[newhigh_Eindices]] = dt_ratio_high[newhigh_Eindices] * (Vx0_high[newhigh_Eindices]-Vx1_high[newhigh_Eindices]) + Vx1_high[newhigh_Eindices]
+            
+            # if 4*Vz1_high**2 - 4*9.81*(2*d_h-2*z1_high) > 0:
+            #     dt_ratio_high = (-2*Vz1_high + np.sqrt(4*Vz1_high**2 - 4*9.81*(2*d_h-2*z1_high))) / (2*9.81) / dt
+            #     newhigh_Eindices = np.where(dt_ratio_high < 1)
+            #     VExi[high_Eindices[0][newhigh_Eindices[0]]] = dt_ratio_high[newhigh_Eindices[0]] * (Vx0_high[newhigh_Eindices[0]]-Vx1_high[newhigh_Eindices[0]]) + Vx1_high[newhigh_Eindices[0]]
+            # renew the stored ejection velocities
             VExzi = np.sqrt(VExi**2+VEzi**2)
             
             ID_Dbefore = ID_Di - 1
@@ -155,7 +180,7 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
                 D_vector_t[interval-1].append([VDxzi[j], ThetaDi[j], ID_Dbefore[j], xDi[j], i, mp])
             for j, dix in enumerate(ID_Di_new):
                 interval = min(int(np.ceil((idx - 1) / (len(X[:, i]) / N_inter))), N_inter)
-                VD_TD_vector_t[interval-1].append([VDxzi[j], abs(Vrepxi[j]), Trepi[j], Tdepi[j]])
+                VD_TD_vector_t[interval-1].append([VDxzi[j], ThetaDi[j], abs(Vrepxi[j]), Trepi[j], Tdepi[j]])
                 
             
         else:
