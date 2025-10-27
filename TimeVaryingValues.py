@@ -35,7 +35,7 @@ for i in range(2,7): #Theta = 0.02-0.06
 dt = 0.01
 g = 9.81
 D = 0.00025
-coe_h = 14 #critial height for a mobile particle to reach
+coe_h = 15 #critial height for a mobile particle to reach
 coe_sal_h = 17
 N_inter = 500 #number of output timesteps for erosion and deposition properties
 t_inter = np.linspace(0,5,N_inter+1)
@@ -250,45 +250,45 @@ for i in cases:
 
 t_plot = np.linspace(0, 5, 500)
 
-plt.figure(figsize=(12, 6))
-for i in range(5):  # 5 groups
-    plt.subplot(2, 3, i+1)
-    index = i * 5 
-    # example
-    RIM_i = savgol_keep_first(RIM[index], window_length=21, polyorder=2) #smooth
-    # RIM_i = RIM[index]
-    U_center = 0.5*(U_list[i][:-1] + U_list[i][1:]) 
-    plt.plot(t_plot, RIM_i, '.', label='Impact mass rate')
-    plt.plot(t_plot, U_center, '.', label='U')
-    plt.title(f'$\Theta$=0.0{i+2}')
-    plt.ylabel(r'$R_{im}$ [kg/m$^2$/s]')
-    plt.xlabel(r't [s]')
-    plt.xlim(left=0)
-    plt.ylim(bottom=0)
-    plt.grid(True)
-plt.legend()
-plt.tight_layout()
-plt.show()
+# plt.figure(figsize=(12, 6))
+# for i in range(5):  # 5 groups
+#     plt.subplot(2, 3, i+1)
+#     index = i * 5 
+#     # example
+#     RIM_i = savgol_keep_first(RIM[index], window_length=21, polyorder=2) #smooth
+#     # RIM_i = RIM[index]
+#     U_center = 0.5*(U_list[i][:-1] + U_list[i][1:]) 
+#     plt.plot(t_plot, RIM_i, '.', label='Impact mass rate')
+#     plt.plot(t_plot, U_center, '.', label='U')
+#     plt.title(f'$\Theta$=0.0{i+2}')
+#     plt.ylabel(r'$R_{im}$ [kg/m$^2$/s]')
+#     plt.xlabel(r't [s]')
+#     plt.xlim(left=0)
+#     plt.ylim(bottom=0)
+#     plt.grid(True)
+# plt.legend()
+# plt.tight_layout()
+# plt.show()
 
-plt.figure(figsize=(12, 6))
-for i in range(5):  # 5 groups
-    plt.subplot(2, 3, i+1)
-    index = i * 5 
-    # example
-    D_i = savgol_keep_first(MD[index], window_length=21, polyorder=2) #smooth
-    # D_i = MD[index]
-    U_center = 0.5*(U_list[i][:-1] + U_list[i][1:]) 
-    plt.plot(t_plot, D_i, '.', label='Deposition rate')
-    plt.plot(t_plot, U_center, '.', label='U')
-    plt.title(f'$\Theta$=0.0{i+2}')
-    plt.ylabel(r'$D$ [kg/m$^2$/s]')
-    plt.xlabel(r't [s]')
-    plt.xlim(left=0)
-    plt.ylim(bottom=0)
-    plt.grid(True)
-plt.legend()
-plt.tight_layout()
-plt.show()
+# plt.figure(figsize=(12, 6))
+# for i in range(5):  # 5 groups
+#     plt.subplot(2, 3, i+1)
+#     index = i * 5 
+#     # example
+#     D_i = savgol_keep_first(MD[index], window_length=21, polyorder=2) #smooth
+#     # D_i = MD[index]
+#     U_center = 0.5*(U_list[i][:-1] + U_list[i][1:]) 
+#     plt.plot(t_plot, D_i, '.', label='Deposition rate')
+#     plt.plot(t_plot, U_center, '.', label='U')
+#     plt.title(f'$\Theta$=0.0{i+2}')
+#     plt.ylabel(r'$D$ [kg/m$^2$/s]')
+#     plt.xlabel(r't [s]')
+#     plt.xlim(left=0)
+#     plt.ylim(bottom=0)
+#     plt.grid(True)
+# plt.legend()
+# plt.tight_layout()
+# plt.show()
 
 
 # plt.figure(figsize=(12, 6))
@@ -330,7 +330,7 @@ plt.show()
 # plt.show()
 
 # store E and D in files
-idxs = [0, 5, 10, 15, 20]
+idxs = np.array([0, 5, 10, 15, 20]) 
 
 def get_entry(d, k):
     """Handle dicts with int or str keys."""
