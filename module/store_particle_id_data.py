@@ -15,7 +15,7 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
     Vxstored = np.array([[time_step['Velocity'][i][0] for i in ID_Particle] for time_step in data])
     Vzstored = np.array([[time_step['Velocity'][i][2] for i in ID_Particle] for time_step in data])
     Rp = np.array([[time_step['Radius'][i] for i in ID_Particle] for time_step in data])
-    Vp = (4/3)*math.pi*Rp**3 
+    Vp = (4/3)*np.pi*Rp**3 
     
     EDindices = []
     VExVector, VEzVector = [], []
@@ -62,7 +62,6 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
 
         VX.append(Vx)
         VZ.append(Vz)
-        E.append(e)
 
         if ID_Ei.size > 0:
             ID_Eafter = ID_Ei + 1
@@ -157,25 +156,48 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
             EEi = 0.5*mp*VExzi**2
             ThetaEi_radian = np.arctan(np.abs(VEzi/VExi))
             ThetaEi = np.degrees(ThetaEi_radian)
-            # VExVector.extend(VExi)
-            # VEzVector.extend(VEzi)
-            #ME_tot += np.sum(mE) / 5 / A
-            #MD_tot += np.sum(mD) / 5 / A
             # Distribute values into intervals
+            # print('ID_Ei', ID_Ei)
             for j, idx in enumerate(ID_Ei):
                 interval = min(int(np.ceil((idx + 1) / (len(X[:, i]) / N_inter))), N_inter)
                 VEx[interval - 1].append(VExi[j]*mp)
                 VEz[interval - 1].append(VEzi[j]*mp)
                 VExz_t[interval - 1].append(VExzi[j]*mp)
-                ME[interval - 1] += mp / (5 / N_inter) / A
+                # print('ID_Ei[j]+1', ID_Ei[j]+1)
+                Ei = mp*g*z[ID_Ei[j]+1] + 0.5*mp*Vz[ID_Ei[j]+1]**2
+                zp_top = Ei/mp/g #the top height this particle can reach (should be > d_h)
+                if zp_top < d_h:
+                    print('Warning: erosion zp_top < d_h')
+                zp_bottom = zp_top - Rp[0,i]
+                if zp_bottom >= d_h:
+                    mE = mp 
+                else:
+                    h = zp_top - d_h + Rp[0,i]
+                    V_cap = np.pi*h**2*(3*Rp[0,i] -h)/3
+                    mE = V_cap*2650 
+                ME[interval - 1] += mE/(5 / N_inter) / A
                 MpE[interval - 1] += mp
                 E_vector_t[interval - 1].append([VExzi[j], ID_Eafter[j], xEi[j], i, zEi[j], EEi[j], ThetaEi[j], mp])
+            # print('ID_Di',ID_Di)
             for j, idx in enumerate(ID_Di):
                 interval = min(int(np.ceil((idx - 1) / (len(X[:, i]) / N_inter))), N_inter)
                 VDx[interval - 1].append(VDxi[j]*mp)
                 VDz[interval - 1].append(VDzi[j]*mp)
                 VDxz_t[interval - 1].append(VDxzi[j]*mp)
-                MD[interval - 1] += mp / (5 / N_inter) / A
+                # print('ID_Di[j]-1', ID_Di[j]-1)
+                E = mp*g*z[ID_Di[j]-1] + 0.5*mp*Vz[ID_Di[j]-1]**2
+                zp_top = E/mp/g
+                if zp_top < d_h:
+                    print('Warning: deposition zp_top < d_h')
+                zp_bottom = zp_top - Rp[0,i]
+                if zp_bottom >= d_h:
+                    mD = mp 
+                else:
+                    h = zp_top - d_h + Rp[0,i]
+                    V_cap = np.pi*h**2*(3*Rp[0,i] -h)/3
+                    mD = V_cap*2650
+                # print('idx in ID_Di',idx,'mp',mp,'mD',mD)
+                MD[interval - 1] += mD/(5 / N_inter) / A
                 MpD[interval - 1] += mp
                 D_vector_t[interval-1].append([VDxzi[j], ThetaDi[j], ID_Dbefore[j], xDi[j], i, mp])
             for j, dix in enumerate(ID_Di_new):
@@ -202,7 +224,7 @@ def output_id(e, thre_e, dt):
     t = np.linspace(dt, 5, len(e))
     g = 9.81
 
-    condition_indices = np.where(e <= thre_e)[0]
+    condition_indices = np.where(e < thre_e)[0]
     segments = [] # static intervals
 
     if condition_indices.size > 0:
