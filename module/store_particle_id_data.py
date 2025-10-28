@@ -38,7 +38,7 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
     Ly = 2 * D
     A = Lx * Ly
     
-    t = np.linspace(dt, 5, int(5 / dt))
+    t = np.linspace(dt, 5, int(5 / dt)+1)
 
     for i in range(len(ID_Particle)):
         z = Z[:,i]
@@ -54,7 +54,9 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
         e = ke + pe
         d_h = coe_h * D
         thre_e = g * d_h
-        ID_Ei, ID_Di = output_id(e, thre_e, dt)
+        ID_Ei, ID_Di = output_id(e, z, thre_e, dt)
+        if ID_Ei.size == 0 and ID_Di.size > 0:
+            print('warning: 0 ID_Ei but ID_Dis')
 
         # Correct Vx when an ejected particle crosses the boundary
         # Index_neg = np.where(Vx < -Lx * 0.25 / dt)[0]
@@ -126,14 +128,15 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
             ThetaDi = np.degrees(ThetaDi_radian)
             # get the id at the top of the reptation hops
             reptop_indices = []
-            if ID_Di[0] < ID_Ei[0]:
+            if ID_Di[0] <= ID_Ei[0]:
                 ID_Di_new = ID_Di[1:]     # remove the first element
             else:
                 ID_Di_new = ID_Di.copy()  # keep the original array
-            if ID_Ei[-1] > ID_Di[-1]:
+            if ID_Ei[-1] >= ID_Di[-1]:
                 ID_Ei_new = ID_Ei[:-1]     # remove the last element
             else:
                 ID_Ei_new = ID_Ei.copy()  # keep the original array
+                
             for start, end in zip(ID_Ei_new, ID_Di_new):
                 Vz_rep = Vz[start:end]
                 crossing_indice = np.where((Vz_rep[:-1] >= 0) & (Vz_rep[1:] < 0))[0]
@@ -143,7 +146,7 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
                     reptop_indices.append(end)
                 else:
                     reptop_indices.append(end-1)
-            
+                
             IDdepai = np.maximum(-np.asarray(ID_Di_new) + 2*np.asarray(reptop_indices), 0)
             Vrepxi = hop_average_Usal(t, Vx, ID_Di_new, IDdepai)
             Trepi = (ID_Di_new - IDdepai) * dt # reptation time
@@ -219,34 +222,48 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
     #VExz_mean_t, VEz_mean_t
     return EDindices, ME, MD, VExz_mean_t, VDxz_mean_t, D_vector_t, E_vector_t, VD_TD_vector_t
 
-def output_id(e, thre_e, dt):
+def output_id(e, z, thre_e, dt):
     ID_E, ID_D = [], []
     t = np.linspace(dt, 5, len(e))
     g = 9.81
 
-    condition_indices = np.where(e < thre_e)[0]
+    condition_indices = np.where(e <= thre_e)[0]
     segments = [] # static intervals
 
     if condition_indices.size > 0:
         start_idx = condition_indices[0]
         for i in range(1, len(condition_indices)):
             #the interval between every E and D should be long enough to be considered saltation
-            if (t[condition_indices[i]] - t[condition_indices[i - 1]]) > np.sqrt((thre_e / g - 12 * 0.00025) * 2 / g)*2:
+        #     if (t[condition_indices[i]] - t[condition_indices[i - 1]]) > np.sqrt((thre_e / g - 12 * 0.00025) * 2 / g)*2:
+        #         end_idx = condition_indices[i - 1]
+        #         #set an interval between every ID_D and ID_E to avoid counting rebounds
+        #         # the particle has to be static over 0.02s between a deposition and an ejection
+        #         #for now use 2*0.01s from the coarsest output steps
+        #         if (t[end_idx] - t[start_idx]) > 0.02:
+        #             segments.append((start_idx, end_idx))
+        #         start_idx = condition_indices[i]
+        # if (t[condition_indices[-1]] - t[start_idx]) > 0.02:
+        #     segments.append((start_idx, condition_indices[-1]))
+        
+            # if (t[condition_indices[i]] - t[condition_indices[i - 1]]) > np.sqrt((thre_e / g - 12 * 0.00025) * 2 / g)*2:
+            if condition_indices[i] > condition_indices[i - 1] + 1:
                 end_idx = condition_indices[i - 1]
-                #set an interval between every ID_D and ID_E to avoid counting rebounds
-                # the particle has to be static over 0.02s between a deposition and an ejection
-                #for now use 2*0.01s from the coarsest output steps
-                if (t[end_idx] - t[start_idx]) > 0.02:
-                    segments.append((start_idx, end_idx))
+                segments.append((start_idx, end_idx))
                 start_idx = condition_indices[i]
-        if (t[condition_indices[-1]] - t[start_idx]) > 0.02:
-            segments.append((start_idx, condition_indices[-1]))
+        segments.append((start_idx, condition_indices[-1]))
     
+    # print('segments', segments)
     if len(segments) > 1:
         ID_E = [seg[1] for seg in segments[:]]
         ID_D = [seg[0] for seg in segments[:]]
         #delete the ID_D if it appears at the first time step and the ID_E if it appears at the last time step
         ID_D = [id_d for id_d in ID_D if id_d > 0]
         ID_E = [id_e for id_e in ID_E if id_e < len(e)-1]
+        if ID_D[-1] <= ID_E[-1] and np.all(z[ID_E[-1]:] < thre_e / g):
+            print('z[ID_E[-1]:]', z[ID_E[-1]:])
+            ID_E = ID_E[:-1]
+        if ID_D[0] <= ID_E[0] and np.all(z[:ID_D[0]] < thre_e / g):
+            print('z[:ID_D[0]]', z[:ID_D[0]])
+            ID_D = ID_D[1:]
 
     return np.array(ID_E), np.array(ID_D)
