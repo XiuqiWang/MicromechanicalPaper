@@ -35,7 +35,7 @@ for i in range(2,7): #Theta = 0.02-0.06
 dt = 0.01
 g = 9.81
 D = 0.00025
-coe_h = 15 #critial height for a mobile particle to reach
+coe_h = 13.5 #critial height for a mobile particle to reach
 coe_sal_h = 17
 N_inter = 500 #number of output timesteps for erosion and deposition properties
 t_inter = np.linspace(0,5,N_inter+1)
@@ -47,7 +47,7 @@ colors = plt.cm.viridis(np.linspace(1, 0, 5))  # 5 colors
 colors_n = plt.cm.plasma(np.linspace(0, 1, 3))
 t_ver = np.linspace(dt, 5, 500)
 
-#initialize
+# initialize
 EDindices = defaultdict(list)
 ME,MD,MoE,MoD = defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list)
 VExz_mean_t, VDxz_mean_t= defaultdict(list), defaultdict(list)
@@ -76,14 +76,51 @@ for i in range(25):
     ParticleID_int = ParticleID.astype(int)
     #cal erosion and deposition properties for each Omega
     #EDindices, E, VX, VExVector, VEzVector, VEx, VEz, ME, MD
-    EDindices[i], ME[i], MD[i], VExz_mean_t[i], VDxz_mean_t[i], D_vector_t[i], E_vector_t[i], _=module.store_particle_id_data(data,ParticleID_int,coe_h,dt,N_inter,D)
+    EDindices[i], ME[i], MD[i], VExz_mean_t[i], VDxz_mean_t[i], D_vector_t[i], E_vector_t[i], _=module.detectED_byZ(data,ParticleID_int,coe_h,dt,N_inter,D)
     #cal rebound properties for each Omega
-    ParticleID_sal=np.linspace(0, num_p-1, num_p)#(num_p-310,num_p-1,310)
-    ParticleID_salint = ParticleID_sal.astype(int)
-    X[i] = np.array([[time_step['Position'][i][0] for i in ParticleID_salint] for time_step in data])
-    Z[i] = np.array([[time_step['Position'][i][2] for i in ParticleID_salint] for time_step in data])
-    Par[i], VZ[i], exz_mean_t[i], ez_mean_t[i], VIM_mean_t[i], ThetaIM_mean_t[i], RIM[i], exz_vector_t[i], IM_vector_t[i]=module.store_sal_id_data(data,ParticleID_salint, coe_sal_h, dt, N_inter, D)
- 
+    # ParticleID_sal=np.linspace(0, num_p-1, num_p)#(num_p-310,num_p-1,310)
+    # ParticleID_salint = ParticleID_sal.astype(int)
+    # X[i] = np.array([[time_step['Position'][i][0] for i in ParticleID_salint] for time_step in data])
+    # Z[i] = np.array([[time_step['Position'][i][2] for i in ParticleID_salint] for time_step in data])
+    # Par[i], VZ[i], exz_mean_t[i], ez_mean_t[i], VIM_mean_t[i], ThetaIM_mean_t[i], RIM[i], exz_vector_t[i], IM_vector_t[i]=module.store_sal_id_data(data,ParticleID_salint, coe_sal_h, dt, N_inter, D)
+
+C_com_list = []
+C_list = []
+idxs = np.array([0, 5, 10, 15, 20])
+t_dpm = np.linspace(0.01, 5, 501)
+for i in range(5):
+    cg = np.loadtxt(f"../ContinuumModel/dcdt/Discrete_C/S00{i+2}DryC_discrete.txt")
+    C = cg
+    C_list.append(C)
+    N = len(C)       
+    c_com = np.zeros(N)
+    c_com[0] = C[0]
+    
+    idx = idxs[i]
+    for j in range(N-1):
+        dcdt = ME[idx][j] - MD[idx][j]
+        c_com[j+1] = c_com[j] + dcdt * dt
+    C_com_list.append(c_com)
+
+# plt.close('all')
+plt.figure(figsize=(10,9))
+for i in range(5):
+    plt.subplot(3,2,i+1)
+    plt.plot(t_dpm, C_list[i], label='DPM CG data')
+    plt.plot(t_dpm, C_com_list[i], label='computed from E and D')
+    plt.xlabel('t [s]')
+    plt.ylabel(r'$C$ [kg/m$^2$]')
+    plt.ylim(0,0.3)
+plt.legend()
+plt.tight_layout()
+
+
+# E_net = sum(ME*dt) - sum(MD*dt)
+# print('C0',C[0],'E_net', E_net)
+# print('net deposition', (C[0] + E_net) * (100*2*D**2))
+# mp = np.pi/6 * D**3 * 2650
+# N_differ = (C[0] + E_net) * (100*2*D**2) / mp
+
 # exz_all,Vim_all,VD_all,ThetaD_all,Theta_all,Thetare_all,impact_list,impact_deposition_list,ejection_list = defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list)
 # ThetaE_all, UE_all = defaultdict(list), defaultdict(list)
 # N_range = np.full(25, 0).astype(int)
@@ -239,16 +276,16 @@ def savgol_keep_first(x, window_length=21, polyorder=2):
     y[0] = x[0]             # keep the first value fixed
     return y
 
-cases = range(2, 7)  # S002..S006
-C_list, U_list, Ua_list, E_list, D_list = [], [], [], [], []
-t_dpm = np.linspace(0.01, 5, 501)
-for i in cases:
-    # CG data: columns -> Q, C, U (501 rows in your example)
-    cg = np.loadtxt(f"CGdata/Shields{i:03d}dry.txt")
-    C_list.append(cg[:, 1])
-    U_list.append(cg[:, 2])
+# cases = range(2, 7)  # S002..S006
+# C_list, U_list, Ua_list, E_list, D_list = [], [], [], [], []
+# t_dpm = np.linspace(0.01, 5, 501)
+# for i in cases:
+#     # CG data: columns -> Q, C, U (501 rows in your example)
+#     cg = np.loadtxt(f"CGdata/Shields{i:03d}dry.txt")
+#     C_list.append(cg[:, 1])
+#     U_list.append(cg[:, 2])
 
-t_plot = np.linspace(0, 5, 500)
+# t_plot = np.linspace(0, 5, 500)
 
 # plt.figure(figsize=(12, 6))
 # for i in range(5):  # 5 groups
@@ -330,26 +367,26 @@ t_plot = np.linspace(0, 5, 500)
 # plt.show()
 
 # store E and D in files
-idxs = np.array([0, 5, 10, 15, 20]) 
+idxs = np.array([0, 5, 10, 15, 20])+4
 
 def get_entry(d, k):
     """Handle dicts with int or str keys."""
     return d.get(k, d.get(str(k)))
 
 for j in idxs:
-    Rim = np.asarray(get_entry(RIM, j))
+    # Rim = np.asarray(get_entry(RIM, j))
     E = np.asarray(get_entry(ME, j))
     D = np.asarray(get_entry(MD, j))
 
-    if Rim is None or E is None or D is None:
+    if E is None or D is None:
         raise KeyError(f"Missing Rim/ME/MD entry for index {j}")
 
     # truncate to common length if they differ
-    n = min(len(Rim), len(E), len(D))
-    out = np.column_stack([Rim[:n], E[:n], D[:n]])
+    n = min(len(E), len(D))
+    out = np.column_stack([E[:n], D[:n]])
 
     shield = 2 + j // 5           # j=0,5,10,15,20 -> 2..6
-    fname = f"S00{shield}RimEandD.txt"
+    fname = f"S00{shield}M20EandD.txt"
 
     np.savetxt(fname, out, fmt="%.6e", delimiter="\t",
                 header="", comments="")
