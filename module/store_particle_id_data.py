@@ -39,7 +39,6 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
     A = Lx * Ly
     
     t = np.linspace(dt, 5, int(5 / dt)+1)
-
     for i in range(len(ID_Particle)):
         z = Z[:,i]
         x = X[:,i]
@@ -54,7 +53,7 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
         e = ke + pe
         d_h = coe_h * D
         thre_e = g * d_h
-        ID_Ei, ID_Di = output_id(e, z, thre_e, dt)
+        ID_Ei, ID_Di = output_id(e, z, thre_e, dt, Rp[0,i])
         if ID_Ei.size == 0 and ID_Di.size > 0:
             print('warning: 0 ID_Ei but ID_Dis')
 
@@ -69,60 +68,66 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
             ID_Eafter = ID_Ei + 1
             ID_Eafter = np.clip(ID_Eafter, 0, len(Vx)-2)
             VExi,VEzi = Vx[ID_Eafter],Vz[ID_Eafter]
-            #correct ejection velocities at the evaluation height by extrapolating
+            #correct vertical ejection velocities at the evaluation height by extrapolating
             high_Eindices = np.where(z[ID_Eafter] > d_h)[0]
             low_Eindices = np.where(z[ID_Eafter] < d_h)[0]
             VEzi[high_Eindices] = np.sqrt(2*9.81*(z[ID_Eafter[high_Eindices]]-d_h)+Vz[ID_Eafter[high_Eindices]]**2)
-            
-            mask = np.where(Vz[ID_Eafter[low_Eindices]]**2 - 2*9.81*(d_h-z[ID_Eafter[low_Eindices]]) > 0)[0]
-            VEzi[low_Eindices[mask]] = np.sqrt(Vz[ID_Eafter[low_Eindices[mask]]]**2 - 2*9.81*(d_h-z[ID_Eafter[low_Eindices[mask]]]))  
-            # print('ID_Eafter', ID_Eafter,'low_Eindices',low_Eindices,'mask', mask)
-            # indices = ID_Eafter[low_Eindices[mask]].astype(int)
-            # VEzi[low_Eindices[mask]] = np.sqrt(Vz[indices]**2 - 2*9.81*(d_h - z[indices]))
-            
-            # if Vz[ID_Eafter[low_Eindices]]**2 - 2*9.81*(d_h-z[ID_Eafter[low_Eindices]]) > 0:
-            #     VEzi[low_Eindices] = np.sqrt(Vz[ID_Eafter[low_Eindices]]**2 - 2*9.81*(d_h-z[ID_Eafter[low_Eindices]]))  
+        
+            maskE1 = np.where(Vz[ID_Eafter[low_Eindices]]**2 - 2*9.81*(d_h-z[ID_Eafter[low_Eindices]]) > 0)[0]
+            VEzi[low_Eindices[maskE1]] = np.sqrt(Vz[ID_Eafter[low_Eindices[maskE1]]]**2 - 2*9.81*(d_h-z[ID_Eafter[low_Eindices[maskE1]]]))  
+    
             #correct horizontal ejection velocity by interpolating (for the ones lower than 1.5D)
             Vz1_low,Vx1_low,Vx2_low = Vz[ID_Eafter[low_Eindices]],Vx[ID_Eafter[low_Eindices]],Vx[ID_Eafter[low_Eindices]+1]
             z1_low = z[ID_Eafter[low_Eindices]]
-            
-            mask = 4*Vz1_low**2 - 4*9.81*(2*d_h - 2*z1_low) > 0
+            maskE2 = 4*Vz1_low**2 - 4*9.81*(2*d_h - 2*z1_low) > 0
             dt_ratio_low = np.empty_like(Vz1_low)
             dt_ratio_low[:] = np.nan  # optional initialization
-            dt_ratio_low[mask] = (2*Vz1_low[mask] + np.sqrt(4*Vz1_low[mask]**2 - 4*9.81*(2*d_h - 2*z1_low[mask]))) / (2*9.81*dt)
+            dt_ratio_low[maskE2] = (Vz1_low[maskE2] - np.sqrt(Vz1_low[maskE2]**2 - 2*9.81*(d_h - z1_low[maskE2]))) / 9.81
             newlow_Eindices = np.where(dt_ratio_low < 1)[0]
-            VExi[low_Eindices[newlow_Eindices]] = dt_ratio_low[newlow_Eindices] * (Vx2_low[newlow_Eindices]-Vx1_low[newlow_Eindices]) + Vx1_low[newlow_Eindices]
-           
-            # if 4*Vz1_low**2 - 4*9.81*(2*d_h-2*z1_low) > 0:
-            #     dt_ratio_low = (2*Vz1_low + np.sqrt(4*Vz1_low**2 - 4*9.81*(2*d_h-2*z1_low))) / (2*9.81) /dt
-            #     newlow_Eindices = np.where(dt_ratio_low < 1)
-            #     VExi[low_Eindices[0][newlow_Eindices[0]]] = dt_ratio_low[newlow_Eindices[0]] * (Vx2_low[newlow_Eindices[0]]-Vx1_low[newlow_Eindices[0]]) + Vx1_low[newlow_Eindices[0]]
+            VExi[low_Eindices[newlow_Eindices]] = dt_ratio_low[newlow_Eindices] / dt * (Vx2_low[newlow_Eindices]-Vx1_low[newlow_Eindices]) + Vx1_low[newlow_Eindices]
            
             #for the ones higher than 1.5D
             Vx0_high, Vx1_high = Vx[ID_Eafter[high_Eindices]-1], Vx[ID_Eafter[high_Eindices]]
             Vz1_high = Vz[ID_Eafter[high_Eindices]]
-            z1_high = z[ID_Eafter[high_Eindices]]
-            
-            mask = 4*Vz1_high**2 - 4*9.81*(2*d_h-2*z1_high) > 0
-            dt_ratio_high = np.empty_like(Vz1_high)
+            z1_high = z[ID_Eafter[high_Eindices]]          
+            dt_ratio_high = (-Vz1_high + np.sqrt(Vz1_high**2 + 2*9.81*(z1_high - dh ))) / 9.81
             newhigh_Eindices = np.where(dt_ratio_high < 1)[0]
-            VExi[high_Eindices[newhigh_Eindices]] = dt_ratio_high[newhigh_Eindices] * (Vx0_high[newhigh_Eindices]-Vx1_high[newhigh_Eindices]) + Vx1_high[newhigh_Eindices]
+            VExi[high_Eindices[newhigh_Eindices]] = Vx1_high[newhigh_Eindices] - dt_ratio_high[newhigh_Eindices] / dt * (Vx1_high[newhigh_Eindices]-Vx0_high[newhigh_Eindices]) 
             
-            # if 4*Vz1_high**2 - 4*9.81*(2*d_h-2*z1_high) > 0:
-            #     dt_ratio_high = (-2*Vz1_high + np.sqrt(4*Vz1_high**2 - 4*9.81*(2*d_h-2*z1_high))) / (2*9.81) / dt
-            #     newhigh_Eindices = np.where(dt_ratio_high < 1)
-            #     VExi[high_Eindices[0][newhigh_Eindices[0]]] = dt_ratio_high[newhigh_Eindices[0]] * (Vx0_high[newhigh_Eindices[0]]-Vx1_high[newhigh_Eindices[0]]) + Vx1_high[newhigh_Eindices[0]]
             # renew the stored ejection velocities
             VExzi = np.sqrt(VExi**2+VEzi**2)
             
+            # depositions
             ID_Dbefore = ID_Di - 1
             VDxi = Vx[ID_Dbefore]
             VDzi = Vz[ID_Dbefore]
             #correct vertical deposition velocities at the evaluation height by extrapolating
-            high_Dindices = np.where(z[ID_Dbefore] > d_h)
-            low_Dindices = np.where(z[ID_Dbefore] < d_h)
+            high_Dindices = np.where(z[ID_Dbefore] > d_h)[0]
+            low_Dindices = np.where(z[ID_Dbefore] < d_h)[0]
             VDzi[high_Dindices] = -np.sqrt(2*9.81*(z[ID_Dbefore[high_Dindices]]-d_h)+Vz[ID_Dbefore[high_Dindices]]**2)
-            VDzi[low_Dindices] = -np.sqrt(Vz[ID_Dbefore[low_Dindices]]**2 - 2*9.81*(d_h-z[ID_Dbefore[low_Dindices]]))    
+            maskD1 = np.where(Vz[ID_Dbefore[low_Dindices]]**2 - 2*9.81*(d_h-z[ID_Dbefore[low_Dindices]]) > 0)[0]
+            VDzi[low_Dindices[maskD1]] = -np.sqrt(Vz[ID_Dbefore[low_Dindices[maskD1]]]**2 - 2*9.81*(d_h-z[ID_Dbefore[low_Dindices[maskD1]]]))    
+            
+            # horizontal deposition velocity (lower than 1.5D)
+            VzD1_low,VxD1_low,VxD0_low = Vz[ID_Dbefore[low_Dindices]],Vx[ID_Dbefore[low_Dindices]],Vx[ID_Dbefore[low_Dindices]-1]
+            zD1_low = z[ID_Dbefore[low_Dindices]]
+            maskD2 =  > 0
+            dt_ratio_lowD = np.empty_like(VzD1_low)
+            dt_ratio_lowD[:] = np.nan  # optional initialization
+            dt_ratio_lowD[maskD2] = (-VzD1_low[maskD2] + np.sqrt(VzD1_low[maskD2]**2 + 2*9.81*(d_h - zD1_low[maskD2]))) / 9.81
+            newlow_Dindices = np.where(dt_ratio_lowD < 1)[0]
+            VDxi[low_Dindices[newlow_Dindices]] = - dt_ratio_lowD[newlow_Dindices] /dt * (VxD1_low[newlow_Dindices]-VxD0_low[newlow_Dindices]) + VxD1_low[newlow_Dindices]
+            
+            # higher than 1.5D
+            VzD2_high,VxD2_high,VxD1_high = Vz[ID_Dbefore[low_Dindices]],Vx[ID_Dbefore[low_Dindices]],Vx[ID_Dbefore[low_Dindices]-1]
+            zD2_low = z[ID_Dbefore[low_Dindices]]
+            maskD3 = 4*VzD2_low**2 - 4*9.81*(2*d_h - 2*zD2_low) > 0
+            dt_ratio_highD = np.empty_like(VzD2_high)
+            dt_ratio_highD[:] = np.nan  # optional initialization
+            dt_ratio_highD[maskD3] = (2*VzD1_high[maskD3] + np.sqrt(4*VzD2_low[maskD3]**2 - 4*9.81*(2*d_h - 2*zD2_low[maskD3]))) / (2*9.81*dt)
+            newlow_Dindices = np.where(dt_ratio_lowD < 1)[0]
+            VDxi[low_Dindices[newlow_Dindices]] = VxD2_low[newlow_Dindices] - dt_ratio_lowD[newlow_Dindices] * (VxD2_low[newlow_Dindices] + VxD1_low[newlow_Dindices])
+            
             VDxzi = np.sqrt(VDxi**2+VDzi**2)
             ThetaDi_radian = np.arctan(np.abs(VDzi/VDxi))
             ThetaDi = np.degrees(ThetaDi_radian)
@@ -168,17 +173,18 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
                 VExz_t[interval - 1].append(VExzi[j]*mp)
                 # print('ID_Ei[j]+1', ID_Ei[j]+1)
                 Ei = mp*g*z[ID_Ei[j]+1] + 0.5*mp*Vz[ID_Ei[j]+1]**2
-                zp_top = Ei/mp/g #the top height this particle can reach (should be > d_h)
-                if zp_top < d_h:
-                    print('Warning: erosion zp_top < d_h')
-                zp_bottom = zp_top - Rp[0,i]
-                if zp_bottom >= d_h:
-                    mE = mp 
-                else:
-                    h = zp_top - d_h + Rp[0,i]
-                    V_cap = np.pi*h**2*(3*Rp[0,i] -h)/3
-                    mE = V_cap*2650 
-                ME[interval - 1] += mE/(5 / N_inter) / A
+                # zp_top = Ei/mp/g #the top height this particle can reach (should be > d_h)
+                # if zp_top < d_h:
+                #     print('Warning: erosion zp_top < d_h')
+                # zp_bottom = zp_top - Rp[0,i]
+                # if zp_bottom >= d_h:
+                #     mE = mp 
+                # else:
+                #     h = zp_top - d_h + Rp[0,i]
+                #     V_cap = np.pi*h**2*(3*Rp[0,i] -h)/3
+                #     mE = V_cap*2650 
+                mE = mp
+                ME[interval - 1] += mE/((5-dt) / N_inter) / A
                 MpE[interval - 1] += mp
                 E_vector_t[interval - 1].append([VExzi[j], ID_Eafter[j], xEi[j], i, zEi[j], EEi[j], ThetaEi[j], mp])
             # print('ID_Di',ID_Di)
@@ -189,18 +195,19 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
                 VDxz_t[interval - 1].append(VDxzi[j]*mp)
                 # print('ID_Di[j]-1', ID_Di[j]-1)
                 E = mp*g*z[ID_Di[j]-1] + 0.5*mp*Vz[ID_Di[j]-1]**2
-                zp_top = E/mp/g
-                if zp_top < d_h:
-                    print('Warning: deposition zp_top < d_h')
-                zp_bottom = zp_top - Rp[0,i]
-                if zp_bottom >= d_h:
-                    mD = mp 
-                else:
-                    h = zp_top - d_h + Rp[0,i]
-                    V_cap = np.pi*h**2*(3*Rp[0,i] -h)/3
-                    mD = V_cap*2650
+                # zp_top = E/mp/g
+                # if zp_top < d_h:
+                #     print('Warning: deposition zp_top < d_h')
+                # zp_bottom = zp_top - Rp[0,i]
+                # if zp_bottom >= d_h:
+                #     mD = mp 
+                # else:
+                #     h = zp_top - d_h + Rp[0,i]
+                #     V_cap = np.pi*h**2*(3*Rp[0,i] -h)/3
+                #     mD = V_cap*2650
+                mD = mp
                 # print('idx in ID_Di',idx,'mp',mp,'mD',mD)
-                MD[interval - 1] += mD/(5 / N_inter) / A
+                MD[interval - 1] += mD/((5-dt) / N_inter) / A
                 MpD[interval - 1] += mp
                 D_vector_t[interval-1].append([VDxzi[j], ThetaDi[j], ID_Dbefore[j], xDi[j], i, mp])
             for j, dix in enumerate(ID_Di_new):
@@ -218,12 +225,13 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
             VExz_mean_t[i] = np.sum(VExz_t[i])/MpE[i]
         if VDxz_t[i]:
             VDxz_mean_t[i] = np.sum(VDxz_t[i])/MpD[i]      
-            
+    
     #VExz_mean_t, VEz_mean_t
     return EDindices, ME, MD, VExz_mean_t, VDxz_mean_t, D_vector_t, E_vector_t, VD_TD_vector_t
 
-def output_id(e, z, thre_e, dt):
+def output_id(e, z, thre_e, dt, Rp):
     ID_E, ID_D = [], []
+    ID_Ez, ID_Dz = [], []
     t = np.linspace(dt, 5, len(e))
     g = 9.81
 
@@ -251,19 +259,45 @@ def output_id(e, z, thre_e, dt):
                 segments.append((start_idx, end_idx))
                 start_idx = condition_indices[i]
         segments.append((start_idx, condition_indices[-1]))
+        
+    # try: determine by z    
+    condition_indices_z = np.where(z + Rp <= thre_e/g)[0]
+    segments_z = [] # static intervals
+
+    if condition_indices_z.size > 0:
+        start_idxz = condition_indices_z[0]
+        for i in range(1, len(condition_indices_z)):
+            # if (t[condition_indices[i]] - t[condition_indices[i - 1]]) > np.sqrt((thre_e / g - 12 * 0.00025) * 2 / g)*2:
+            if condition_indices_z[i] > condition_indices_z[i - 1] + 1:
+                end_idxz = condition_indices_z[i - 1]
+                segments_z.append((start_idxz, end_idxz))
+                start_idxz = condition_indices_z[i]
+        segments_z.append((start_idxz, condition_indices_z[-1]))
+    # print('segments_z', segments_z)
     
-    # print('segments', segments)
     if len(segments) > 1:
         ID_E = [seg[1] for seg in segments[:]]
         ID_D = [seg[0] for seg in segments[:]]
         #delete the ID_D if it appears at the first time step and the ID_E if it appears at the last time step
         ID_D = [id_d for id_d in ID_D if id_d > 0]
         ID_E = [id_e for id_e in ID_E if id_e < len(e)-1]
-        if ID_D[-1] <= ID_E[-1] and np.all(z[ID_E[-1]:] < thre_e / g):
-            print('z[ID_E[-1]:]', z[ID_E[-1]:])
-            ID_E = ID_E[:-1]
-        if ID_D[0] <= ID_E[0] and np.all(z[:ID_D[0]] < thre_e / g):
-            print('z[:ID_D[0]]', z[:ID_D[0]])
-            ID_D = ID_D[1:]
+        # if ID_D[-1] <= ID_E[-1]: #and np.all(z[ID_E[-1]:] < thre_e / g)
+        #     print('z[ID_E[-1]:]', z[ID_E[-1]:])
+        #     # ID_E = ID_E[:-1]
+        # if ID_D[0] <= ID_E[0]: # and np.all(z[:ID_D[0]] < thre_e / g)
+        #     print('ID_D[0]', ID_D[0], 'ID_E[0]', ID_E[0])
+        #     print('mp', Rp ** 3 * 4/3 * np.pi * 2650)
+            # print('z[:ID_D[0]]', z[:ID_D[0]])
+            # print('e[:ID_D[0]+1]', e[:ID_D[0]+1])
+        #     ID_D = ID_D[1:]
+        # print('ID_E', ID_E, 'ID_D', ID_D)
+        
+    if len(segments_z) > 1:
+        ID_Ez = [seg[1] for seg in segments_z[:]]
+        ID_Dz = [seg[0] for seg in segments_z[:]]
+        #delete the ID_D if it appears at the first time step and the ID_E if it appears at the last time step
+        ID_Dz = [id_d for id_d in ID_Dz if id_d > 0]
+        ID_Ez = [id_e for id_e in ID_Ez if id_e < len(e)-1]
+        # print('By z: ID_Ez', ID_Ez, 'ID_Dz', ID_Dz)
 
-    return np.array(ID_E), np.array(ID_D)
+    return np.array(ID_Ez), np.array(ID_Dz)
