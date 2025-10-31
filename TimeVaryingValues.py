@@ -76,43 +76,43 @@ for i in range(25):
     ParticleID_int = ParticleID.astype(int)
     #cal erosion and deposition properties for each Omega
     #EDindices, E, VX, VExVector, VEzVector, VEx, VEz, ME, MD
-    EDindices[i], ME[i], MD[i], VExz_mean_t[i], VDxz_mean_t[i], D_vector_t[i], E_vector_t[i], _=module.detectED_byZ(data,ParticleID_int,coe_h,dt,N_inter,D)
+    EDindices[i], ME[i], MD[i], VExz_mean_t[i], VDxz_mean_t[i], D_vector_t[i], E_vector_t[i], _=module.store_particle_id_data(data,ParticleID_int,coe_h,dt,N_inter,D)
     #cal rebound properties for each Omega
-    # ParticleID_sal=np.linspace(0, num_p-1, num_p)#(num_p-310,num_p-1,310)
-    # ParticleID_salint = ParticleID_sal.astype(int)
-    # X[i] = np.array([[time_step['Position'][i][0] for i in ParticleID_salint] for time_step in data])
-    # Z[i] = np.array([[time_step['Position'][i][2] for i in ParticleID_salint] for time_step in data])
-    # Par[i], VZ[i], exz_mean_t[i], ez_mean_t[i], VIM_mean_t[i], ThetaIM_mean_t[i], RIM[i], exz_vector_t[i], IM_vector_t[i]=module.store_sal_id_data(data,ParticleID_salint, coe_sal_h, dt, N_inter, D)
+    ParticleID_sal=np.linspace(0, num_p-1, num_p)#(num_p-310,num_p-1,310)
+    ParticleID_salint = ParticleID_sal.astype(int)
+    X[i] = np.array([[time_step['Position'][i][0] for i in ParticleID_salint] for time_step in data])
+    Z[i] = np.array([[time_step['Position'][i][2] for i in ParticleID_salint] for time_step in data])
+    Par[i], VZ[i], exz_mean_t[i], ez_mean_t[i], VIM_mean_t[i], ThetaIM_mean_t[i], RIM[i], exz_vector_t[i], IM_vector_t[i]=module.store_sal_id_data(data,ParticleID_salint, coe_sal_h, dt, N_inter, D)
 
-C_com_list = []
-C_list = []
-idxs = np.array([0, 5, 10, 15, 20])
-t_dpm = np.linspace(0.01, 5, 501)
-for i in range(5):
-    cg = np.loadtxt(f"../ContinuumModel/dcdt/Discrete_C/S00{i+2}DryC_discrete.txt")
-    C = cg
-    C_list.append(C)
-    N = len(C)       
-    c_com = np.zeros(N)
-    c_com[0] = C[0]
+# C_com_list = []
+# C_list = []
+# idxs = np.array([0, 5, 10, 15, 20])
+# t_dpm = np.linspace(0.01, 5, 501)
+# for i in range(5):
+#     cg = np.loadtxt(f"../ContinuumModel/dcdt/Discrete_C/S00{i+2}DryC_discrete.txt")
+#     C = cg
+#     C_list.append(C)
+#     N = len(C)       
+#     c_com = np.zeros(N)
+#     c_com[0] = C[0]
     
-    idx = idxs[i]
-    for j in range(N-1):
-        dcdt = ME[idx][j] - MD[idx][j]
-        c_com[j+1] = c_com[j] + dcdt * dt
-    C_com_list.append(c_com)
+#     idx = idxs[i]
+#     for j in range(N-1):
+#         dcdt = ME[idx][j] - MD[idx][j]
+#         c_com[j+1] = c_com[j] + dcdt * dt
+#     C_com_list.append(c_com)
 
-# plt.close('all')
-plt.figure(figsize=(10,9))
-for i in range(5):
-    plt.subplot(3,2,i+1)
-    plt.plot(t_dpm, C_list[i], label='DPM CG data')
-    plt.plot(t_dpm, C_com_list[i], label='computed from E and D')
-    plt.xlabel('t [s]')
-    plt.ylabel(r'$C$ [kg/m$^2$]')
-    plt.ylim(0,0.3)
-plt.legend()
-plt.tight_layout()
+# # plt.close('all')
+# plt.figure(figsize=(10,9))
+# for i in range(5):
+#     plt.subplot(3,2,i+1)
+#     plt.plot(t_dpm, C_list[i], label='DPM CG data')
+#     plt.plot(t_dpm, C_com_list[i], label='computed from E and D')
+#     plt.xlabel('t [s]')
+#     plt.ylabel(r'$C$ [kg/m$^2$]')
+#     plt.ylim(0,0.3)
+# plt.legend()
+# plt.tight_layout()
 
 
 # E_net = sum(ME*dt) - sum(MD*dt)
@@ -122,12 +122,17 @@ plt.tight_layout()
 # N_differ = (C[0] + E_net) * (100*2*D**2) / mp
 
 # exz_all,Vim_all,VD_all,ThetaD_all,Theta_all,Thetare_all,impact_list,impact_deposition_list,ejection_list = defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list)
+# Vre_all, Vsal_all = defaultdict(list), defaultdict(list)
+# Vrep_all = defaultdict(list)
 # ThetaE_all, UE_all = defaultdict(list), defaultdict(list)
 # N_range = np.full(25, 0).astype(int)
 # for i in range (25):
 #     exz_all[i] = [value for sublist in exz_vector_t[i][N_range[i]:] for value in sublist]
 #     Vim_all[i] = [value[0] for sublist in IM_vector_t[i][N_range[i]:] for value in sublist]
+#     Vre_all[i] = [value[10] for sublist in IM_vector_t[i][N_range[i]:] for value in sublist]
+#     Vsal_all[i] = [value[11] for sublist in IM_vector_t[i][N_range[i]:] for value in sublist]
 #     VD_all[i] = [value[0] for sublist in D_vector_t[i][N_range[i]:] for value in sublist]
+#     # Vrep_all[i] = [value[-1] for sublist in D_vector_t[i][N_range[i]:] for value in sublist]
 #     ThetaD_all[i] = [value[1] for sublist in D_vector_t[i][N_range[i]:] for value in sublist]
 #     Theta_all[i] = [value[7] for sublist in IM_vector_t[i][N_range[i]:] for value in sublist]
 #     Thetare_all[i] = [value[8] for sublist in IM_vector_t[i][N_range[i]:] for value in sublist]
@@ -153,9 +158,17 @@ plt.tight_layout()
 #     #print('Ne/Nim',len(IDE)/len(IDim))
 
 # Vim_all_values = [value for sublist in Vim_all.values() for value in sublist]
-# Vim_bin = np.linspace(min(Vim_all_values), max(Vim_all_values), 10)
+# Vim_bin = np.linspace(0, max(Vim_all_values)+1, 10)
+# VD_all_values = [value for sublist in VD_all.values() for value in sublist]
+# Vde_bin = np.linspace(0, max(VD_all_values)+1, 15)
 # Vimde_all_values = [value for sublist in Vim_all.values() for value in sublist] + [value for sublist in VD_all.values() for value in sublist]
-# Vimde_bin = np.linspace(min(Vimde_all_values), max(Vimde_all_values), 10)
+# Vimde_bin = np.linspace(0, max(Vimde_all_values)+1, 10)
+# # Vre_all_values = [value for sublist in Vre_all.values() for value in sublist]
+# # Vre_bin = np.linspace(0, max(Vre_all_values)+1, 10)
+# VE_all_values = [value for sublist in UE_all.values() for value in sublist]
+# VE_bin = np.linspace(0, max(VE_all_values)+1, 10)
+# # Vsal_all_values = [value for sublist in Vsal_all.values() for value in sublist] + [value for sublist in Vrep_all.values() for value in sublist]
+# # Vsal_bin = np.linspace(min(Vsal_all_values), max(Vsal_all_values), 10)
 # Thetaimde_all_values = [value for sublist in Theta_all.values() for value in sublist] + [value for sublist in ThetaD_all.values() for value in sublist]
 # Thetaimde_bin = np.linspace(min(Thetaimde_all_values), max(Thetaimde_all_values), 10)
 # Thetaim_all_values = [value for sublist in Theta_all.values() for value in sublist]
@@ -173,14 +186,18 @@ plt.tight_layout()
     
 # constant = np.sqrt(9.81*D)  
 # #combine the values from all Shields numbers
-# Vim_all_Omega, exz_all_Omega, Theta_all_Omega, Thetare_all_Omega, VD_all_Omega, ThetaD_all_Omega, matched_Vim_Omega, matched_Thetaim_Omega, matched_NE_Omega, matched_UE_Omega, matched_EE_Omega = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list),defaultdict(list),defaultdict(list)
+# Vim_all_Omega, Vre_all_Omega, exz_all_Omega, Thetaim_all_Omega, Thetare_all_Omega, VD_all_Omega, ThetaD_all_Omega, matched_Vim_Omega, matched_Thetaim_Omega, matched_NE_Omega, matched_UE_Omega, matched_EE_Omega = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list),defaultdict(list),defaultdict(list)
+# Vsal_all_Omega, Vrep_all_Omega = defaultdict(list), defaultdict(list)
 # ThetaE_all_Omega, UE_all_Omega = defaultdict(list), defaultdict(list)
 # matched_thetaE_Omega = defaultdict(list)
 # for i in range (5): #loop over Omega 0-20 %
 #     selected_indices = list(range(i, 25, 5))  # Get indices like [0,5,10,15,20], [1,6,11,16,21], etc.
 #     Vim_all_Omega[i] = np.concatenate([Vim_all[j] for j in selected_indices]).tolist()
+#     Vre_all_Omega[i] = np.concatenate([Vre_all[j] for j in selected_indices]).tolist()
+#     # Vsal_all_Omega[i] = np.concatenate([Vsal_all[j] for j in selected_indices]).tolist()
+#     # Vrep_all_Omega[i] = np.concatenate([Vrep_all[j] for j in selected_indices]).tolist()
 #     exz_all_Omega[i] = np.concatenate([exz_all[j] for j in selected_indices]).tolist()
-#     Theta_all_Omega[i] = np.concatenate([Theta_all[j] for j in selected_indices]).tolist()
+#     Thetaim_all_Omega[i] = np.concatenate([Theta_all[j] for j in selected_indices]).tolist()
 #     Thetare_all_Omega[i] = np.concatenate([Thetare_all[j] for j in selected_indices]).tolist()
 #     VD_all_Omega[i] = np.concatenate([VD_all[j] for j in selected_indices]).tolist()
 #     ThetaD_all_Omega[i] = np.concatenate([ThetaD_all[j] for j in selected_indices]).tolist()
@@ -193,41 +210,133 @@ plt.tight_layout()
 #     matched_EE_Omega[i] = np.concatenate([matched_EE[j] for j in selected_indices]).tolist()
 #     matched_thetaE_Omega[i] = np.concatenate([matched_thetaE[j] for j in selected_indices]).tolist()
 
-# CORmean_Omega,CORstd_Omega,CORstderr_Omega,Uimplot_Omega = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
-# COR_theta_mean_Omega, COR_theta_std_Omega, Thetaremean_Omega, Thetarestderr_Omega, Thetaimplot_Omega = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
-# Pr_Omega,Uplot_Omega, N_PrUre = defaultdict(list), defaultdict(list), defaultdict(list)
-# Pr_theta_Omega,Theta_pr_Omega = defaultdict(list), defaultdict(list)
-# NE_mean_Omega, UE_mean_Omega, UE_std_Omega, UE_stderr_Omega, Uplot_NE_Omega, N_Einbin = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list),
+# CORmean_Omega,CORstderr_Omega,N_COR_Omega,Uimplot_Omega, Thetaremean_Omega, Thetarestderr_Omega = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
+# Pr_Omega,Uplot_Omega, N_PrUre, Uim_meaninbin, UD_meaninbin = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
+# NE_mean_Omega, UE_mean_Omega, UE_stderr_Omega, Uplot_NE_Omega, N_Einbin = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
 # ThetaE_mean_Omega, ThetaE_stderr_Omega = defaultdict(list), defaultdict(list)
-# NE_theta_mean_Omega, UE_theta_mean_Omega, UE_theta_std_Omega, Thetaplot_NE_Omega = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
-# EE_mean_Omega, EE_stderr_Omega = defaultdict(list), defaultdict(list)
 # for i in range (5): #loop over Omega 0-20%
-#     CORmean_Omega[i],CORstd_Omega[i],CORstderr_Omega[i],Thetaremean_Omega[i],Thetarestderr_Omega[i],Uimplot_Omega[i] = module.BinUimCOR_equalbinsize(Vim_all_Omega[i],exz_all_Omega[i],Thetare_all_Omega[i],Vim_bin)
-#     # COR_theta_mean_Omega[i], COR_theta_std_Omega[i], Thetaimplot_Omega[i] = module.BinThetaimCOR_equalbinsize(Theta_all_Omega[i], exz_all_Omega[i], Thetaim_bin)
-#     Pr_Omega[i],Uplot_Omega[i],N_PrUre[i] = module.BinUimUd_equalbinsize(Vim_all_Omega[i],VD_all_Omega[i],Vimde_bin)   
-#     # Pr_theta_Omega[i],Theta_pr_Omega[i] = module.BinThetaimThetad_equalbinsize(Theta_all_Omega[i],ThetaD_all_Omega[i],Thetaimde_bin)   
-#     NE_mean_Omega[i], UE_mean_Omega[i], UE_std_Omega[i], UE_stderr_Omega[i], ThetaE_mean_Omega[i], ThetaE_stderr_Omega[i], Uplot_NE_Omega[i], N_Einbin[i]=module.get_ejection_ratios_equalbinsize(matched_Vim_Omega[i], VD_all_Omega[i], matched_NE_Omega[i], matched_UE_Omega[i], matched_thetaE_Omega[i], Vimde_bin)#matched_EE_Omega[i]
-#     # NE_theta_mean_Omega[i], UE_theta_mean_Omega[i], UE_theta_std_Omega[i], Thetaplot_NE_Omega[i]=module.get_ejection_theta_equalbinsize(matched_Thetaim_Omega[i], matched_NE_Omega[i], matched_UE_Omega[i], Thetaim_bin)
+#     CORmean_Omega[i], CORstd_Omega, CORstderr_Omega[i], N_COR_Omega[i], Thetaremean_Omega[i], Thetastd_Omega, Thetarestderr_Omega[i], Uimplot_Omega[i] = module.BinUimCOR_equalbinsize(Vim_all_Omega[i],Vre_all_Omega[i],Thetare_all_Omega[i],Vim_bin)
+#     Pr_Omega[i],Uplot_Omega[i],N_PrUre[i], Uim_meaninbin[i], UD_meaninbin[i] = module.BinUimUd_equalbinsize(Vim_all_Omega[i],VD_all_Omega[i],Vimde_bin)   
+#     NE_mean_Omega[i], UE_mean_Omega[i], UE_std_Omega, UE_stderr_Omega[i], ThetaE_mean_Omega[i], ThetaE_std_Omega, ThetaE_stderr_Omega[i], N_Einbin[i], Uplot_NE_Omega[i]=module.get_ejection_ratios_equalbinsize(matched_Vim_Omega[i], VD_all_Omega[i], matched_NE_Omega[i], matched_UE_Omega[i], matched_thetaE_Omega[i], Vimde_bin)#matched_EE_Omega[i]
 
-#plot Uim-t
-# fig, axs = plt.subplots(2, 3, figsize=(18, 10), sharey=True)
-# axs = axs.flatten()
+# smooth function
+from scipy.signal import savgol_filter
+def savgol_keep_first(x, window_length=21, polyorder=2):
+    x = np.asarray(x, dtype=float)
 
-# for i in range(5):  # 5 groups
-#     ax = axs[i]
-#     for j in range(5):  # 5 elements per group
-#         index = i * 5 + j
-#         ax.plot(t_inter[1:], VIM_mean_t[index], label=fr'$\Omega$={Omega[j]} $\%$')
-#     ax.set_title(f'$\Theta$=0.0{i+2}')
-#     ax.set_ylabel(r'$U_{im}$ [m/s]')
-#     ax.set_xlabel(r't [s]')
-#     ax.set_xlim(left=0)
-#     ax.set_ylim(0,12)
-#     ax.grid(True)
-#     ax.legend()
+    # handle NaNs (optional)
+    if np.isnan(x).any():
+        idx = np.arange(len(x))
+        x = np.interp(idx, idx[~np.isnan(x)], x[~np.isnan(x)])
 
-# plt.tight_layout()
-# plt.show()
+    # make window valid: odd, <= len(x), > polyorder
+    n = len(x)
+    w = int(window_length)
+    if w % 2 == 0: w += 1
+    w = min(w, n if n % 2 == 1 else n-1)
+    w = max(w, polyorder + 2 if (polyorder + 2) % 2 == 1 else polyorder + 3)
+
+    y = savgol_filter(x, window_length=w, polyorder=polyorder, mode='interp')
+    y[0] = x[0]             # keep the first value fixed
+    return y
+   
+# plot Uim-t
+plt.figure(figsize=(12, 8))
+for i in range(5):  # 5 groups
+    plt.subplot(2, 3, i+1)
+    for j in range(5):  # 5 elements per group
+        index = i * 5 + j
+        plt.plot(t_inter[1:], VIM_mean_t[index], color=colors[j], label=fr'$\Omega$={Omega[j]} $\%$')
+    plt.title(f'$\Theta$=0.0{i+2}')
+    plt.ylabel(r'$U_{im}$ [m/s]')
+    plt.xlabel(r't [s]')
+    plt.xlim(left=0)
+    plt.ylim(0,12)
+    plt.grid(True)
+    plt.legend()
+plt.tight_layout()
+plt.show()
+
+plt.figure(figsize=(12, 8))
+for i in range(5):  # 5 groups
+    plt.subplot(2, 3, i+1)
+    for j in range(5):  # 5 elements per group
+        index = i * 5 + j
+        Uim = savgol_keep_first(VIM_mean_t[index], window_length=21, polyorder=2) #smooth
+        plt.plot(t_inter[1:], Uim, color=colors[j], label=fr'$\Omega$={Omega[j]} $\%$')
+    plt.title(f'$\Theta$=0.0{i+2}')
+    plt.ylabel(r'$U_{im}$ [m/s]')
+    plt.xlabel(r't [s]')
+    plt.xlim(left=0)
+    plt.ylim(0,12)
+    plt.grid(True)
+    plt.legend()
+plt.suptitle('Smoothed')
+plt.tight_layout()
+plt.show()
+
+# plot UD - t
+plt.figure(figsize=(12, 8))
+for i in range(5):  # 5 groups
+    plt.subplot(2, 3, i+1)
+    for j in range(5):  # 5 elements per group
+        index = i * 5 + j
+        plt.plot(t_inter[1:], VDxz_mean_t[index], color=colors[j], label=fr'$\Omega$={Omega[j]} $\%$')
+    plt.title(f'$\Theta$=0.0{i+2}')
+    plt.ylabel(r'$U_{D}$ [m/s]')
+    plt.xlabel(r't [s]')
+    plt.xlim(left=0)
+    plt.ylim(0,10)
+    plt.grid(True)
+    plt.legend()
+plt.tight_layout()
+plt.show()
+
+plt.figure(figsize=(12, 8))
+for i in range(5):  # 5 groups
+    plt.subplot(2, 3, i+1)
+    for j in range(5):  # 5 elements per group
+        index = i * 5 + j
+        UD = savgol_keep_first(VDxz_mean_t[index], window_length=21, polyorder=2) #smooth
+        plt.plot(t_inter[1:], UD, color=colors[j], label=fr'$\Omega$={Omega[j]} $\%$')
+    plt.title(f'$\Theta$=0.0{i+2}')
+    plt.ylabel(r'$U_{D}$ [m/s]')
+    plt.xlabel(r't [s]')
+    plt.xlim(left=0)
+    plt.ylim(0,10)
+    plt.grid(True)
+    plt.legend()
+plt.suptitle('Smoothed')
+plt.tight_layout()
+plt.show()
+
+# U_list = []
+# for i in range(5):
+#     file_c = f'../ContinuumModel/CGdata/hb=13.5d/Shields00{i+2}M20-135d.txt'
+#     data_dpm = np.loadtxt(file_c)
+#     U_dpm = data_dpm[:, 2]
+#     U_list.append(U_dpm)
+
+
+plt.close('all')
+for i in range(5):  # 5 groups
+    plt.figure(figsize=(12, 8))
+    for j in range(5):
+        plt.subplot(2, 3, j+1)
+        index = i*5+j
+        plt.plot(t_inter, U_list[index], label=r'$U$')
+        Uim = savgol_keep_first(VDxz_mean_t[index], window_length=21, polyorder=2) #smooth
+        plt.plot(t_inter[1:], Uim, label=r'$U_{D}$')
+        plt.title(fr'$\Omega$ = {Omega[j]} $\%$')
+        plt.ylabel(r'$U$ and $U_{D}$ [m/s]')
+        plt.xlabel(r't [s]')
+        plt.xlim(left=0)
+        plt.ylim(0,10)
+        plt.grid(True)
+    plt.legend()
+    plt.suptitle(f'Shields=0.0{i+2}')
+    plt.tight_layout()
+    plt.show()
 
 # #Steady Uim
 # Uim_steady = []
@@ -254,27 +363,6 @@ plt.tight_layout()
 
 # plt.tight_layout()
 # plt.show()
-
-
-from scipy.signal import savgol_filter
-def savgol_keep_first(x, window_length=21, polyorder=2):
-    x = np.asarray(x, dtype=float)
-
-    # handle NaNs (optional)
-    if np.isnan(x).any():
-        idx = np.arange(len(x))
-        x = np.interp(idx, idx[~np.isnan(x)], x[~np.isnan(x)])
-
-    # make window valid: odd, <= len(x), > polyorder
-    n = len(x)
-    w = int(window_length)
-    if w % 2 == 0: w += 1
-    w = min(w, n if n % 2 == 1 else n-1)
-    w = max(w, polyorder + 2 if (polyorder + 2) % 2 == 1 else polyorder + 3)
-
-    y = savgol_filter(x, window_length=w, polyorder=polyorder, mode='interp')
-    y[0] = x[0]             # keep the first value fixed
-    return y
 
 # cases = range(2, 7)  # S002..S006
 # C_list, U_list, Ua_list, E_list, D_list = [], [], [], [], []
@@ -367,28 +455,28 @@ def savgol_keep_first(x, window_length=21, polyorder=2):
 # plt.show()
 
 # store E and D in files
-idxs = np.array([0, 5, 10, 15, 20])+4
+# idxs = np.array([0, 5, 10, 15, 20])+4
 
-def get_entry(d, k):
-    """Handle dicts with int or str keys."""
-    return d.get(k, d.get(str(k)))
+# def get_entry(d, k):
+#     """Handle dicts with int or str keys."""
+#     return d.get(k, d.get(str(k)))
 
-for j in idxs:
-    # Rim = np.asarray(get_entry(RIM, j))
-    E = np.asarray(get_entry(ME, j))
-    D = np.asarray(get_entry(MD, j))
+# for j in idxs:
+#     # Rim = np.asarray(get_entry(RIM, j))
+#     E = np.asarray(get_entry(ME, j))
+#     D = np.asarray(get_entry(MD, j))
 
-    if E is None or D is None:
-        raise KeyError(f"Missing Rim/ME/MD entry for index {j}")
+#     if E is None or D is None:
+#         raise KeyError(f"Missing Rim/ME/MD entry for index {j}")
 
-    # truncate to common length if they differ
-    n = min(len(E), len(D))
-    out = np.column_stack([E[:n], D[:n]])
+#     # truncate to common length if they differ
+#     n = min(len(E), len(D))
+#     out = np.column_stack([E[:n], D[:n]])
 
-    shield = 2 + j // 5           # j=0,5,10,15,20 -> 2..6
-    fname = f"S00{shield}M20EandD.txt"
+#     shield = 2 + j // 5           # j=0,5,10,15,20 -> 2..6
+#     fname = f"S00{shield}M20EandD.txt"
 
-    np.savetxt(fname, out, fmt="%.6e", delimiter="\t",
-                header="", comments="")
+#     np.savetxt(fname, out, fmt="%.6e", delimiter="\t",
+#                 header="", comments="")
 
-    print(f"Wrote {fname} with {n} rows.")
+#     print(f"Wrote {fname} with {n} rows.")
