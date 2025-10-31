@@ -76,23 +76,25 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
             maskE1 = np.where(Vz[ID_Eafter[low_Eindices]]**2 - 2*9.81*(d_h-z[ID_Eafter[low_Eindices]]) > 0)[0]
             VEzi[low_Eindices[maskE1]] = np.sqrt(Vz[ID_Eafter[low_Eindices[maskE1]]]**2 - 2*9.81*(d_h-z[ID_Eafter[low_Eindices[maskE1]]]))  
     
-            #correct horizontal ejection velocity by interpolating (for the ones lower than 1.5D)
+            # correct horizontal ejection velocity by interpolating (for the ones lower than 1.5D)
             Vz1_low,Vx1_low,Vx2_low = Vz[ID_Eafter[low_Eindices]],Vx[ID_Eafter[low_Eindices]],Vx[ID_Eafter[low_Eindices]+1]
             z1_low = z[ID_Eafter[low_Eindices]]
-            maskE2 = 4*Vz1_low**2 - 4*9.81*(2*d_h - 2*z1_low) > 0
+            maskE2 = Vz1_low**2 - 2*9.81*(d_h - z1_low) > 0
             dt_ratio_low = np.empty_like(Vz1_low)
             dt_ratio_low[:] = np.nan  # optional initialization
-            dt_ratio_low[maskE2] = (Vz1_low[maskE2] - np.sqrt(Vz1_low[maskE2]**2 - 2*9.81*(d_h - z1_low[maskE2]))) / 9.81
+            dt_ratio_low[maskE2] = (Vz1_low[maskE2] - np.sqrt(Vz1_low[maskE2]**2 - 2*9.81*(d_h - z1_low[maskE2]))) / 9.81 / dt
             newlow_Eindices = np.where(dt_ratio_low < 1)[0]
-            VExi[low_Eindices[newlow_Eindices]] = dt_ratio_low[newlow_Eindices] / dt * (Vx2_low[newlow_Eindices]-Vx1_low[newlow_Eindices]) + Vx1_low[newlow_Eindices]
+            VExi[low_Eindices[newlow_Eindices]] = dt_ratio_low[newlow_Eindices] * (Vx2_low[newlow_Eindices]-Vx1_low[newlow_Eindices]) + Vx1_low[newlow_Eindices]
+            # VExi[low_Eindices] = dt_ratio_low / dt * (Vx2_low-Vx1_low) + Vx1_low
            
-            #for the ones higher than 1.5D
+            # for the ones higher than 1.5D
             Vx0_high, Vx1_high = Vx[ID_Eafter[high_Eindices]-1], Vx[ID_Eafter[high_Eindices]]
             Vz1_high = Vz[ID_Eafter[high_Eindices]]
             z1_high = z[ID_Eafter[high_Eindices]]          
-            dt_ratio_high = (-Vz1_high + np.sqrt(Vz1_high**2 + 2*9.81*(z1_high - dh ))) / 9.81
+            dt_ratio_high = (-Vz1_high + np.sqrt(Vz1_high**2 + 2*9.81*(z1_high - d_h))) / 9.81 / dt
             newhigh_Eindices = np.where(dt_ratio_high < 1)[0]
-            VExi[high_Eindices[newhigh_Eindices]] = Vx1_high[newhigh_Eindices] - dt_ratio_high[newhigh_Eindices] / dt * (Vx1_high[newhigh_Eindices]-Vx0_high[newhigh_Eindices]) 
+            VExi[high_Eindices[newhigh_Eindices]] = Vx1_high[newhigh_Eindices] - dt_ratio_high[newhigh_Eindices] * (Vx1_high[newhigh_Eindices]-Vx0_high[newhigh_Eindices]) 
+            # VExi[high_Eindices] = Vx1_high - dt_ratio_high / dt * (Vx1_high-Vx0_high) 
             
             # renew the stored ejection velocities
             VExzi = np.sqrt(VExi**2+VEzi**2)
@@ -108,27 +110,22 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
             maskD1 = np.where(Vz[ID_Dbefore[low_Dindices]]**2 - 2*9.81*(d_h-z[ID_Dbefore[low_Dindices]]) > 0)[0]
             VDzi[low_Dindices[maskD1]] = -np.sqrt(Vz[ID_Dbefore[low_Dindices[maskD1]]]**2 - 2*9.81*(d_h-z[ID_Dbefore[low_Dindices[maskD1]]]))    
             
-            # horizontal deposition velocity (lower than 1.5D)
+            # correct horizontal deposition velocity (lower than 1.5D)
             VzD1_low,VxD1_low,VxD0_low = Vz[ID_Dbefore[low_Dindices]],Vx[ID_Dbefore[low_Dindices]],Vx[ID_Dbefore[low_Dindices]-1]
             zD1_low = z[ID_Dbefore[low_Dindices]]
-            maskD2 =  > 0
-            dt_ratio_lowD = np.empty_like(VzD1_low)
-            dt_ratio_lowD[:] = np.nan  # optional initialization
-            dt_ratio_lowD[maskD2] = (-VzD1_low[maskD2] + np.sqrt(VzD1_low[maskD2]**2 + 2*9.81*(d_h - zD1_low[maskD2]))) / 9.81
+            dt_ratio_lowD = (-VzD1_low + np.sqrt(VzD1_low**2 + 2*9.81*(d_h - zD1_low))) / 9.81 /dt
             newlow_Dindices = np.where(dt_ratio_lowD < 1)[0]
-            VDxi[low_Dindices[newlow_Dindices]] = - dt_ratio_lowD[newlow_Dindices] /dt * (VxD1_low[newlow_Dindices]-VxD0_low[newlow_Dindices]) + VxD1_low[newlow_Dindices]
+            VDxi[low_Dindices[newlow_Dindices]] = - dt_ratio_lowD[newlow_Dindices] * (VxD1_low[newlow_Dindices]-VxD0_low[newlow_Dindices]) + VxD1_low[newlow_Dindices]
             
             # higher than 1.5D
-            VzD2_high,VxD2_high,VxD1_high = Vz[ID_Dbefore[low_Dindices]],Vx[ID_Dbefore[low_Dindices]],Vx[ID_Dbefore[low_Dindices]-1]
-            zD2_low = z[ID_Dbefore[low_Dindices]]
-            maskD3 = 4*VzD2_low**2 - 4*9.81*(2*d_h - 2*zD2_low) > 0
-            dt_ratio_highD = np.empty_like(VzD2_high)
-            dt_ratio_highD[:] = np.nan  # optional initialization
-            dt_ratio_highD[maskD3] = (2*VzD1_high[maskD3] + np.sqrt(4*VzD2_low[maskD3]**2 - 4*9.81*(2*d_h - 2*zD2_low[maskD3]))) / (2*9.81*dt)
-            newlow_Dindices = np.where(dt_ratio_lowD < 1)[0]
-            VDxi[low_Dindices[newlow_Dindices]] = VxD2_low[newlow_Dindices] - dt_ratio_lowD[newlow_Dindices] * (VxD2_low[newlow_Dindices] + VxD1_low[newlow_Dindices])
+            VzD1_high,VxD1_high,VxD2_high = Vz[ID_Dbefore[high_Dindices]],Vx[ID_Dbefore[high_Dindices]],Vx[ID_Dbefore[high_Dindices]+1]
+            zD1_high = z[ID_Dbefore[high_Dindices]]
+            dt_ratio_highD = (VzD1_high + np.sqrt(VzD1_high**2 + 2*9.81*(zD1_high - d_h))) / 9.81 /dt
+            newhigh_Dindices = np.where(dt_ratio_highD < 1)[0]
+            VDxi[high_Dindices[newhigh_Dindices]] = VxD2_high[newhigh_Dindices] + dt_ratio_highD[newhigh_Dindices] * (VxD2_high[newhigh_Dindices] - VxD1_high[newhigh_Dindices])
             
             VDxzi = np.sqrt(VDxi**2+VDzi**2)
+            
             ThetaDi_radian = np.arctan(np.abs(VDzi/VDxi))
             ThetaDi = np.degrees(ThetaDi_radian)
             # get the id at the top of the reptation hops
