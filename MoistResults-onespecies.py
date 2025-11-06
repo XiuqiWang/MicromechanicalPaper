@@ -84,45 +84,67 @@ for i in range(25):
 #     U_list.append(U_dpm)
 t_dpm = np.linspace(0.01, 5, 501)
 
-# plt.close('all')
-# for i in range(5):  # 5 groups
-#     plt.figure(figsize=(12, 8))
-#     for j in range(5):
-#         plt.subplot(2, 3, j+1)
-#         index = j*5+i # BY Omega
-#         plt.plot(t_dpm, U_list[index], label=r'$U$')
-#         index_byS = i*5+j # by Shields
-#         UD = VDxz_mean_t[index_byS] 
-#         plt.plot(t_inter, UD, label=r'$U_{D}$')
-#         plt.title(fr'$\Omega$ = {Omega[j]} $\%$')
-#         plt.ylabel(r'$U$ and $U_{D}$ [m/s]')
-#         plt.xlabel(r't [s]')
-#         plt.xlim(left=0)
-#         plt.ylim(0,10)
-#         plt.grid(True)
-#     plt.legend()
-#     plt.suptitle(f'Shields=0.0{i+2}')
-#     plt.tight_layout()
-#     plt.show()    
+# calculate mass-weighted mean Uinc = (mim * Uim + mD* UD)/(mim + mD)
+def _uinc_one(vim, vd):
+    has_vim = isinstance(vim, (list, tuple)) and len(vim) == 2
+    has_vd  = isinstance(vd,  (list, tuple)) and len(vd)  == 2
+
+    if has_vim and has_vd:
+        num = vim[0] + vd[0]
+        den = vim[1] + vd[1]
+    elif has_vim:
+        num, den = vim
+    elif has_vd:
+        num, den = vd
+    else:
+        return np.nan  # 或者返回 0.0
+
+    return num/den if den != 0 else np.nan
+
+Uinc_t = {
+    k: [_uinc_one(VIM_mean_t[k][i], VDxz_mean_t[k][i]) for i in range(100)]
+    for k in VIM_mean_t
+}
+
+plt.close('all')
+for i in range(5):  # 5 groups
+    plt.figure(figsize=(12, 8))
+    for j in range(5):
+        plt.subplot(2, 3, j+1)
+        index = j*5+i # BY Omega
+        plt.plot(t_dpm, U_list[index], label=r'$U$')
+        index_byS = i*5+j # by Shields
+        Uinc = Uinc_t[index_byS] 
+        plt.plot(t_inter, Uinc, label=r'$U_{inc}$')
+        plt.title(fr'$\Omega$ = {Omega[j]} $\%$')
+        plt.ylabel(r'$U$ and $U_{inc}$ [m/s]')
+        plt.xlabel(r't [s]')
+        plt.xlim(left=0)
+        plt.ylim(0,10)
+        plt.grid(True)
+    plt.legend()
+    plt.suptitle(f'Shields=0.0{i+2}')
+    plt.tight_layout()
+    plt.show()    
     
-# plt.figure(figsize=(12, 8))
-# for j in range(5):
-#     plt.subplot(2, 3, j+1)
-#     index_byS = 4*5+j # by Shields
-#     Uim = VIM_mean_t[index_byS] 
-#     plt.plot(t_inter, Uim, label=r'$U_{im}$')
-#     index = j*5+4 # BY Omega
-#     plt.plot(t_dpm, U_list[index]/np.cos(12/180*np.pi), label=r'$U/\cos(\theta_{im})$')
-#     plt.title(fr'$\Omega$ = {Omega[j]} $\%$')
-#     plt.ylabel(r'$U_{im}$ [m/s]')
-#     plt.xlabel(r't [s]')
-#     plt.xlim(left=0)
-#     plt.ylim(0,10)
-#     plt.grid(True)
-# plt.legend()
-# plt.suptitle(f'Shields=0.0{i+2}')
-# plt.tight_layout()
-# plt.show()    
+plt.figure(figsize=(12, 8))
+for j in range(5):
+    plt.subplot(2, 3, j+1)
+    index_byS = 4*5+j # by Shields
+    Uinc = Uinc_t[index_byS] 
+    plt.plot(t_inter, Uinc, label=r'$U_{inc}$')
+    index = j*5+4 # BY Omega
+    plt.plot(t_dpm, 0.8*U_list[index], label=r'$U*0.8$')
+    plt.title(fr'$\Omega$ = {Omega[j]} $\%$')
+    plt.ylabel(r'$U_{inc}$ [m/s]')
+    plt.xlabel(r't [s]')
+    plt.xlim(left=0)
+    plt.ylim(0,10)
+    plt.grid(True)
+plt.legend()
+plt.suptitle(f'Shields=0.0{i+2}')
+plt.tight_layout()
+plt.show()    
     
 exz_all,Vim_all,VD_all,ThetaD_all,Theta_all,Thetare_all,impact_list,impact_deposition_list,ejection_list = defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list),defaultdict(list)
 Vre_all, Vsal_all = defaultdict(list), defaultdict(list)
@@ -811,10 +833,59 @@ plt.subplot(2, 2, 4)
 # plt.errorbar(Omega, Thetaim_mean_glo, yerr=Thetaim_std_glo, fmt='o', capsize=5, color='#3776ab')
 plt.errorbar(Omega,p50_thetaim,yerr=[p50_thetaim - p25_thetaim, p75_thetaim - p50_thetaim],fmt='ko',capsize=5, label=r'$\theta_\mathrm{im}$')
 plt.errorbar(Omega,p50_ThetaD,yerr=[p50_ThetaD - p25_ThetaD, p75_ThetaD - p50_ThetaD],fmt='o',capsize=5, label=r'$\theta_\mathrm{D}$')
-plt.ylim(8,48)
+plt.ylim(0,30)
 plt.legend(loc='upper right', fontsize=12)
 plt.xlabel(r'$\Omega$ [$\%$]', fontsize=14)
 plt.ylabel(r'$\theta_\mathrm{inc}$ [$\circ$]', fontsize=14)
 plt.text(0.03, 0.94, '(d)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
 plt.tight_layout()
 plt.show()
+
+# theta_inc = f(Uinc)
+mean_thetaim, stderr_thetaim, N_Uim = defaultdict(list),defaultdict(list),defaultdict(list)
+mean_thetaD, stderr_thetaD, N_UD = defaultdict(list),defaultdict(list),defaultdict(list)
+mean_thetaE, stderr_thetaE, N_UE = defaultdict(list),defaultdict(list),defaultdict(list)
+mean_thetare, stderr_thetare, N_Ure =  defaultdict(list),defaultdict(list),defaultdict(list)
+for i in range(5):
+    mean_thetaim[i], stderr_thetaim[i], N_Uim[i], Uthetaplot = module.match_Uim_thetaim(matched_Vim_Omega[i], matched_Thetaim_Omega[i], Vim_bin)
+    # Vimde_Omega = np.array(Vim_all_Omega[i] + VD_all_Omega[i])
+    # Thetaimde_Omega = np.array(Thetaim_all_Omega[i] + ThetaD_all_Omega[i])
+    mean_thetaD[i], stderr_thetaD[i], N_UD[i], UthetaDplot = module.match_Uim_thetaim(VD_all_Omega[i], ThetaD_all_Omega[i], Vde_bin)
+    # mean_thetare[i], stderr_thetare[i], N_Ure[i], Uthetareplot = module.match_Uim_thetaim(Vre_all_Omega[i], Thetare_all_Omega[i], Vre_bin)
+    # mean_thetaE[i], stderr_thetaE[i], N_UE[i], UthetaEplot = module.match_Uim_thetaim(UE_all_Omega[i], ThetaE_all_Omega[i], VE_bin)
+
+# U_fit, theta_fit, a_fit, b_fit, c_fit = defaultdict(),defaultdict(),np.zeros(5),np.zeros(5),np.zeros(5) #U_fit, theta_fit=defaultdict(),defaultdict()
+# # --- Fit ---
+# for i in range(5):
+#     # --- Remove NaN values before fitting ---
+#     valid_indices = ~np.isnan(mean_thetaim[i])  # Get boolean mask where theta_all is NOT NaN
+#     U_clean = Uthetaplot[valid_indices]/constant       # Keep only valid U values
+#     theta_clean = np.deg2rad(mean_thetaim[i])[valid_indices]# Keep only valid theta values
+#     N_Uim_clean = np.array(N_Uim[i])[valid_indices]
+#     stderr = np.deg2rad(stderr_thetaim[i])[valid_indices]
+#     valid_mask = np.where(~np.isnan(stderr))[0]
+#     # 用该掩码过滤所有列表
+#     U_clean = U_clean[valid_mask]
+#     theta_clean = theta_clean[valid_mask]
+#     stderr = stderr[valid_mask]
+#     popt, _ = curve_fit(fit_arcsin, U_clean, theta_clean, p0=[1,0], sigma=stderr, absolute_sigma=True)
+#     a_fit[i], b_fit[i] = popt 
+#     # Generate fitted curve
+#     U_fit[i] = np.linspace(min(U_clean), max(U_clean), 200)
+#     theta_fit[i] = fit_arcsin(U_fit[i], *popt)
+#     theta_fit_dis = fit_arcsin(U_clean, *popt)
+#     R2_weighted = weighted_r2(theta_clean, theta_fit_dis, 1 / stderr ** 2)
+#     print('R2_weighted:', R2_weighted)
+    
+
+plt.figure(figsize=(6,5))
+for i in range(5):
+    plt.errorbar(Uthetaplot/constant, mean_thetaim[i], yerr=stderr_thetaim[i], fmt='o', capsize=5, label=rf'$\Omega$={Omega[i]}%', color=colors[i])
+# Plot fitted curve
+# for i in range(5):
+#     plt.plot(U_fit[i], np.degrees(theta_fit[i]), '--', color=colors[i])
+plt.xlabel(r'$U_{im}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$\theta_{im}$ [-]', fontsize=14)
+plt.legend(fontsize=12)
+plt.tight_layout()
+plt.show()     
