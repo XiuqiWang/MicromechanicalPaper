@@ -26,11 +26,11 @@ def store_sal_id_data(data, ID_Particle, coe_h, dt, N_inter, D):
     Vxi = []
     ez_t = [[] for _ in range(N_inter)]
     exz_t = [[] for _ in range(N_inter)]
-    Vim_t = [[] for _ in range(N_inter)]
+    Vim_t = np.zeros(N_inter)
     Thetaim_t = [[] for _ in range(N_inter)]
     exz_vector_t,IM_vector_t = [[] for _ in range(N_inter)],[[] for _ in range(N_inter)]
     exz_mean_t,ez_mean_t = np.full(N_inter, np.nan), np.full(N_inter, np.nan)
-    Vim_mean_t, Thetaim_mean_t = np.full(N_inter, np.nan), np.full(N_inter, np.nan)
+    Vim_mean_t, Thetaim_mean_t = [[] for _ in range(N_inter)], np.full(N_inter, np.nan)
     RIM,Mp = np.zeros(N_inter),np.zeros(N_inter)
     
     g = 9.81
@@ -87,10 +87,10 @@ def store_sal_id_data(data, ID_Particle, coe_h, dt, N_inter, D):
                 idx = min(idx, N_inter)  # Prevent overflow
                 ez_t[idx - 1].append(ezi[j]*mp)
                 exz_t[idx - 1].append(exzi[j])
-                Vim_t[idx - 1].append(Vi_i[j]*mp)
+                Vim_t[idx - 1] += Vi_i[j]*mp
                 Thetaim_t[idx - 1].append(theta_i[j]*mp)
                 Mp[idx - 1] += mp #for counting the sum of particles' masses
-                RIM[idx - 1] += 1 / (5 / N_inter)
+                RIM[idx - 1] += mp / (5 / N_inter) / A
                 exz_vector_t[idx - 1].append(exzi[j])
                 IM_vector_t[idx - 1].append([Vi_i[j], IDim_i[j], IDre_i[j], xim_i[j], xre_i[j], x_col[j], i, theta_i[j], thetare_i[j], Eim_i[j], Vr_i[j], Vsal_i[j], Tsal_i[j], mp])
     
@@ -101,7 +101,7 @@ def store_sal_id_data(data, ID_Particle, coe_h, dt, N_inter, D):
         if ez_t[i]:
             ez_mean_t[i] = np.sum(ez_t[i])/Mp[i]
         if Vim_t[i]:
-            Vim_mean_t[i] = np.sum(Vim_t[i])/Mp[i]
+            Vim_mean_t[i] = [Vim_t[i], Mp[i]] # output the VD*mass and mass for calculating mass-weighted mean Uinc outside
         if Thetaim_t[i]:
             Thetaim_mean_t[i] = np.sum(Thetaim_t[i])/Mp[i]
             
@@ -143,51 +143,66 @@ def findSaltationID(e, Vxi, Vzi, Zi, thre_e, dt):
         IDvzri = Findez(ID_next, Vzi, Vxzi, Zi, thre_e)
         
         if len(IDvzri) > 0:
-            Vz_im = Vzi[IDvzri[:, 0]]
-            Vz_re,Vx_re = Vzi[IDvzri[:, 1]],Vxi[IDvzri[:, 1]]
+            Vz_im, Vx_im = Vzi[IDvzri[:, 0]],Vxi[IDvzri[:, 0]]
+            Vz_re, Vx_re = Vzi[IDvzri[:, 1]],Vxi[IDvzri[:, 1]]
             
             #calculate the horizontal travel distance of the impact particle before collision
             dh_im = Zi[IDvzri[:,0]]-12*0.00025 #vertical distance between the impact particle and the bed surface
             dt_im = (np.sqrt(4*Vz_im**2+8*9.81*dh_im) - 2*Vz_im)/2/9.81
             dx_im = Vxi[IDvzri[:,0]]*dt_im
             
-            #correct the vertical impact velocities to the values at the evaluation height 13.5D
-            high_iindices = np.where(Zi[IDvzri[:,0]] > h)
-            low_iindices = np.where(Zi[IDvzri[:,0]] < h)
-            Vz_im[high_iindices] = -np.sqrt(2*9.81*(Zi[IDvzri[high_iindices,0]]-h)+Vzi[IDvzri[high_iindices,0]]**2)
-            Vz_im[low_iindices] = -np.sqrt(Vzi[IDvzri[low_iindices,0]]**2 - 2*9.81*(h-Zi[IDvzri[low_iindices,0]]))          
+            # #correct the vertical impact velocities to the values at the evaluation height 13.5D
+            # high_iindices = np.where(Zi[IDvzri[:,0]] > h)[0]
+            # low_iindices = np.where(Zi[IDvzri[:,0]] < h)[0]
+            # Vz_im[high_iindices] = -np.sqrt(2*9.81*(Zi[IDvzri[high_iindices,0]]-h)+Vzi[IDvzri[high_iindices,0]]**2)
+            # maskI1 = np.where(Vzi[IDvzri[low_iindices,0]]**2 - 2*9.81*(h-Zi[IDvzri[low_iindices,0]]) > 0)[0]
+            # Vz_im[low_iindices[maskI1]] = -np.sqrt(Vzi[IDvzri[low_iindices[maskI1],0]]**2 - 2*9.81*(h-Zi[IDvzri[low_iindices[maskI1],0]]))   
+            # # correct horizontal impact velocities (lower than 1.5D)
+            # VzI1_low,VxI1_low,VxI0_low = Vzi[IDvzri[low_iindices,0]],Vxi[IDvzri[low_iindices,0]],Vxi[IDvzri[low_iindices,0]-1]
+            # zI1_low = Zi[IDvzri[low_iindices,0]]
+            # dt_ratio_lowI = (-VzI1_low + np.sqrt(VzI1_low**2 + 2*9.81*(h - zI1_low))) / 9.81 /dt
+            # newlow_iindices = np.where(dt_ratio_lowI < 1)[0]
+            # Vx_im[low_iindices[newlow_iindices]] = - dt_ratio_lowI[newlow_iindices] * (VxI1_low[newlow_iindices]-VxI0_low[newlow_iindices]) + VxI1_low[newlow_iindices]
+            # # higher than 1.5D
+            # VzI1_high,VxI1_high,VxI2_high = Vzi[IDvzri[high_iindices,0]],Vxi[IDvzri[high_iindices,0]],Vxi[IDvzri[high_iindices,0]+1]
+            # zI1_high = Zi[IDvzri[high_iindices,0]]
+            # dt_ratio_highI = (VzI1_high + np.sqrt(VzI1_high**2 + 2*9.81*(zI1_high - h))) / 9.81 /dt
+            # newhigh_iindices = np.where(dt_ratio_highI < 1)[0]
+            # Vx_im[high_iindices[newhigh_iindices]] = VxI2_high[newhigh_iindices] + dt_ratio_highI[newhigh_iindices] * (VxI2_high[newhigh_iindices] - VxI1_high[newhigh_iindices])
+
+            # #correct the vertical rebound velocities
+            # high_rindices = np.where(Zi[IDvzri[:,1]] > h)[0]
+            # low_rindices = np.where(Zi[IDvzri[:,1]] < h)[0]
+            # Vz_re[high_rindices] = np.sqrt(2*9.81*(Zi[IDvzri[high_rindices,1]]-h)+Vzi[IDvzri[high_rindices,1]]**2)
+            # maskR1 = np.where(Vzi[IDvzri[low_rindices,1]]**2 - 2*9.81*(h-Zi[IDvzri[low_rindices,1]])>0)[0]
+            # Vz_re[low_rindices[maskR1]] = np.sqrt(Vzi[IDvzri[low_rindices[maskR1],1]]**2 - 2*9.81*(h-Zi[IDvzri[low_rindices[maskR1],1]]))
+            # #correct the horizontal rebound velocities (lower than 1.5D)
+            # VzR1_low,VxR1_low,VxR2_low = Vzi[IDvzri[low_rindices,1]],Vxi[IDvzri[low_rindices,1]],Vxi[IDvzri[low_rindices,1]+1]
+            # zR1_low = Zi[IDvzri[low_rindices,1]]
+            # maskR2 = VzR1_low**2 - 2*9.81*(h - zR1_low) > 0
+            # dt_ratio_lowR = np.empty_like(VzR1_low)
+            # dt_ratio_lowR[:] = np.nan
+            # dt_ratio_lowR[maskR2] = (VzR1_low + np.sqrt(VzR1_low**2 - 2*9.81*(h-zR1_low))) / 9.81 /dt
+            # newlow_rindices = np.where(dt_ratio_lowR < 1)[0]
+            # Vx_re[low_rindices[newlow_rindices]] = dt_ratio_lowR[newlow_rindices] * (VxR2_low[newlow_rindices] - VxR1_low[newlow_rindices]) + VxR1_low[newlow_rindices]
+            # #higher than 1.5D
+            # VxR0_high,VxR1_high = Vxi[IDvzri[high_rindices,1]-1],Vxi[IDvzri[high_rindices,1]]
+            # VzR1_high = Vzi[IDvzri[high_rindices,1]]
+            # zR1_high = Zi[IDvzri[high_rindices,1]]
+            # dt_ratio_highR = (VzR1_high + np.sqrt(VzR1_high**2 - 2*9.81*(h-zR1_high))) / 9.81 /dt
+            # newhigh_rindices = np.where(dt_ratio_highR < 1)[0]
+            # Vx_re[high_rindices[newhigh_rindices]] = - dt_ratio_highR[newhigh_rindices] * (VxR1_high[newhigh_rindices] - VxR0_high[newhigh_rindices]) + VxR1_high[newhigh_rindices]
             
-            #correct the vertical rebound velocities
-            high_rindices = np.where(Zi[IDvzri[:,1]] > h)
-            low_rindices = np.where(Zi[IDvzri[:,1]] < h)
-            Vz_re[high_rindices] = np.sqrt(2*9.81*(Zi[IDvzri[high_rindices,1]]-h)+Vzi[IDvzri[high_rindices,1]]**2)
-            Vz_re[low_rindices] = np.sqrt(Vzi[IDvzri[low_rindices,1]]**2 - 2*9.81*(h-Zi[IDvzri[low_rindices,1]]))
-            #correct the horizontal rebound velocities
-            Vz1_low,Vx1_low,Vx2_low = Vzi[IDvzri[low_rindices,1]],Vxi[IDvzri[low_rindices,1]],Vxi[IDvzri[low_rindices,1]+1]
-            z1_low = Zi[IDvzri[low_rindices,1]]
-            dt_ratio_low = (2*Vz1_low + np.sqrt(4*Vz1_low**2 - 4*9.81*(2*h-2*z1_low))) / (2*9.81) /dt
-            newlow_rindices = np.where(dt_ratio_low < 1)
-            if len(newlow_rindices[0]) > 0:
-                Vx_re[low_rindices[0][newlow_rindices[0]]] = dt_ratio_low[newlow_rindices[0]] * (Vx2_low[newlow_rindices[0]]-Vx1_low[newlow_rindices[0]]) + Vx1_low[newlow_rindices[0]]
-            #higher than 1.5D
-            Vx0_high,Vx1_high = Vxi[IDvzri[high_rindices,1]-1],Vxi[IDvzri[high_rindices,1]]
-            Vz1_high = Vzi[IDvzri[high_rindices,1]]
-            z1_high = Zi[IDvzri[high_rindices,1]]
-            dt_ratio_high = (2*Vz1_high + np.sqrt(4*Vz1_high**2 - 4*9.81*(2*h-2*z1_high))) / (2*9.81) /dt
-            newhigh_rindices = np.where(dt_ratio_high < 1)
-            if len(newhigh_rindices[0]) > 0:
-                Vx_re[high_rindices[0][newhigh_rindices[0]]] = dt_ratio_high[newhigh_rindices[0]] * (Vx0_high[newhigh_rindices[0]]-Vx1_high[newhigh_rindices[0]]) + Vx1_high[newhigh_rindices[0]]
-            
-            ez = np.abs(Vz_re/Vz_im)#np.abs(Vzi[IDvzri[:, 1]] / Vzi[IDvzri[:, 0]])
-            Vxzi_imnew = np.sqrt(Vxi[IDvzri[:, 0]]**2 + Vz_im**2)
+            Vxzi_imnew = np.sqrt(Vx_im**2 + Vz_im**2)
             Vxzi_renew = np.sqrt(Vx_re**2 + Vz_re**2)
+            ez = np.abs(Vz_re/Vz_im)#np.abs(Vzi[IDvzri[:, 1]] / Vzi[IDvzri[:, 0]])
             exz = Vxzi_renew/Vxzi_imnew #Vxzi[IDvzri[:, 1]] / Vxzi[IDvzri[:, 0]]
             
             #impact angles
-            Thetaii_radian = np.arctan(np.abs(Vz_im/Vxi[IDvzri[:, 0]]))
+            Thetaii_radian = np.arctan(np.abs(Vzi[IDvzri[:, 0]]/Vxi[IDvzri[:, 0]]))
             Thetaii = np.degrees(Thetaii_radian)
             #rebound angles
-            Thetarei_radian = np.arctan(np.abs(Vz_re/Vx_re))
+            Thetarei_radian = np.arctan(np.abs(Vzi[IDvzri[:, 1]]/Vxi[IDvzri[:, 1]]))
             Thetarei = np.degrees(Thetarei_radian)
             
             #hop-averaged saltation velocity
