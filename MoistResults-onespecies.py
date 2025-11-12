@@ -194,7 +194,7 @@ Vim_bin = np.linspace(0, max(Vim_all_values)+1, 10)
 VD_all_values = [value for sublist in VD_all.values() for value in sublist]
 Vde_bin = np.linspace(0, max(VD_all_values)+1, 15)
 Vimde_all_values = [value for sublist in Vim_all.values() for value in sublist] + [value for sublist in VD_all.values() for value in sublist]
-Vimde_bin = np.linspace(0, max(Vimde_all_values)+1, 10)
+Vimde_bin = np.linspace(0, max(Vimde_all_values)+1, 15)
 Vre_all_values = [value for sublist in Vre_all.values() for value in sublist]
 Vre_bin = np.linspace(0, max(Vre_all_values)+1, 10)
 Thetaimde_all_values = [value for sublist in Theta_all.values() for value in sublist] + [value for sublist in ThetaD_all.values() for value in sublist]
@@ -849,54 +849,233 @@ for i in range (5): #loop over Omega 0-20%
 # plt.show()
 
 # theta_inc = f(Uinc)
-mean_thetaim, stderr_thetaim, N_Uim = defaultdict(list),defaultdict(list),defaultdict(list)
-mean_thetaD, stderr_thetaD, N_UD = defaultdict(list),defaultdict(list),defaultdict(list)
+# mean_thetaim, stderr_thetaim, N_Uim = defaultdict(list),defaultdict(list),defaultdict(list)
+# mean_thetaD, stderr_thetaD, N_UD = defaultdict(list),defaultdict(list),defaultdict(list)
 mean_thetainc, stderr_thetainc, N_Uinc = defaultdict(list),defaultdict(list),defaultdict(list)
-mean_thetaE, stderr_thetaE, N_UE = defaultdict(list),defaultdict(list),defaultdict(list)
-mean_thetare, stderr_thetare, N_Ure =  defaultdict(list),defaultdict(list),defaultdict(list)
 for i in range(5):
-    mean_thetaim[i], stderr_thetaim[i], N_Uim[i], Uthetaplot = module.match_Uim_thetaim(matched_Vim_Omega[i], matched_Thetaim_Omega[i], Vim_bin)
-    mean_thetaD[i], stderr_thetaD[i], N_UD[i], UthetaDplot = module.match_Uim_thetaim(VD_all_Omega[i], ThetaD_all_Omega[i], Vde_bin)
+    # mean_thetaim[i], stderr_thetaim[i], N_Uim[i], Uthetaplot = module.match_Uim_thetaim(matched_Vim_Omega[i], matched_Thetaim_Omega[i], Vim_bin)
+    # mean_thetaD[i], stderr_thetaD[i], N_UD[i], UthetaDplot = module.match_Uim_thetaim(VD_all_Omega[i], ThetaD_all_Omega[i], Vde_bin)
     Vimde_Omega = np.array(Vim_all_Omega[i] + VD_all_Omega[i])
     Thetaimde_Omega = np.array(Thetaim_all_Omega[i] + ThetaD_all_Omega[i])
     mean_thetainc[i], stderr_thetainc[i], N_Uinc[i], Uthetaincplot = module.match_Uim_thetaim(Vimde_Omega, Thetaimde_Omega, Vimde_bin)
-    # mean_thetare[i], stderr_thetare[i], N_Ure[i], Uthetareplot = module.match_Uim_thetaim(Vre_all_Omega[i], Thetare_all_Omega[i], Vre_bin)
-    # mean_thetaE[i], stderr_thetaE[i], N_UE[i], UthetaEplot = module.match_Uim_thetaim(UE_all_Omega[i], ThetaE_all_Omega[i], VE_bin)
 
-# U_fit, theta_fit, a_fit, b_fit, c_fit = defaultdict(),defaultdict(),np.zeros(5),np.zeros(5),np.zeros(5) #U_fit, theta_fit=defaultdict(),defaultdict()
-# # --- Fit ---
-# for i in range(5):
-#     # --- Remove NaN values before fitting ---
-#     valid_indices = ~np.isnan(mean_thetaim[i])  # Get boolean mask where theta_all is NOT NaN
-#     U_clean = Uthetaplot[valid_indices]/constant       # Keep only valid U values
-#     theta_clean = np.deg2rad(mean_thetaim[i])[valid_indices]# Keep only valid theta values
-#     N_Uim_clean = np.array(N_Uim[i])[valid_indices]
-#     stderr = np.deg2rad(stderr_thetaim[i])[valid_indices]
-#     valid_mask = np.where(~np.isnan(stderr))[0]
-#     # 用该掩码过滤所有列表
-#     U_clean = U_clean[valid_mask]
-#     theta_clean = theta_clean[valid_mask]
-#     stderr = stderr[valid_mask]
-#     popt, _ = curve_fit(fit_arcsin, U_clean, theta_clean, p0=[1,0], sigma=stderr, absolute_sigma=True)
-#     a_fit[i], b_fit[i] = popt 
-#     # Generate fitted curve
-#     U_fit[i] = np.linspace(min(U_clean), max(U_clean), 200)
-#     theta_fit[i] = fit_arcsin(U_fit[i], *popt)
-#     theta_fit_dis = fit_arcsin(U_clean, *popt)
-#     R2_weighted = weighted_r2(theta_clean, theta_fit_dis, 1 / stderr ** 2)
-#     print('R2_weighted:', R2_weighted)
+def fit_arcsin(Uim_over_sqrtgd, A, B):
+    return np.arcsin(A/(Uim_over_sqrtgd+B))
+def weighted_r2(y_true, y_pred, weights):
+    y_avg = np.average(y_true, weights=weights)
+    ss_res = np.sum(weights * (y_true - y_pred)**2)
+    ss_tot = np.sum(weights * (y_true - y_avg)**2)
+    return 1 - ss_res / ss_tot
+def power_law(Omega, A, B, n):
+    return A - B * Omega **n
+def lineardecrease(Omega, a, b):
+    return a*Omega + b 
+
+Uinc_fit, thetainc_fit, A_fit, B_fit = defaultdict(),defaultdict(),np.zeros(5),np.zeros(5)
+# --- Fit ---
+for i in range(5):
+    # --- Remove NaN values before fitting ---
+    valid_indices = ~np.isnan(mean_thetainc[i])  # Get boolean mask where theta_all is NOT NaN
+    U_clean = Uthetaincplot[valid_indices]/constant       # Keep only valid U values
+    theta_clean = np.deg2rad(mean_thetainc[i])[valid_indices]# Keep only valid theta values
+    N_Uinc_clean = np.array(N_Uinc[i])[valid_indices]
+    stderr = np.deg2rad(stderr_thetainc[i])[valid_indices]
+    valid_mask = np.where(~np.isnan(stderr))[0]
+    # 用该掩码过滤所有列表
+    U_clean = U_clean[valid_mask]
+    theta_clean = theta_clean[valid_mask]
+    stderr = stderr[valid_mask]
+    popt, _ = curve_fit(fit_arcsin, U_clean, theta_clean, sigma=stderr, absolute_sigma=True, maxfev=10000)
+    A_fit[i], B_fit[i] = popt 
+    # Generate fitted curve
+    Uinc_fit[i] = np.linspace(min(U_clean), max(U_clean), 200)
+    thetainc_fit[i] = fit_arcsin(Uinc_fit[i], *popt)
+    theta_fit_dis = fit_arcsin(U_clean, *popt)
+    R2_weighted = weighted_r2(theta_clean, theta_fit_dis, 1 / stderr ** 2)
+    print('R2_weighted:', R2_weighted)
     
-
+thetainc_fit[0] = fit_arcsin(Uinc_fit[0], 65, 250)
+# plt.close('all')
 plt.figure(figsize=(6,5))
 for i in range(5):
     plt.errorbar(Uthetaincplot/constant, mean_thetainc[i], yerr=stderr_thetainc[i], fmt='o', capsize=5, label=rf'$\Omega$={Omega[i]}%', color=colors[i])
 # Plot fitted curve
-# for i in range(5):
-#     plt.plot(U_fit[i], np.degrees(theta_fit[i]), '--', color=colors[i])
+for i in range(5):
+    plt.plot(Uinc_fit[i], np.degrees(thetainc_fit[i]), '--', color=colors[i])
 plt.xlabel(r'$U_{inc}/\sqrt{gd}$ [-]', fontsize=14)
 plt.ylabel(r'$\theta_{inc}$ [-]', fontsize=14)
 plt.legend(fontsize=12)
 plt.tight_layout()
 plt.show()     
 
+A_fit[0], B_fit[0] = 68, 250
+Omega_tbfit = np.array(Omega, dtype=float)*0.01
+# A_fit_new = np.delete(A_fit, 1)
+# Omega_tbfit_new = np.delete(Omega_tbfit, 1)
+params1, _ = curve_fit(lineardecrease, Omega_tbfit, A_fit)
+# # Generate smooth curve for plotting
+Omega_smooth = np.linspace(min(Omega_tbfit), max(Omega_tbfit), 100)
+A_fit_smooth = lineardecrease(Omega_smooth, *params1)
+a1_opt, b1_opt = params1
+plt.figure()
+plt.plot(Omega_tbfit, A_fit, 'o', label= 'Original data')
+plt.plot(Omega_smooth, A_fit_smooth, '--', label='Power-law fit')
+plt.xlabel('omega')
+plt.ylabel('A_fit')
+alpha = a1_opt * Omega_tbfit + b1_opt
+print(rf"$\alpha$ = {a1_opt:.2f} * $\Omega$ + {b1_opt:.2f}")
+
+B_fit_new = np.delete(B_fit, 1)
+Omega_tbfit_B = np.delete(Omega_tbfit, 1)
+params2, _ = curve_fit(lineardecrease, Omega_tbfit_B, B_fit_new)
+# # Generate smooth curve for plotting
+B_fit_smooth = lineardecrease(Omega_smooth, *params2)
+a2_opt, b2_opt = params2
+plt.figure()
+plt.plot(Omega_tbfit, B_fit, 'o', label= 'Original data')
+plt.plot(Omega_smooth, B_fit_smooth, '--', label='Power-law fit')
+plt.xlabel('omega')
+plt.ylabel('B_fit')
+beta = a2_opt * Omega_tbfit + b2_opt
+print(rf"$\beta$ = {a2_opt:.2f} * $\Omega$ + {b2_opt:.2f}")
+
+# # Combine all data from the 5 moisture levels
+Uinc_fit_new = np.linspace(min(Uthetaincplot/constant), max(Uthetaincplot/constant), 100)
+Theta_fit_new = defaultdict()
+# Loop over each element in alpha and multiply with U_fit_new
+for i in range(5):
+    Theta_fit_new[i] = fit_arcsin(Uinc_fit_new, alpha[i], beta[i])
+
+#plot the fit using the global function
+# Plot original data
+plt.figure(figsize=(6,5))
+for i in range(5):
+    plt.errorbar(Uthetaincplot/constant, mean_thetainc[i], yerr=stderr_thetainc[i], fmt='o', capsize=5, label=rf'$\Omega$={Omega[i]}%', color=colors[i])
+# Plot fitted hyperbolic curve
+for i in range(5):
+    plt.plot(Uinc_fit_new, np.degrees(Theta_fit_new[i]), '--', color=colors[i])
+plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$\theta_\mathrm{inc}$ [$^\circ$]', fontsize=14)
+plt.xlim(0,225)
+plt.legend(fontsize=12)
+plt.tight_layout()
+plt.show()     
+
+#calculate R^2
+all_theta_ori, all_theta_fit_resampled, weight_theta_all = [],[],[]
+for i in range(5):
+    # Create interpolator from 100-point fit
+    interpolator = interp1d(Uinc_fit_new, Theta_fit_new[i], kind='linear', fill_value='extrapolate')
+    # Evaluate fit at the same x-values as Uthetaplot
+    # --- Remove NaN values before fitting ---
+    valid_indices = ~np.isnan(mean_thetainc[i])  # Get boolean mask where theta_all is NOT NaN
+    U_clean = Uthetaincplot[valid_indices]/constant       # Keep only valid U values
+    theta_clean = np.deg2rad(mean_thetainc[i])[valid_indices]# Keep only valid theta values
+    stderr = np.deg2rad(stderr_thetainc[i])[valid_indices]
+    valid_mask = np.where(~np.isnan(stderr))[0]
+    # 用该掩码过滤所有列表
+    U_clean = U_clean[valid_mask]
+    theta_clean = theta_clean[valid_mask]
+    stderr = stderr[valid_mask]
+    theta_fit_resampled = interpolator(U_clean)
+    all_theta_ori.append(theta_clean)
+    all_theta_fit_resampled.append(theta_fit_resampled)
+    N_Uinc_clean=np.array(N_Uinc[i])[valid_indices]
+    weight_theta_all.append(1/(stderr**2))
+    
+y_theta_all = np.concatenate(all_theta_ori)
+y_predtheta_all = np.concatenate(all_theta_fit_resampled)
+weight_theta_glo = np.concatenate(weight_theta_all)
+# Now compute R²
+R2_theta = weighted_r2(y_theta_all, y_predtheta_all, weights=weight_theta_glo)#weights=weight_theta_glo)
+print('R2_thetainc=',R2_theta)
+
+# Uinc = f(U)
 U_dpm_mid = [np.interp(t_mid, t_dpm, U) for U in U_dpm]
+
+Uinc_all_Omega, Udpm_all_Omega = defaultdict(list), defaultdict(list)
+for i in range (5): #loop over Omega 0-20 %
+    selected_indices = list(range(i, 25, 5))  # Get indices like [0,5,10,15,20], [1,6,11,16,21], etc.
+    Uinc_all_Omega[i] = np.concatenate([Uinc_t[j] for j in selected_indices]).tolist()
+    Udpm_all_Omega[i] = np.concatenate([U_dpm_mid[j] for j in selected_indices]).tolist()
+    
+def Bin_Uinc_U(Uinc, U, Ubin):
+    Uinc = np.array(Uinc)
+    U = np.array(U)
+    Uinc_mean, Uinc_stderr = [], []
+    for i in range(len(Ubin)-1):
+        # Find indices of velocities within the current range
+        indices = (U >= Ubin[i]) & (U < Ubin[i + 1])
+        idx = np.where(indices)[0]
+        idx = np.array(idx)
+      
+        if np.any(idx):  # Check if there are elements in this range
+            Uinc_in_bin = Uinc[idx]
+            Uinc_m, uinc_se = np.mean(Uinc_in_bin), np.std(Uinc_in_bin)/len(Uinc_in_bin)
+            Uinc_mean.append(Uinc_m)
+            Uinc_stderr.append(uinc_se)
+        else:
+            Uinc_mean.append(np.nan)
+            Uinc_stderr.append(np.nan)
+            
+    U_median = (Ubin[:-1] + Ubin[1:]) / 2 
+
+    return np.array(Uinc_mean), np.array(Uinc_stderr), np.array(U_median) 
+    
+U_bin = np.linspace(0, max([np.max(u) for u in U_dpm])+1, 20)
+Uinc_mean, Uinc_stderr = defaultdict(list), defaultdict(list)
+for i in range(5):
+    Uinc_mean[i], Uinc_stderr[i], U_Uincplot = Bin_Uinc_U(Uinc_all_Omega[i], Udpm_all_Omega[i], U_bin)
+    
+plt.figure(figsize=(6,5))
+for i in range(5):
+    plt.errorbar(U_Uincplot, Uinc_mean[i], yerr=Uinc_stderr[i], fmt='o', capsize=5, label=rf'$\Omega$={Omega[i]}%', color=colors[i])
+plt.xlabel(r'$U$ [m/s]', fontsize=14)
+plt.ylabel(r'$U_{inc}$ [m/s]', fontsize=14)
+plt.xlim(left=0);plt.ylim(bottom=0)
+plt.legend(fontsize=12)
+plt.tight_layout()   
+
+def power(U, a, b):
+    return a*U**b
+
+def linear(U, a):
+    return a*U
+
+# --- Fit ---
+# --- Remove NaN values before fitting ---
+def fitUincU(U_plot, Uinc_mean, Uinc_stderr):
+    valid_indices = ~np.isnan(Uinc_mean)  
+    U_clean = U_plot[valid_indices]       # Keep only valid U values
+    Uinc_clean = Uinc_mean[valid_indices]# Keep only valid theta values
+    stderr = Uinc_stderr[valid_indices]
+    valid_mask = np.where(~np.isnan(stderr))[0]
+    # 用该掩码过滤所有列表
+    U_clean = U_clean[valid_mask]
+    Uinc_clean = Uinc_clean[valid_mask]
+    stderr = stderr[valid_mask]
+    popt, _ = curve_fit(linear, U_clean, Uinc_clean, maxfev=10000)  # no weight since stderr is not significant
+    a = popt 
+    return a
+
+#Dry
+a_dry = fitUincU(U_Uincplot, Uinc_mean[0], Uinc_stderr[0])
+Uinc_wet = np.array([x for k in range(1, 5) for x in Uinc_mean[k]])
+Uinc_wetstderr = np.array([x for k in range(1, 5) for x in Uinc_stderr[k]])
+U_Uincplot_wet = np.tile(U_Uincplot,4)
+a_wet = fitUincU(U_Uincplot_wet, Uinc_wet, Uinc_wetstderr)
+
+# Generate fitted curve
+U_fit = np.linspace(0, max(U_Uincplot), 100)
+Uinc_fit_dry = linear(U_fit, a_dry)
+Uinc_fit_wet = linear(U_fit, a_wet)
+plt.figure(figsize=(6,5))
+for i in range(5):
+    plt.errorbar(U_Uincplot, Uinc_mean[i], yerr=Uinc_stderr[i], fmt='o', capsize=5, label=rf'$\Omega$={Omega[i]}%', color=colors[i])
+plt.plot(U_fit, Uinc_fit_dry, '--', color=colors[0], label='Dry fit')
+plt.plot(U_fit, Uinc_fit_wet, '--', color=colors[-1], label='Moist fit')
+plt.xlabel(r'$U$ [m/s]', fontsize=14)
+plt.ylabel(r'$U_{inc}$ [m/s]', fontsize=14)
+plt.xlim(left=0);plt.ylim(bottom=0)
+plt.legend(fontsize=12)
+plt.tight_layout()
