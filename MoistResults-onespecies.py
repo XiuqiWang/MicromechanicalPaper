@@ -172,47 +172,47 @@ for i in range (5): #loop over Omega 0-20%
 
 
     
-# #compare with static-bed experiment of Ge (2024)
-# #try filtering the CORs with Vim=4 m/s (80)
-# Theta_Ge = [7, 9, 12, 19]
-# COR_Ge = [0.62, 0.57, 0.49, 0.47]
-# Theta_GeWet1 = [11, 14, 18]#1.45%
-# COR_GeWet1 = [0.65, 0.625, 0.525]
-# Theta_GeWet2 = [7, 13, 21]#22.79%
-# COR_GeWet2 = [0.69, 0.67, 0.55]
-# # Select the Omegas you want to work with
-# selected_indices = [0, 4]
-# # Collect valid Vim values from both datasets
-# Thetaim_validation = []
-# for i in selected_indices:
-#     Thetaim_validation += [v for v, t in zip(Thetaim_all_Omega[i],Vim_all_Omega[i]) if 3.5 <= t <= 4.5]
-# # Define the validation range
-# Thetaim_validation_range = np.linspace(min(Thetaim_validation), max(Thetaim_validation), 10)
-# COR_test, COR_Test_std, N_COR_test, Theta_test = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
-# for i in selected_indices:
-#     valid = [(theta, Uim, Ure) for theta, Uim, Ure, t in zip(Thetaim_all_Omega[i], Vim_all_Omega[i], Vre_all_Omega[i], Vim_all_Omega[i]) if 3.5 <= t <= 4.5]
-#     Thetaim_valid, Uim_valid, Ure_valid = zip(*valid)
-#     COR_test[i], COR_Test_std[i], N_COR_test[i], Theta_test[i] = module.BinThetaimCOR_equalbinsize(Thetaim_valid, Uim_valid, Ure_valid, Thetaim_validation_range)
+#compare with static-bed experiment of Ge (2024)
+#try filtering the CORs with Vim=4 m/s (80)
+Theta_Ge = [7, 9, 12, 19]
+COR_Ge = [0.62, 0.57, 0.49, 0.47]
+Theta_GeWet1 = [11, 14, 18]#1.45%
+COR_GeWet1 = [0.65, 0.625, 0.525]
+Theta_GeWet2 = [7, 13, 21]#22.79%
+COR_GeWet2 = [0.69, 0.67, 0.55]
+# Select the Omegas you want to work with
+selected_indices = [0, 4]
+# Collect valid Vim values from both datasets
+Thetaim_validation = []
+for i in selected_indices:
+    Thetaim_validation += [v for v, t in zip(Thetaim_all_Omega[i],Vim_all_Omega[i]) if 3.5 <= t <= 4.5]
+# Define the validation range
+Thetaim_validation_range = np.linspace(min(Thetaim_validation), max(Thetaim_validation), 10)
+COR_test, COR_Test_std, N_COR_test, Theta_test = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
+for i in selected_indices:
+    valid = [(theta, Uim, Ure) for theta, Uim, Ure, t in zip(Thetaim_all_Omega[i], Vim_all_Omega[i], Vre_all_Omega[i], Vim_all_Omega[i]) if 3.5 <= t <= 4.5]
+    Thetaim_valid, Uim_valid, Ure_valid = zip(*valid)
+    COR_test[i], COR_Test_std[i], N_COR_test[i], Theta_test[i] = module.BinThetaimCOR_equalbinsize(Thetaim_valid, Uim_valid, Ure_valid, Thetaim_validation_range)
 
-# #try filtering the CORs with thetaim=11.5 degree
-# U_Ge = [125, 225, 310]
-# UE_Ge = [0.49, 0.52, 0.75]
-# U_GeWet = [60, 145]#22.79%
-# UE_GeWet = [0.7, 2.7]
-# NE_test, UE_test, UE_test_std, UE_test_stderr, U_testNE, N_EinbinTest = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
+#try filtering the CORs with thetaim=11.5 degree
+U_Ge = [125, 225, 310]
+UE_Ge = [0.49, 0.52, 0.75]
+U_GeWet = [60, 145]#22.79%
+UE_GeWet = [0.7, 2.7]
+NE_test, UE_test, UE_test_std, UE_test_stderr, U_testNE, N_EinbinTest = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
 
-# # Collect valid Vim values from both datasets
-# Vim_validation,VD_validation = [],[]
-# for i in selected_indices:
-#     Vim_validation += [v for v, t in zip(matched_Vim_Omega[i], matched_Thetaim_Omega[i]) if 10 <= t <= 13]
-#     VD_validation += [v for v, t in zip(VD_all_Omega[i], ThetaD_all_Omega[i]) if 10 <= t <= 13]
-# # Define the validation range
-# Vim_validation_range = np.linspace(min(Vim_validation + VD_validation), max(Vim_validation + VD_validation), 10)
-# # Compute NE_test, UE_test, UE_test_std, U_testNE for selected indices
-# for i in selected_indices:
-#     valid = [(vim, vD, ne, ue, thetae) for vim, vD, ne, ue, thetae, t in zip(matched_Vim_Omega[i], VD_all_Omega[i], matched_NE_Omega[i], matched_UE_Omega[i], matched_thetaE_Omega[i], matched_Thetaim_Omega[i]) if 10 <= t <= 13]
-#     Vim_valid, VD_valid, NE_valid, UE_valid, ThetaE_valid = zip(*valid)
-#     NE_test[i], UE_test[i], UE_test_std[i], UE_test_stderr[i], thetaEtest, thetaEtest_std, thetaEtest_stderr, N_EinbinTest[i], U_testNE[i] = module.get_ejection_ratios_equalbinsize(Vim_valid, VD_valid, NE_valid, UE_valid, ThetaE_valid, Vim_validation_range)
+# Collect valid Vim values from both datasets
+Vim_validation,VD_validation = [],[]
+for i in selected_indices:
+    Vim_validation += [v for v, t in zip(matched_Vim_Omega[i], matched_Thetaim_Omega[i]) if 10 <= t <= 13]
+    VD_validation += [v for v, t in zip(VD_all_Omega[i], ThetaD_all_Omega[i]) if 10 <= t <= 13]
+# Define the validation range
+Vim_validation_range = np.linspace(min(Vim_validation + VD_validation), max(Vim_validation + VD_validation), 10)
+# Compute NE_test, UE_test, UE_test_std, U_testNE for selected indices
+for i in selected_indices:
+    valid = [(vim, vD, ne, ue, thetae) for vim, vD, ne, ue, thetae, t in zip(matched_Vim_Omega[i], VD_all_Omega[i], matched_NE_Omega[i], matched_UE_Omega[i], matched_thetaE_Omega[i], matched_Thetaim_Omega[i]) if 10 <= t <= 13]
+    Vim_valid, VD_valid, NE_valid, UE_valid, ThetaE_valid = zip(*valid)
+    NE_test[i], UE_test[i], UE_test_std[i], UE_test_stderr[i], thetaEtest, thetaEtest_std, thetaEtest_stderr, N_EinbinTest[i], U_testNE[i] = module.get_ejection_ratios_equalbinsize(Vim_valid, VD_valid, NE_valid, UE_valid, ThetaE_valid, Vim_validation_range)
 
 
 # plt.figure(figsize=(12,5))
@@ -981,16 +981,17 @@ def gompertz(x, L, a, b):
 # plt.show()
 
 # theta_inc = f(Uinc)
-# mean_thetaim, stderr_thetaim, N_Uim = defaultdict(list),defaultdict(list),defaultdict(list)
-# mean_thetaD, stderr_thetaD, N_UD = defaultdict(list),defaultdict(list),defaultdict(list)
-# mean_thetainc, stderr_thetainc, N_Uinc = defaultdict(list),defaultdict(list),defaultdict(list)
-# for i in range(5):
-#     # mean_thetaim[i], stderr_thetaim[i], N_Uim[i], Uthetaplot = module.match_Uim_thetaim(matched_Vim_Omega[i], matched_Thetaim_Omega[i], Vim_bin)
-#     # mean_thetaD[i], stderr_thetaD[i], N_UD[i], UthetaDplot = module.match_Uim_thetaim(VD_all_Omega[i], ThetaD_all_Omega[i], Vde_bin)
-#     Vimde_Omega = np.array(Vim_all_Omega[i] + VD_all_Omega[i])
-#     Thetaimde_Omega = np.array(Thetaim_all_Omega[i] + ThetaD_all_Omega[i])
-#     mean_thetainc[i], stderr_thetainc[i], N_Uinc[i], Uthetaincplot = module.match_Uim_thetaim(Vimde_Omega, Thetaimde_Omega, Vimde_bin)
-
+mean_thetaim, stderr_thetaim, N_Uim = defaultdict(list),defaultdict(list),defaultdict(list)
+mean_thetaD, stderr_thetaD, N_UD = defaultdict(list),defaultdict(list),defaultdict(list)
+mean_thetainc, stderr_thetainc, N_Uinc = defaultdict(list),defaultdict(list),defaultdict(list)
+mean_thetare, stderr_thetare, N_Ure =  defaultdict(list),defaultdict(list),defaultdict(list)
+for i in range(5):
+    # mean_thetaim[i], stderr_thetaim[i], N_Uim[i], Uthetaplot = module.match_Uim_thetaim(matched_Vim_Omega[i], matched_Thetaim_Omega[i], Vim_bin)
+    # mean_thetaD[i], stderr_thetaD[i], N_UD[i], UthetaDplot = module.match_Uim_thetaim(VD_all_Omega[i], ThetaD_all_Omega[i], Vde_bin)
+    Vimde_Omega = np.array(Vim_all_Omega[i] + VD_all_Omega[i])
+    Thetaimde_Omega = np.array(Thetaim_all_Omega[i] + ThetaD_all_Omega[i])
+    mean_thetainc[i], stderr_thetainc[i], N_Uinc[i], Uthetaincplot = module.match_Uim_thetaim(Vimde_Omega, Thetaimde_Omega, Vimde_bin)
+    mean_thetare[i], stderr_thetare[i], N_Ure[i], Uthetareplot = module.match_Uim_thetaim(Vre_all_Omega[i], Thetare_all_Omega[i], Vre_bin)
 
 # def weighted_r2(y_true, y_pred, weights):
 #     y_avg = np.average(y_true, weights=weights)
@@ -1112,6 +1113,15 @@ def gompertz(x, L, a, b):
 # R2_theta = weighted_r2(y_theta_all, y_predtheta_all, weights=weight_theta_glo)#weights=weight_theta_glo)
 # print('R2_thetainc=',R2_theta)
 
+plt.figure(figsize=(6,5))
+for i in range(5):
+    plt.errorbar(Uthetareplot/constant, mean_thetare[i], yerr=stderr_thetare[i], fmt='o', capsize=5, label=rf'$\Omega$={Omega[i]}%', color=colors[i])
+plt.xlabel(r'$U_\mathrm{re}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$\theta_\mathrm{re}$ [$^\circ$]', fontsize=14)
+plt.xlim(left=0)
+plt.legend(fontsize=12)
+plt.tight_layout()
+plt.show()   
 
 # # validation dry
 # #empirical data
