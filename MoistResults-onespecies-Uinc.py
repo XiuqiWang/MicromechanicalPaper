@@ -187,23 +187,25 @@ result = fit_Cref_parameters()
 Cref_opt = result.x
 print("Optimal Cref_Uinc          =", Cref_opt)
 
-for i in range(5):  # 5 groups
-    plt.figure(figsize=(10, 6))
-    for j in range(5):
-        plt.subplot(2, 3, j+1)
-        index_byS = i*5+j # by Shields
+plt.close('all')
+for i in range(5):  # 5 omega
+    plt.figure(figsize=(10, 8))
+    for j in range(5): # 5 shields
+        plt.subplot(3, 2, j+1)
+        index_byS = i+j*5 
         Uinc_test = Cal_Uinc_test(U_dpm[index_byS], C_dpm[index_byS], Cref_opt)
-        plt.plot(t_dpm, Uinc_test, label=r'$\frac{{U}}{{\sqrt{{1 + C/C_{{ref}}}}}}$')
+        plt.plot(t_dpm, Uinc_test, label=r'$\breve{U}_\mathrm{inc}=\frac{{\hat{U}}}{{\sqrt{{1 + \hat{c}/c_\mathrm{{ref, Uinc}}}}}}$')
         Uinc = Uinc_t[index_byS] 
-        plt.plot(t_mid, Uinc, label=r'$U_{inc}$')
-        plt.title(fr'$\Omega$ = {Omega[j]} $\%$')
-        plt.ylabel(r'$U_{inc}$ [m/s]')
-        plt.xlabel(r't [s]')
+        plt.plot(t_mid, Uinc, label=r'$\hat{U}_\mathrm{inc}$')
+        plt.title(fr'$\tilde{{\Theta}}$=0.0{j+2}')
+        plt.ylabel(r'$U_\mathrm{inc}$ [m/s]')
+        plt.xlabel(r'$t$ [s]')
         plt.xlim(left=0)
         plt.ylim(0,10)
         plt.grid(True)
-    plt.legend()
-    plt.suptitle(f'Shields=0.0{i+2}')
+        if j == 0:
+            plt.legend(fontsize=9, loc='upper right')
+    plt.suptitle(fr'$\Omega$={Omega[i]}%')
     plt.tight_layout()
     plt.show()  
     
