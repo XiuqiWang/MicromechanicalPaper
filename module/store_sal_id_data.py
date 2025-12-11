@@ -199,10 +199,10 @@ def findSaltationID(e, Vxi, Vzi, Zi, thre_e, dt):
             exz = Vxzi_renew/Vxzi_imnew #Vxzi[IDvzri[:, 1]] / Vxzi[IDvzri[:, 0]]
             
             #impact angles
-            Thetaii_radian = np.arctan(np.abs(Vzi[IDvzri[:, 0]]/Vxi[IDvzri[:, 0]]))
+            Thetaii_radian = np.arctan(np.abs(Vz_im/Vx_im))
             Thetaii = np.degrees(Thetaii_radian)
             #rebound angles
-            Thetarei_radian = np.arctan(np.abs(Vzi[IDvzri[:, 1]]/Vxi[IDvzri[:, 1]]))
+            Thetarei_radian = np.arctan(np.abs(Vz_re/Vx_re))
             Thetarei = np.degrees(Thetarei_radian)
             
             #hop-averaged saltation velocity

@@ -126,7 +126,7 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
             
             VDxzi = np.sqrt(VDxi**2+VDzi**2)
             
-            ThetaDi_radian = np.arctan(np.abs(Vz[ID_Dbefore]/Vx[ID_Dbefore])) # original angles
+            ThetaDi_radian = np.arctan(np.abs(VDzi/VDxi)) 
             ThetaDi = np.degrees(ThetaDi_radian)
             # get the id at the top of the reptation hops
             reptop_indices = []
@@ -159,7 +159,7 @@ def store_particle_id_data(data,ID_Particle, coe_h, dt, N_inter, D):
             mp = Vp[0, i] * 2650
             xDi = x[ID_Di]
             EEi = 0.5*mp*VExzi**2
-            ThetaEi_radian = np.arctan(np.abs(Vz[ID_Eafter]/Vx[ID_Eafter]))
+            ThetaEi_radian = np.arctan(np.abs(VEzi/VExi))
             ThetaEi = np.degrees(ThetaEi_radian)
             # Distribute values into intervals
             # print('ID_Ei', ID_Ei)
