@@ -28,14 +28,15 @@ def hop_average_Usal(times, u_stream, id_im, id_depa):
         t_seg = times[i0:iN+1]
         u_seg = u_stream[i0:iN+1]
         # Interpolate to exact hop boundaries if needed
-        if t_seg[0] > t_depa:
-            u0 = np.interp(t_depa, times, u_stream)
-            t_seg = np.concatenate(([t_depa], t_seg))
-            u_seg = np.concatenate(([u0], u_seg))
-        if t_seg[-1] < t_imp:
-            uN = np.interp(t_imp, times, u_stream)
-            t_seg = np.concatenate((t_seg, [t_imp]))
-            u_seg = np.concatenate((u_seg, [uN]))
+        if len(t_seg) > 1:
+            if t_seg[0] > t_depa:
+                u0 = np.interp(t_depa, times, u_stream)
+                t_seg = np.concatenate(([t_depa], t_seg))
+                u_seg = np.concatenate(([u0], u_seg))
+            if t_seg[-1] < t_imp:
+                uN = np.interp(t_imp, times, u_stream)
+                t_seg = np.concatenate((t_seg, [t_imp]))
+                u_seg = np.concatenate((u_seg, [uN]))
 
         # Integration
         dt = np.diff(t_seg)
