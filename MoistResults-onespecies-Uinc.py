@@ -187,6 +187,36 @@ result = fit_Cref_parameters()
 Cref_opt = result.x
 print("Optimal Cref_Uinc          =", Cref_opt)
 
+# calculate r2
+# --- Compute R2 ---
+y_all = []
+y_pred_all = []
+
+for idx in range(10, 25):
+    # align data
+    U_aligned = resample_to_measured_times(U_dpm[idx], t_dpm, t_mid)
+    C_aligned = resample_to_measured_times(C_dpm[idx], t_dpm, t_mid)
+    Uinc_meas = Uinc_t[idx]
+    Uinc_meas = np.asarray(Uinc_meas)
+
+    # model prediction with optimal parameter
+    Uinc_pred = Cal_Uinc_test(U_aligned, C_aligned, Cref_opt)
+    Uinc_pred = np.asarray(Uinc_pred)
+
+    # mask invalid values
+    mask = np.isfinite(np.array(Uinc_meas)) & np.isfinite(np.array(Uinc_pred))
+
+    y_all.append(Uinc_meas[mask])
+    y_pred_all.append(Uinc_pred[mask])
+
+# flatten
+y_all = np.concatenate(y_all)
+y_pred_all = np.concatenate(y_pred_all)
+
+R2 = r2_score(y_all, y_pred_all)
+print("Global R² =", R2)
+
+
 plt.close('all')
 for i in range(5):  # 5 omega
     plt.figure(figsize=(10, 8))
@@ -200,7 +230,7 @@ for i in range(5):  # 5 omega
         plt.title(fr'$\tilde{{\Theta}}$=0.0{j+2}')
         plt.ylabel(r'$U_\mathrm{inc}$ [m/s]')
         plt.xlabel(r'$t$ [s]')
-        plt.xlim(left=0)
+        plt.xlim(0,5)
         plt.ylim(0,10)
         plt.grid(True)
         if j == 0:
