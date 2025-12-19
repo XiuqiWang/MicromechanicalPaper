@@ -80,6 +80,7 @@ def store_sal_id_data(data, ID_Particle, coe_h, dt, N_inter, D):
             xim_i = x[IDim_i]
             xre_i = x[IDre_i]
             x_col = xim_i + dxim_i
+            zim_i = z[IDim_i]
             Eim_i = 0.5*mp*Vi_i**2 #kinetic energy 
             # Time-varying: determine which interval the values should go
             for j in range(IDvzri_vec.shape[0]):
@@ -92,7 +93,8 @@ def store_sal_id_data(data, ID_Particle, coe_h, dt, N_inter, D):
                 Mp[idx - 1] += mp #for counting the sum of particles' masses
                 RIM[idx - 1] += mp / (5 / N_inter) / A
                 exz_vector_t[idx - 1].append(exzi[j])
-                IM_vector_t[idx - 1].append([Vi_i[j], IDim_i[j], IDre_i[j], xim_i[j], xre_i[j], x_col[j], i, theta_i[j], thetare_i[j], Eim_i[j], Vr_i[j], Vsal_i[j], Tsal_i[j], mp])
+                Viz = Vi_i[j]*np.sin(np.deg2rad(theta_i[j]))
+                IM_vector_t[idx - 1].append([Vi_i[j], IDim_i[j], IDre_i[j], xim_i[j], xre_i[j], x_col[j], i, theta_i[j], thetare_i[j], Eim_i[j], Vr_i[j], Vsal_i[j], Tsal_i[j], mp, Viz, zim_i[j]])
     
     #mass-weighted avergae values in each output time step
     for i in range(N_inter):
@@ -122,7 +124,7 @@ def findSaltationID(e, Vxi, Vzi, Zi, thre_e, dt):
     if len(IntervalMobile)>0:
         IDmobile.extend(IntervalMobile)
     t = np.linspace(dt, 5, int(5 / dt))
-    h = 13.5*0.00025 #the height for evaluating velocities 13.5D
+    # h = 13.5*0.00025 #the height for evaluating velocities 13.5D
     
     for interval in IntervalMobile:
         Vz_sal = Vzi[interval[0]:interval[1]]
@@ -287,6 +289,6 @@ def Findez(ID_next, Vzi, Vxzi, Zi, thre_e):
         #the rebound velocity should be high enough to reach (coe_h-12)D
         IDvzri = IDvzri[Vzi[IDvzri[:,1]] > vz_crit]
         #the impact should be lower than 30D to be close to the bed, for excluding mid-air collision
-        IDvzri = IDvzri[Zi[IDvzri[:,0]] <= 42*0.00025]
+        # IDvzri = IDvzri[Zi[IDvzri[:,0]] <= 42*0.00025]
     
     return IDvzri
