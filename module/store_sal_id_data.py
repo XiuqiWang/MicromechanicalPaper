@@ -289,6 +289,6 @@ def Findez(ID_next, Vzi, Vxzi, Zi, thre_e):
         #the rebound velocity should be high enough to reach (coe_h-12)D
         IDvzri = IDvzri[Vzi[IDvzri[:,1]] > vz_crit]
         #the impact should be lower than 30D to be close to the bed, for excluding mid-air collision
-        # IDvzri = IDvzri[Zi[IDvzri[:,0]] <= 42*0.00025]
+        IDvzri = IDvzri[Zi[IDvzri[:,0]] <= 80*0.00025]
     
     return IDvzri
