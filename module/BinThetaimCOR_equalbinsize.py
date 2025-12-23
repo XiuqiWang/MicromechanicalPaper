@@ -35,5 +35,6 @@ def BinThetaimCOR_equalbinsize(thetas,Uims, Ures,theta_bins):
             counts.append(0)
     
     thetaplot = (theta_bins[:-1] + theta_bins[1:]) / 2 
+    print('impacts:', counts)
     
     return cor_means, cor_stds, counts, thetaplot
