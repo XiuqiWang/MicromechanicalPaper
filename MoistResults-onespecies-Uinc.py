@@ -227,14 +227,14 @@ for i in range(5):  # 5 omega
         plt.plot(t_dpm, Uinc_test, label=r'$\breve{U}_\mathrm{inc}=\frac{{\hat{U}}}{{\sqrt{{1 + \hat{c}/c_\mathrm{{ref, Uinc}}}}}}$')
         Uinc = Uinc_t[index_byS] 
         plt.plot(t_mid, Uinc, label=r'$\hat{U}_\mathrm{inc}$')
-        plt.title(fr'$\tilde{{\Theta}}$=0.0{j+2}')
-        plt.ylabel(r'$U_\mathrm{inc}$ [m/s]')
-        plt.xlabel(r'$t$ [s]')
+        plt.title(fr'$\tilde{{\Theta}}$=0.0{j+2}', fontsize=14)
+        plt.ylabel(r'$U_\mathrm{inc}$ [m/s]', fontsize=14)
+        plt.xlabel(r'$t$ [s]', fontsize=14)
         plt.xlim(0,5)
         plt.ylim(0,10)
         plt.grid(True)
         if j == 0:
-            plt.legend(fontsize=9, loc='upper right')
+            plt.legend(fontsize=12, loc='upper right')
     plt.suptitle(fr'$\Omega$={Omega[i]}%')
     plt.tight_layout()
     plt.show()  
