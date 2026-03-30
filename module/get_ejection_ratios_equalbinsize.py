@@ -23,14 +23,14 @@ def get_ejection_ratios_equalbinsize(matched_Vim_all, VD_all, matched_NE_all, ma
         number = []
         impact_num, deposition_num = [],[]
         thetaEmean, thetaEstds, thetaEstderr = [],[],[]
+        momentum_ratio_mean, momentum_ratio_std = [], []
         for i in range(len(velimde_bins)-1):
             # Find the indices of the velocities within the current bin range
             bin_mask = (impact_velocities >= velimde_bins[i]) & (impact_velocities < velimde_bins[i + 1])
             bin_mask_de = (deposition_velocities >= velimde_bins[i]) & (deposition_velocities < velimde_bins[i + 1])
             # Calculate the ejection ratio (ejection number / total impact number)
             if np.sum(bin_mask) > 0:
-                ejection_ratio_mean = np.sum(ejection_numbers[bin_mask]) / (np.sum(bin_mask) + np.sum(bin_mask_de))#np.mean(ejection_numbers[bin_mask])#
-                #ejection_ratio_std = np.std(ejection_numbers[bin_mask])
+                ejection_ratio_mean = np.sum(ejection_numbers[bin_mask]) / (np.sum(bin_mask) + np.sum(bin_mask_de))
                 impact_num.append(np.sum(bin_mask))
                 deposition_num.append(np.sum(bin_mask_de))
                 flattened_elements = list(itertools.chain.from_iterable(ejection_velocities[bin_mask]))
@@ -46,6 +46,13 @@ def get_ejection_ratios_equalbinsize(matched_Vim_all, VD_all, matched_NE_all, ma
                 thetaEstds.append(thetaEstd)
                 thetaEstderr.append(thetaEse)
                 number.append(np.size(flattened_elements))
+                #check momentum partitioning
+                # print('UE', ejection_velocities[bin_mask])
+                # print('Uinc', impact_velocities[bin_mask])
+                ratios_UE_Uim = [np.sum(u) / uim for u, uim in zip(ejection_velocities[bin_mask], impact_velocities[bin_mask])]
+                # print('ratios_UE_Uim', ratios_UE_Uim)
+                momentum_ratio_mean.append(np.mean(ratios_UE_Uim))
+                momentum_ratio_std.append(np.std(ratios_UE_Uim))
             else:
                 ejection_ratio_mean = np.nan
                 impact_num.append(0)
@@ -57,13 +64,16 @@ def get_ejection_ratios_equalbinsize(matched_Vim_all, VD_all, matched_NE_all, ma
                 thetaEmean.append(np.nan)
                 thetaEstds.append(np.nan)
                 thetaEstderr.append(np.nan)
+                momentum_ratio_mean.append(np.nan)
+                momentum_ratio_std.append(np.nan)
                 
             ejection_ratios.append(ejection_ratio_mean)#, impact_num])#, ejection_ratio_std])
         
         Uplot = (velimde_bins[:-1] + velimde_bins[1:]) / 2 
         
-        print('number of incidence:', [a+b for a,b in zip(impact_num,deposition_num)])
+        n_inc = [a+b for a,b in zip(impact_num,deposition_num)]
+        print('number of incidence:', n_inc)
         print('number of ejections:', number)
         
         
-        return ejection_ratios, UE_mean, UE_stds, UE_stderr, thetaEmean, thetaEstds, thetaEstderr, number, Uplot
+        return ejection_ratios, UE_mean, UE_stds, UE_stderr, thetaEmean, thetaEstds, thetaEstderr, number, Uplot, n_inc, momentum_ratio_mean, momentum_ratio_std

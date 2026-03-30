@@ -169,11 +169,18 @@ CORmean_Omega,CORstd_Omega,CORstderr_Omega,N_COR_Omega,Uimplot_Omega, Thetaremea
 Pr_Omega,Uplot_Omega, N_PrUre, Uim_meaninbin, UD_meaninbin, N_Princ = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
 NE_mean_Omega, UE_mean_Omega, UE_std_Omega, UE_stderr_Omega, Uplot_NE_Omega, N_Einbin, N_Einc = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
 ThetaE_mean_Omega, ThetaE_std_Omega, ThetaE_stderr_Omega = defaultdict(list), defaultdict(list), defaultdict(list)
+mom_ratio_mean, mom_ratio_std = defaultdict(list), defaultdict(list)
 for i in range (5): #loop over Omega 0-20%
     CORmean_Omega[i], CORstd_Omega[i], CORstderr_Omega[i], N_COR_Omega[i], Thetaremean_Omega[i], Thetarestd_Omega[i], Thetarestderr_Omega[i], Uimplot_Omega[i] = module.BinUimCOR_equalbinsize(Vim_all_Omega[i],Vre_all_Omega[i],Thetare_all_Omega[i],Vim_bin)
     Pr_Omega[i], Uplot_Omega[i],N_PrUre[i], Uim_meaninbin[i], UD_meaninbin[i], N_Princ[i] = module.BinUimUd_equalbinsize(Vim_all_Omega[i],VD_all_Omega[i],Vimde_bin)   
-    NE_mean_Omega[i], UE_mean_Omega[i], UE_std_Omega[i], UE_stderr_Omega[i], ThetaE_mean_Omega[i], ThetaE_std_Omega[i], ThetaE_stderr_Omega[i], N_Einbin[i], Uplot_NE_Omega[i], N_Einc[i]=module.get_ejection_ratios_equalbinsize(matched_Vim_Omega[i], VD_all_Omega[i], matched_NE_Omega[i], matched_UE_Omega[i], matched_thetaE_Omega[i], Vimde_bin)#matched_EE_Omega[i]
+    NE_mean_Omega[i], UE_mean_Omega[i], UE_std_Omega[i], UE_stderr_Omega[i], ThetaE_mean_Omega[i], ThetaE_std_Omega[i], ThetaE_stderr_Omega[i], N_Einbin[i], Uplot_NE_Omega[i], N_Einc[i], mom_ratio_mean[i], mom_ratio_std[i]= module.get_ejection_ratios_equalbinsize(matched_Vim_Omega[i], VD_all_Omega[i], matched_NE_Omega[i], matched_UE_Omega[i], matched_thetaE_Omega[i], Vimde_bin)#matched_EE_Omega[i]
 
+# # check momentum partitioning of impact grains
+# plt.figure()
+# for i in range(5):
+#     plt.errorbar(Uplot_NE_Omega[i], mom_ratio_mean[i], yerr=mom_ratio_std[i], fmt='o', capsize=5, color=colors[i])
+# plt.xlabel('Uinc')
+# plt.ylabel('Mom_E/Mom_Uim')
 
 # ---- plot distribution of zim
 # # Flatten all values from the dict of lists
@@ -839,6 +846,24 @@ for i in range (5): #loop over Omega 0-20%
 # plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
 # plt.ylabel(r'$U_\mathrm{E}/\sqrt{gd}$ [-]', fontsize=14)
 
+# # test momentum and energy partitioned to ejections
+# plt.figure(figsize=(6,5.5))  
+# for i in range(5):
+#     plt.errorbar(Uplot_NE_Omega[i], np.array(UE_mean_Omega[i])*np.array(NE_mean_Omega[i])/Uplot_NE_Omega[i], yerr=, label=f"$\\Omega$={Omega[i]}%",color=colors[i])
+#     print(np.nanmean(np.array(UE_mean_Omega[i])*np.array(NE_mean_Omega[i])/Uplot_NE_Omega[i]))
+# plt.xlim(left=0)
+# plt.ylim(bottom=0)
+# plt.xlabel(r'$U_\mathrm{inc}$ [-]', fontsize=14)
+# plt.ylabel(r'$N_EU_\mathrm{E}/U_\mathrm{inc}$ [-]', fontsize=14)
+
+# plt.figure(figsize=(6,5.5))  
+# for i in range(5):
+#     plt.scatter(Uplot_NE_Omega[i], np.array(NE_mean_Omega[i])*np.array(UE_mean_Omega[i])**2/(Uplot_NE_Omega[i]**2), label=f"$\\Omega$={Omega[i]}%",color=colors[i])   
+# plt.xlim(left=0)
+# plt.ylim(bottom=0)
+# plt.xlabel(r'$U_\mathrm{inc}$ [-]', fontsize=14)
+# plt.ylabel(r'$N_EU_\mathrm{E}^2/{U_\mathrm{inc}}^2}$ [-]', fontsize=14)
+
 # # # thetaE
 # plt.figure(figsize=(6,5.5))  
 # for i in range(5):
@@ -925,436 +950,436 @@ for i in range (5): #loop over Omega 0-20%
 # plt.text(0.03, 0.93, '(f)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
 # plt.tight_layout()
 
-# # distribution of theta and Uim
-# def compute_percentiles_by_omega(data_dict, percentiles=[10, 25, 50, 75, 90]):
-#     omega_values = sorted(data_dict.keys())
-#     percentile_data = []
-#     for omega in omega_values:
-#         data = np.array(data_dict[omega])
-#         percentiles_for_omega = [np.percentile(data, p) for p in percentiles]
-#         percentile_data.append(percentiles_for_omega)
-#     return percentile_data
+# distribution of theta and Uim
+def compute_percentiles_by_omega(data_dict, percentiles=[10, 25, 50, 75, 90]):
+    omega_values = sorted(data_dict.keys())
+    percentile_data = []
+    for omega in omega_values:
+        data = np.array(data_dict[omega])
+        percentiles_for_omega = [np.percentile(data, p) for p in percentiles]
+        percentile_data.append(percentiles_for_omega)
+    return percentile_data
 
-# percentiles=[10, 25, 50, 75, 90]
-# VD_per = compute_percentiles_by_omega(VD_all_Omega, percentiles)
-# percentile_VD = np.array(VD_per)
-# p10_VD, p25_VD, p50_VD, p75_VD, p90_VD = percentile_VD.T
-# ThetaD_per = compute_percentiles_by_omega(ThetaD_all_Omega, percentiles)
-# percentile_ThetaD = np.array(ThetaD_per)
-# p10_ThetaD, p25_ThetaD, p50_ThetaD, p75_ThetaD, p90_ThetaD = percentile_ThetaD.T
+percentiles=[10, 25, 50, 75, 90]
+VD_per = compute_percentiles_by_omega(VD_all_Omega, percentiles)
+percentile_VD = np.array(VD_per)
+p10_VD, p25_VD, p50_VD, p75_VD, p90_VD = percentile_VD.T
+ThetaD_per = compute_percentiles_by_omega(ThetaD_all_Omega, percentiles)
+percentile_ThetaD = np.array(ThetaD_per)
+p10_ThetaD, p25_ThetaD, p50_ThetaD, p75_ThetaD, p90_ThetaD = percentile_ThetaD.T
 
-# percentiles=[10, 25, 50, 75, 90]
-# Vim_per = compute_percentiles_by_omega(Vim_all_Omega, percentiles)
-# percentile_Vim = np.array(Vim_per)
-# p10_Vim, p25_Vim, p50_Vim, p75_Vim, p90_Vim = percentile_Vim.T
-# Thetaim_per = compute_percentiles_by_omega(Thetaim_all_Omega, percentiles)
-# percentile_thetaim = np.array(Thetaim_per)
-# p10_thetaim, p25_thetaim, p50_thetaim, p75_thetaim, p90_thetaim = percentile_thetaim.T
+percentiles=[10, 25, 50, 75, 90]
+Vim_per = compute_percentiles_by_omega(Vim_all_Omega, percentiles)
+percentile_Vim = np.array(Vim_per)
+p10_Vim, p25_Vim, p50_Vim, p75_Vim, p90_Vim = percentile_Vim.T
+Thetaim_per = compute_percentiles_by_omega(Thetaim_all_Omega, percentiles)
+percentile_thetaim = np.array(Thetaim_per)
+p10_thetaim, p25_thetaim, p50_thetaim, p75_thetaim, p90_thetaim = percentile_thetaim.T
 
-# plt.figure(figsize=(12, 9))
-# # Plot PDF of U_im/sqrt(gd)
-# plt.subplot(2, 2, 1)
+plt.figure(figsize=(12, 9))
+# Plot PDF of U_im/sqrt(gd)
+plt.subplot(2, 2, 1)
+for i in range(5):
+    # Calculate histogram (density=True for probability density)
+    counts, bin_edges = np.histogram(Vim_all_Omega[i], bins=50, density=True)
+    plt.step(bin_edges[:-1], counts, where='mid', color=colors[i], label=f"$\\Omega$={Omega[i]}%")
+# UD
+for i in range(5):
+    counts, bin_edges = np.histogram(VD_all_Omega[i], bins=50, density=True)
+    plt.step(bin_edges[:-1], counts, where='mid', linestyle=':', linewidth=2, color=colors[i])
+plt.plot([], [], color='black', label=r"$U_\mathrm{im}$")
+plt.plot([], [], ':', color='black', label=r"$U_\mathrm{D}$")
+plt.xlabel(r'$U_\mathrm{inc}$ [m/s]', fontsize=14)
+plt.ylabel('Probability Density [-]', fontsize=14)
+plt.xlim(left=0)
+plt.ylim(bottom=0)
+plt.legend(fontsize=12)
+plt.text(0.03, 0.94, '(a)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
+# Plot PDF of theta_im
+plt.subplot(2, 2, 2)
+for i in range(5):
+    # Calculate histogram (density=True for probability density)
+    counts, bin_edges = np.histogram(Thetaim_all_Omega[i], bins=50, density=True)
+    # Create the step plot
+    plt.step(bin_edges[:-1], counts, where='mid', color=colors[i], label=f"$\\Omega$={Omega[i]}%")
+for i in range(5):    
+    counts, bin_edges = np.histogram(ThetaD_all_Omega[i], bins=50, density=True)
+    plt.step(bin_edges[:-1], counts, where='mid', linestyle=':', linewidth=2, color=colors[i])
+plt.plot([], [], color='black', label=r"$\theta_\mathrm{im}$")
+plt.plot([], [], ':', color='black', label=r"$\theta_\mathrm{D}$")
+plt.legend(fontsize=12)
+plt.xlim(left=0)
+plt.ylim(bottom=0)
+plt.xlabel(r'$\theta_\mathrm{inc}$ [$^\circ$]', fontsize=14)
+plt.ylabel('Probability Density [-]', fontsize=14)
+plt.text(0.03, 0.94, '(b)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
+plt.subplot(2, 2, 3)
+# plt.errorbar(Omega, Vim_mean_glo, yerr=Vim_std_glo, fmt='o', capsize=5, color='#3776ab')
+plt.errorbar(Omega,p50_Vim,yerr=[p50_Vim - p25_Vim, p75_Vim - p50_Vim],fmt='ko',capsize=5, label=r'$U_\mathrm{im}$')
+plt.errorbar(Omega,p50_VD,yerr=[p50_VD - p25_VD, p75_VD - p50_VD],fmt='o',capsize=5, label=r'$U_\mathrm{D}$')
+plt.legend(loc='upper right', fontsize=12)
+plt.ylim(0,5.5)
+plt.xlabel(r'$\Omega$ [$\%$]', fontsize=14)
+plt.ylabel(r'$U_\mathrm{inc}$ [m/s]', fontsize=14)
+plt.text(0.03, 0.94, '(c)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
+plt.subplot(2, 2, 4)
+# plt.errorbar(Omega, Thetaim_mean_glo, yerr=Thetaim_std_glo, fmt='o', capsize=5, color='#3776ab')
+plt.errorbar(Omega,p50_thetaim,yerr=[p50_thetaim - p25_thetaim, p75_thetaim - p50_thetaim],fmt='ko',capsize=5, label=r'$\theta_\mathrm{im}$')
+plt.errorbar(Omega,p50_ThetaD,yerr=[p50_ThetaD - p25_ThetaD, p75_ThetaD - p50_ThetaD],fmt='o',capsize=5, label=r'$\theta_\mathrm{D}$')
+plt.ylim(0,30)
+plt.legend(loc='upper right', fontsize=12)
+plt.xlabel(r'$\Omega$ [$\%$]', fontsize=14)
+plt.ylabel(r'$\theta_\mathrm{inc}$ [$\circ$]', fontsize=14)
+plt.text(0.03, 0.94, '(d)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
+plt.tight_layout()
+plt.show()
+
+# # theta_inc = f(Uinc)
+mean_thetaim, stderr_thetaim, N_Uim = defaultdict(list),defaultdict(list),defaultdict(list)
+mean_thetaD, stderr_thetaD, N_UD = defaultdict(list),defaultdict(list),defaultdict(list)
+mean_thetainc, stderr_thetainc, N_Uinc = defaultdict(list),defaultdict(list),defaultdict(list)
+mean_thetare, stderr_thetare, N_Ure =  defaultdict(list),defaultdict(list),defaultdict(list)
+for i in range(5):
+    mean_thetaim[i], stderr_thetaim[i], N_Uim[i], Uthetaplot = module.match_Uim_thetaim(matched_Vim_Omega[i], matched_Thetaim_Omega[i], Vim_bin)
+    mean_thetaD[i], stderr_thetaD[i], N_UD[i], UthetaDplot = module.match_Uim_thetaim(VD_all_Omega[i], ThetaD_all_Omega[i], Vde_bin)
+    Vimde_Omega = np.array(Vim_all_Omega[i] + VD_all_Omega[i])
+    Thetaimde_Omega = np.array(Thetaim_all_Omega[i] + ThetaD_all_Omega[i])
+    mean_thetainc[i], stderr_thetainc[i], N_Uinc[i], Uthetaincplot = module.match_Uim_thetaim(Vimde_Omega, Thetaimde_Omega, Vimde_bin)
+#     mean_thetare[i], stderr_thetare[i], N_Ure[i], Uthetareplot = module.match_Uim_thetaim(Vre_all_Omega[i], Thetare_all_Omega[i], Vre_bin)
+
+def weighted_r2(y_true, y_pred, weights):
+    y_avg = np.average(y_true, weights=weights)
+    ss_res = np.sum(weights * (y_true - y_pred)**2)
+    ss_tot = np.sum(weights * (y_true - y_avg)**2)
+    return 1 - ss_res / ss_tot
+def power_law(Omega, A, B, n):
+    return A - B * Omega **n
+def lineardecrease(Omega, a, b):
+    return a*Omega + b 
+def arcsin_exp(U, A, B):
+    return np.arcsin(A*np.exp(-B*U))
+
+Uinc_fit, thetainc_fit, A_fit, B_fit = defaultdict(),defaultdict(),np.zeros(5),np.zeros(5)
+# --- Fit ---
+for i in range(5):
+    # --- Remove NaN values before fitting ---
+    valid_indices = ~np.isnan(mean_thetainc[i])  # Get boolean mask where theta_all is NOT NaN
+    U_clean = Uthetaincplot[valid_indices]/constant       # Keep only valid U values
+    theta_clean = np.deg2rad(mean_thetainc[i])[valid_indices]# Keep only valid theta values
+    N_Uinc_clean = np.array(N_Uinc[i])[valid_indices]
+    stderr = np.deg2rad(stderr_thetainc[i])[valid_indices]
+    valid_mask = np.where(~np.isnan(stderr))[0]
+    # 用该掩码过滤所有列表
+    U_clean = U_clean[valid_mask]
+    theta_clean = theta_clean[valid_mask]
+    stderr = stderr[valid_mask]
+    popt, _ = curve_fit(arcsin_exp, U_clean, theta_clean, sigma=stderr, absolute_sigma=True, maxfev=10000)
+    A_fit[i], B_fit[i] = popt 
+    # Generate fitted curve
+    Uinc_fit[i] = np.linspace(min(U_clean), max(U_clean), 200)
+    thetainc_fit[i] = arcsin_exp(Uinc_fit[i], *popt)
+    theta_fit_dis = arcsin_exp(U_clean, *popt)
+    R2_weighted = weighted_r2(theta_clean, theta_fit_dis, 1 / stderr ** 2)
+    print('R2_weighted:', R2_weighted)
+    
+# thetainc_fit[0] = fit_arcsin(Uinc_fit[0], 65, 250)
+# plt.close('all')
+plt.figure(figsize=(6,5))
+for i in range(5):
+    plt.errorbar(Uthetaincplot/constant, mean_thetainc[i], yerr=stderr_thetainc[i], fmt='o', capsize=5, label=rf'$\Omega$={Omega[i]}%', color=colors[i])
+# Plot fitted curve
 # for i in range(5):
-#     # Calculate histogram (density=True for probability density)
-#     counts, bin_edges = np.histogram(Vim_all_Omega[i], bins=50, density=True)
-#     plt.step(bin_edges[:-1], counts, where='mid', color=colors[i], label=f"$\\Omega$={Omega[i]}%")
-# # UD
-# for i in range(5):
-#     counts, bin_edges = np.histogram(VD_all_Omega[i], bins=50, density=True)
-#     plt.step(bin_edges[:-1], counts, where='mid', linestyle=':', linewidth=2, color=colors[i])
-# plt.plot([], [], color='black', label=r"$U_\mathrm{im}$")
-# plt.plot([], [], ':', color='black', label=r"$U_\mathrm{D}$")
-# plt.xlabel(r'$U_\mathrm{inc}$ [m/s]', fontsize=14)
-# plt.ylabel('Probability Density [-]', fontsize=14)
-# plt.xlim(left=0)
-# plt.ylim(bottom=0)
+    # plt.plot(Uinc_fit[i], np.degrees(thetainc_fit[i]), '--', color=colors[i])
+plt.xlabel(r'$U_{inc}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$\theta_{inc}$ [$^\circ$]', fontsize=14)
+plt.legend(fontsize=12)
+plt.tight_layout()
+plt.show()     
+
+# A_fit[0], B_fit[0] = 68, 250
+# # Generate smooth curve for plotting
+Omega_smooth = np.linspace(min(Omega_tbfit), max(Omega_tbfit), 100)
+a1_opt, b1_opt, n1_opt = 0.2682, 0.05, 0.15
+A_fit_smooth = power_law(Omega_smooth, a1_opt, b1_opt, n1_opt)
+plt.figure()
+plt.plot(Omega_tbfit, A_fit, 'o', label= 'Original data')
+plt.plot(Omega_smooth, A_fit_smooth, '--', label='Power-law fit')
+plt.xlabel('omega')
+plt.ylabel('A_fit')
+alpha = a1_opt - b1_opt * Omega_tbfit ** n1_opt
+print(rf"$\alpha$ = {a1_opt:.2f} - {b1_opt:.2f} * $\Omega$ ** {n1_opt:.2f}")
+
+plt.figure()
+plt.plot(Omega_tbfit, B_fit, 'o', label= 'Original data')
+plt.xlabel('omega')
+plt.ylabel('B_fit')
+beta = np.mean(B_fit)
+print(rf"$\beta$ = {beta:.4f}")
+
+# # Combine all data from the 5 moisture levels
+Uinc_fit_new = np.linspace(min(Uthetaincplot/constant), max(Uthetaincplot/constant), 100)
+Theta_fit_new = defaultdict()
+# Loop over each element in alpha and multiply with U_fit_new
+for i in range(5):
+    Theta_fit_new[i] = arcsin_exp(Uinc_fit_new, alpha[i], beta)
+
+#plot the fit using the global function
+# Plot original data
+plt.figure(figsize=(12,9))
+plt.subplot(2,2,1)
+for i in range(5):
+    plt.errorbar(Uthetaplot/constant, mean_thetaim[i], yerr=stderr_thetaim[i], fmt='o', capsize=5, label=rf'$\Omega$={Omega[i]}%', color=colors[i])
+    plt.xlabel(r'$U_\mathrm{im}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$\theta_\mathrm{im}$ [$^\circ$]', fontsize=14)
+plt.xlim(0,265)
+plt.ylim(4,18)
+plt.text(0.02, 0.94, '(a)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
+plt.legend(fontsize=12)
+plt.subplot(2,2,2)
+for i in range(5):
+    plt.errorbar(UthetaDplot/constant, mean_thetaD[i], yerr=stderr_thetaD[i], fmt='o', capsize=5, label=rf'$\Omega$={Omega[i]}%', color=colors[i])
+    plt.xlabel(r'$U_\mathrm{D}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$\theta_\mathrm{D}$ [$^\circ$]', fontsize=14)
+plt.xlim(0,265)
+plt.ylim(4,18)
+plt.text(0.02, 0.94, '(b)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
+plt.subplot(2,2,3)
+for i in range(5):
+    plt.errorbar(Uthetaincplot/constant, mean_thetainc[i], yerr=stderr_thetainc[i], fmt='o', capsize=5, label=rf'$\Omega$={Omega[i]}%', color=colors[i])
+# Plot fitted hyperbolic curve
+for i in range(5):
+    plt.plot(Uinc_fit_new, np.degrees(Theta_fit_new[i]), '--', color=colors[i])
+plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$\theta_\mathrm{inc}$ [$^\circ$]', fontsize=14)
+plt.xlim(0,265)
+plt.ylim(4,18)
+plt.text(0.02, 0.94, '(c)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
+# to check the real event based relation
+plt.subplot(2,2,4)
+for i in range(5):
+    plt.scatter(Vim_all_Omega[i]/constant, Thetaim_all_Omega[i], color=colors[i], alpha=0.1, marker='.')
+    plt.scatter(VD_all_Omega[i]/constant, ThetaD_all_Omega[i], color=colors[i], alpha=0.1, marker='.')
+    plt.plot(Uinc_fit_new, np.degrees(Theta_fit_new[i]), '-', color=colors[i])
+plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$\theta_\mathrm{inc}$ [$^\circ$]', fontsize=14)
+plt.scatter([], [], color='black', marker='.', label=r"Data points")
+plt.plot([], [], color='black', label=r"Fitted relations in (c)")
+plt.xlim(0,265)
+plt.text(0.02, 0.94, '(d)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
+plt.legend()
+plt.tight_layout(fontsize=12)
+plt.show()     
+
+#calculate R^2
+all_theta_ori, all_theta_fit_resampled, weight_theta_all = [],[],[]
+for i in range(5):
+    # Create interpolator from 100-point fit
+    interpolator = interp1d(Uinc_fit_new, Theta_fit_new[i], kind='linear', fill_value='extrapolate')
+    # Evaluate fit at the same x-values as Uthetaplot
+    # --- Remove NaN values before fitting ---
+    valid_indices = ~np.isnan(mean_thetainc[i])  # Get boolean mask where theta_all is NOT NaN
+    U_clean = Uthetaincplot[valid_indices]/constant       # Keep only valid U values
+    theta_clean = np.deg2rad(mean_thetainc[i])[valid_indices]# Keep only valid theta values
+    stderr = np.deg2rad(stderr_thetainc[i])[valid_indices]
+    valid_mask = np.where(~np.isnan(stderr))[0]
+    # 用该掩码过滤所有列表
+    U_clean = U_clean[valid_mask]
+    theta_clean = theta_clean[valid_mask]
+    stderr = stderr[valid_mask]
+    theta_fit_resampled = interpolator(U_clean)
+    all_theta_ori.append(theta_clean)
+    all_theta_fit_resampled.append(theta_fit_resampled)
+    N_Uinc_clean=np.array(N_Uinc[i])[valid_indices]
+    weight_theta_all.append(1/(stderr**2))
+    
+y_theta_all = np.concatenate(all_theta_ori)
+y_predtheta_all = np.concatenate(all_theta_fit_resampled)
+weight_theta_glo = np.concatenate(weight_theta_all)
+# Now compute R²
+R2_theta = weighted_r2(y_theta_all, y_predtheta_all, weights=weight_theta_glo)#weights=weight_theta_glo)
+print('R2_thetainc=',R2_theta)
+
+plt.figure(figsize=(6,5))
+for i in range(5):
+    plt.errorbar(Uthetareplot/constant, mean_thetare[i], yerr=stderr_thetare[i], fmt='o', capsize=5, label=rf'$\Omega$={Omega[i]}%', color=colors[i])
+plt.xlabel(r'$U_\mathrm{re}/\sqrt{gd}$ [-]', fontsize=14)
+plt.ylabel(r'$\theta_\mathrm{re}$ [$^\circ$]', fontsize=14)
+plt.xlim(left=0)
+plt.legend(fontsize=12)
+plt.tight_layout()
+plt.show()   
+    
+
+# # validation dry
+# #empirical data
+# Hcr = 1.5
+# UIM_UE_prin = np.linspace(0,190, 100)
+# thetaim_prin = np.arcsin(39.21/(UIM_UE_prin+105.73))
+# NE_prin = (-0.001*Hcr + 0.012)*UIM_UE_prin
+# VE_prin = (0.0538*Hcr + 1.0966)*np.sqrt(UIM_UE_prin)
+# COR_emp = 0.7469*np.exp(0.1374*Hcr)*(UIM_UE_prin)**(-0.0741*np.exp(0.214*Hcr))#Jiang et al. (2024) JGR
+# Pr_emp = 0.9945*Hcr**(-0.0166)*(1-np.exp(-0.1992*Hcr**(-0.8686)*UIM_UE_prin))
+# Thetare_emp = 24.56*np.ones(len(UIM_UE_prin))
+# ThetaE_emp = 0.2*UIM_UE_prin-1.4714*Hcr + 24.2
+# #anderson
+# Pr_and = 0.95*(1-np.exp(-2*UIM_UE_prin*constant))
+# # #Chen 2019
+# # COR_Chen = 0.62 + 0.0084*Uimplot - 0.63*np.sin(Theta_mean_all/180*np.pi)
+# NE_Chen = np.exp(-0.2 + 1.35*np.log(UIM_UE_prin*constant)-0.01*thetaim_prin/180*np.pi)
+# VE_Chen = np.exp(-1.48 + 0.082*UIM_UE_prin*constant-0.003*thetaim_prin/180*np.pi)/constant
+# #beladijne et al 2007
+# VE_Bel = 1.18*UIM_UE_prin**0.25
+# thetare_Bel = np.degrees(np.arcsin((0.3-0.15*np.sin(thetaim_prin))/(0.87-0.72*np.sin(thetaim_prin))))
+# thetaE_Bel = np.degrees(np.pi/2 + 0.1*(thetaim_prin-np.pi/2))
+# #exp data Jiang 2024; Hcr = 1.5D
+# Unsexp = [15, 35, 55, 75, 95, 125]
+# Nsexp = [0.05, 0.25, 0.65, 0.625, 1.1, 1.25]
+# CORexp_mean = [0.7, 0.7, 0.6, 0.65, 0.5, 0.6]
+# CORexp_std = [0.4, 0.3, 0.2, 0.15, 0.25, 0.3]
+# thetareexp = [25, 26, 24, 24, 34, 37]
+# thetareexp_std = [15, 20, 30, 28, 18, 27]
+# Prexp = [0.85, 0.94, 0.98, 0.99, 1.0, 1.0]
+# Uvsexp = [25, 45, 70, 95, 125]
+# Usexp = [5, 7, 8, 12.5, 6]
+# Usexp_std = [3, 4.5, 3.4, 5, 1]
+# thetaEexp = [28, 33, 35, 28, 20]
+# thetaEexp_std = [24, 24, 26, 15, 8]
+# error_hor = np.full(6,4.5)
+# #exp data Selmani 2024
+# UNE_Selmani = [20, 25, 55, 72, 100]
+# NE_Selmani = [0.5, 1, 3, 5, 10]
+
+# # plt.close("all")
+# plt.figure(figsize=(12,13.5))
+# plt.subplot(3,2,1)
+# line1 = plt.errorbar(Uimplot_Omega[0]/constant, CORmean_Omega[0], yerr=CORstd_Omega[0], fmt='o', capsize=5, label='This study', color='#3776ab') 
+# line2 = plt.errorbar(Unsexp, CORexp_mean, yerr=CORexp_std, fmt='x', capsize=5, label='Jiang et al. (2024)', color='k')
+# line3 = plt.plot(UIM_UE_prin, COR_emp, 'k-', label='Jiang et al. (2024)')
+# plt.xlim(0,190)
+# plt.ylim(0,2.25)
+# plt.xlabel(r'$U_\mathrm{im}/\sqrt{gd}$ [-]', fontsize=14)
+# plt.ylabel(r'$e$ [-]', fontsize=14)
+# plt.legend([line2[0],line3[0], line1],['Jiang et al. (2024)','Jiang et al. (2024)', 'This study'], fontsize=12)
+# plt.text(0.02, 0.92, '(a)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
+# plt.subplot(3,2,2)
+# line1 = plt.errorbar(Uimplot_Omega[0]/constant, Thetaremean_Omega[0], yerr=Thetarestd_Omega[0], fmt='o', capsize=5, label='This study', color='#3776ab')
+# line2 = plt.errorbar(Unsexp, thetareexp, yerr=thetareexp_std, fmt='x', capsize=5, label='Jiang et al. (2024)', color='k')
+# line3 = plt.plot(UIM_UE_prin, Thetare_emp, 'k-')
+# line4 = plt.plot(UIM_UE_prin, thetare_Bel, 'k:', label='Beladjine et al. (2007)')
+# plt.ylim(-8,120)
+# plt.xlim(0,190)
+# plt.legend([line2[0],line3[0], line4[0], line1[0]],['Jiang et al. (2024)','Jiang et al. (2024)', 'Beladjine et al. (2007)', 'This study'], loc='upper left', bbox_to_anchor=(0.08, 0.99), fontsize=12)
+# plt.xlabel(r'$U_\mathrm{im}/\sqrt{gd}$ [-]', fontsize=14)
+# plt.ylabel(r'$\theta_\mathrm{re}$ [$^\circ$]', fontsize=14)
+# plt.text(0.02, 0.92, '(b)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
+# plt.subplot(3,2,3)
+# #plot Pr - Uim 
+# plt.scatter(Uplot_Omega[0]/constant, Pr_Omega[0], s=np.sqrt(N_Princ[0])*3, label='This study', color='#3776ab')
+# plt.plot(UIM_UE_prin, Pr_emp, label='Jiang et al. (2024)',color='k')
+# plt.plot(Unsexp, Prexp, 'x', label='Jiang et al. (2024)', color='k')
+# plt.plot(UIM_UE_prin, Pr_and, 'k-.', label='Anderson & Haff (1991)')
+# plt.ylim(0,1.05)
+# plt.xlim(0,190)
+# plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
+# plt.ylabel(r'$\mathrm{Pr}$ [-]', fontsize=14)
 # plt.legend(fontsize=12)
-# plt.text(0.03, 0.94, '(a)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
-# # Plot PDF of theta_im
-# plt.subplot(2, 2, 2)
-# for i in range(5):
-#     # Calculate histogram (density=True for probability density)
-#     counts, bin_edges = np.histogram(Thetaim_all_Omega[i], bins=50, density=True)
-#     # Create the step plot
-#     plt.step(bin_edges[:-1], counts, where='mid', color=colors[i], label=f"$\\Omega$={Omega[i]}%")
-# for i in range(5):    
-#     counts, bin_edges = np.histogram(ThetaD_all_Omega[i], bins=50, density=True)
-#     plt.step(bin_edges[:-1], counts, where='mid', linestyle=':', linewidth=2, color=colors[i])
-# plt.plot([], [], color='black', label=r"$\theta_\mathrm{im}$")
-# plt.plot([], [], ':', color='black', label=r"$\theta_\mathrm{D}$")
-# plt.legend(fontsize=12)
-# plt.xlim(left=0)
-# plt.ylim(bottom=0)
-# plt.xlabel(r'$\theta_\mathrm{inc}$ [$^\circ$]', fontsize=14)
-# plt.ylabel('Probability Density [-]', fontsize=14)
-# plt.text(0.03, 0.94, '(b)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
-# plt.subplot(2, 2, 3)
-# # plt.errorbar(Omega, Vim_mean_glo, yerr=Vim_std_glo, fmt='o', capsize=5, color='#3776ab')
-# plt.errorbar(Omega,p50_Vim,yerr=[p50_Vim - p25_Vim, p75_Vim - p50_Vim],fmt='ko',capsize=5, label=r'$U_\mathrm{im}$')
-# plt.errorbar(Omega,p50_VD,yerr=[p50_VD - p25_VD, p75_VD - p50_VD],fmt='o',capsize=5, label=r'$U_\mathrm{D}$')
-# plt.legend(loc='upper right', fontsize=12)
-# plt.ylim(0,5.5)
-# plt.xlabel(r'$\Omega$ [$\%$]', fontsize=14)
-# plt.ylabel(r'$U_\mathrm{inc}$ [m/s]', fontsize=14)
-# plt.text(0.03, 0.94, '(c)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
-# plt.subplot(2, 2, 4)
-# # plt.errorbar(Omega, Thetaim_mean_glo, yerr=Thetaim_std_glo, fmt='o', capsize=5, color='#3776ab')
-# plt.errorbar(Omega,p50_thetaim,yerr=[p50_thetaim - p25_thetaim, p75_thetaim - p50_thetaim],fmt='ko',capsize=5, label=r'$\theta_\mathrm{im}$')
-# plt.errorbar(Omega,p50_ThetaD,yerr=[p50_ThetaD - p25_ThetaD, p75_ThetaD - p50_ThetaD],fmt='o',capsize=5, label=r'$\theta_\mathrm{D}$')
-# plt.ylim(0,30)
-# plt.legend(loc='upper right', fontsize=12)
-# plt.xlabel(r'$\Omega$ [$\%$]', fontsize=14)
-# plt.ylabel(r'$\theta_\mathrm{inc}$ [$\circ$]', fontsize=14)
-# plt.text(0.03, 0.94, '(d)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
+# plt.text(0.02, 0.92, '(c)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
+# plt.subplot(3,2,4)
+# #plot \bar{NE} - Uim
+# plt.scatter(Uplot_NE_Omega[0]/constant, NE_mean_Omega[0], s=np.sqrt(N_Einc[0])*3, label='This study', color='#3776ab')
+# plt.plot(UIM_UE_prin, NE_prin, 'k-', label='Jiang et al. (2024)')
+# plt.plot(Unsexp, Nsexp,'x', label='Jiang et al. (2024)',color='k')
+# plt.plot(UNE_Selmani, NE_Selmani, 'dk', label='Selmani et al. (2024)')
+# plt.plot(UIM_UE_prin, NE_Chen, 'k-.', label='Chen et al. (2019)')
+# plt.ylim(0,20)
+# plt.xlim(0,190)
+# plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
+# plt.ylabel(r'$N_\mathrm{E}$ [-]', fontsize=14)
+# plt.legend(loc='upper left', bbox_to_anchor=(0.08, 0.99), fontsize=12)
+# plt.text(0.02, 0.92, '(d)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
+# plt.subplot(3,2,5)
+# #plot \bar{UE} - Uim
+# line1 = plt.errorbar(Uplot_NE_Omega[0]/constant, UE_mean_Omega[0]/constant, yerr=UE_std_Omega[0]/constant, fmt='o', capsize=5, label='This study', color='#3776ab')
+# line2 = plt.errorbar(Uvsexp, Usexp, yerr=Usexp_std, fmt='x', capsize=5, label='Jiang et al. (2024)', color='k')
+# line3 = plt.plot(UIM_UE_prin, VE_prin, 'k-')
+# line4 = plt.plot(UIM_UE_prin, VE_Chen, 'k-.')
+# line5 = plt.plot(UIM_UE_prin, VE_Bel, 'k:', label='Beladijne et al. (2007)')
+# plt.ylim(0,32.5)
+# plt.xlim(0,190)
+# plt.legend([line2[0],line3[0], line4[0], line5[0], line1[0]],['Jiang et al. (2024)','Jiang et al. (2024)', 'Chen et al. (2019)', 'Beladjine et al. (2007)', 'This study'], loc='upper left', bbox_to_anchor=(0.08, 0.99), fontsize=12)
+# plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
+# plt.ylabel(r'$U_\mathrm{E}/\sqrt{gd}$ [-]', fontsize=14)
+# plt.text(0.02, 0.92, '(e)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
+# plt.subplot(3,2,6)
+# line1 = plt.errorbar(Uplot_NE_Omega[0]/constant, ThetaE_mean_Omega[0], yerr=ThetaE_std_Omega[0], fmt='o', capsize=5, label='This study', color='#3776ab')
+# line2 = plt.errorbar(Uvsexp, thetaEexp, yerr=thetaEexp_std, fmt='x', capsize=5, label='Jiang et al. (2024)', color='k')
+# line3 = plt.plot(UIM_UE_prin, ThetaE_emp, 'k-')
+# line4 = plt.plot(UIM_UE_prin, thetaE_Bel, 'k:', label='Beladjine et al. (2007)')
+# plt.ylim(-10,140)
+# plt.xlim(0,190)
+# plt.legend([line2[0],line3[0], line4[0], line1[0]],['Jiang et al. (2024)','Jiang et al. (2024)', 'Beladjine et al. (2007)', 'This study'], loc='upper left', bbox_to_anchor=(0.08, 0.99), fontsize=12)
+# plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
+# plt.ylabel(r'$\theta_\mathrm{E}$ [$^\circ$]', fontsize=14)
+# plt.text(0.02, 0.92, '(f)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
 # plt.tight_layout()
 # plt.show()
 
-# # # theta_inc = f(Uinc)
-# mean_thetaim, stderr_thetaim, N_Uim = defaultdict(list),defaultdict(list),defaultdict(list)
-# mean_thetaD, stderr_thetaD, N_UD = defaultdict(list),defaultdict(list),defaultdict(list)
-# mean_thetainc, stderr_thetainc, N_Uinc = defaultdict(list),defaultdict(list),defaultdict(list)
-# mean_thetare, stderr_thetare, N_Ure =  defaultdict(list),defaultdict(list),defaultdict(list)
-# for i in range(5):
-#     mean_thetaim[i], stderr_thetaim[i], N_Uim[i], Uthetaplot = module.match_Uim_thetaim(matched_Vim_Omega[i], matched_Thetaim_Omega[i], Vim_bin)
-#     mean_thetaD[i], stderr_thetaD[i], N_UD[i], UthetaDplot = module.match_Uim_thetaim(VD_all_Omega[i], ThetaD_all_Omega[i], Vde_bin)
-#     Vimde_Omega = np.array(Vim_all_Omega[i] + VD_all_Omega[i])
-#     Thetaimde_Omega = np.array(Thetaim_all_Omega[i] + ThetaD_all_Omega[i])
-#     mean_thetainc[i], stderr_thetainc[i], N_Uinc[i], Uthetaincplot = module.match_Uim_thetaim(Vimde_Omega, Thetaimde_Omega, Vimde_bin)
-# #     mean_thetare[i], stderr_thetare[i], N_Ure[i], Uthetareplot = module.match_Uim_thetaim(Vre_all_Omega[i], Thetare_all_Omega[i], Vre_bin)
-
-# def weighted_r2(y_true, y_pred, weights):
-#     y_avg = np.average(y_true, weights=weights)
-#     ss_res = np.sum(weights * (y_true - y_pred)**2)
-#     ss_tot = np.sum(weights * (y_true - y_avg)**2)
-#     return 1 - ss_res / ss_tot
-# def power_law(Omega, A, B, n):
-#     return A - B * Omega **n
-# def lineardecrease(Omega, a, b):
-#     return a*Omega + b 
-# def arcsin_exp(U, A, B):
-#     return np.arcsin(A*np.exp(-B*U))
-
-# Uinc_fit, thetainc_fit, A_fit, B_fit = defaultdict(),defaultdict(),np.zeros(5),np.zeros(5)
-# # --- Fit ---
-# for i in range(5):
-#     # --- Remove NaN values before fitting ---
-#     valid_indices = ~np.isnan(mean_thetainc[i])  # Get boolean mask where theta_all is NOT NaN
-#     U_clean = Uthetaincplot[valid_indices]/constant       # Keep only valid U values
-#     theta_clean = np.deg2rad(mean_thetainc[i])[valid_indices]# Keep only valid theta values
-#     N_Uinc_clean = np.array(N_Uinc[i])[valid_indices]
-#     stderr = np.deg2rad(stderr_thetainc[i])[valid_indices]
-#     valid_mask = np.where(~np.isnan(stderr))[0]
-#     # 用该掩码过滤所有列表
-#     U_clean = U_clean[valid_mask]
-#     theta_clean = theta_clean[valid_mask]
-#     stderr = stderr[valid_mask]
-#     popt, _ = curve_fit(arcsin_exp, U_clean, theta_clean, sigma=stderr, absolute_sigma=True, maxfev=10000)
-#     A_fit[i], B_fit[i] = popt 
-#     # Generate fitted curve
-#     Uinc_fit[i] = np.linspace(min(U_clean), max(U_clean), 200)
-#     thetainc_fit[i] = arcsin_exp(Uinc_fit[i], *popt)
-#     theta_fit_dis = arcsin_exp(U_clean, *popt)
-#     R2_weighted = weighted_r2(theta_clean, theta_fit_dis, 1 / stderr ** 2)
-#     print('R2_weighted:', R2_weighted)
-    
-# # thetainc_fit[0] = fit_arcsin(Uinc_fit[0], 65, 250)
-# # plt.close('all')
-# plt.figure(figsize=(6,5))
-# for i in range(5):
-#     plt.errorbar(Uthetaincplot/constant, mean_thetainc[i], yerr=stderr_thetainc[i], fmt='o', capsize=5, label=rf'$\Omega$={Omega[i]}%', color=colors[i])
-# # Plot fitted curve
-# # for i in range(5):
-#     # plt.plot(Uinc_fit[i], np.degrees(thetainc_fit[i]), '--', color=colors[i])
-# plt.xlabel(r'$U_{inc}/\sqrt{gd}$ [-]', fontsize=14)
-# plt.ylabel(r'$\theta_{inc}$ [$^\circ$]', fontsize=14)
-# plt.legend(fontsize=12)
+# # #trajectory and vertical velocity
+# id_p = 2700
+# plt.figure(figsize=(10,8))
+# plt.subplot(2,1,1)
+# plt.plot(t_ver, Z[20][:,id_p]/D, linestyle='-', marker='.', color='k', markersize=3, linewidth=1)
+# plt.plot(t_ver[EDindices[20][id_p][0]], Z[20][EDindices[20][id_p][0],id_p]/D, 'ob', label='Ejections', markerfacecolor='none')
+# plt.plot(t_ver[EDindices[20][id_p][1]], Z[20][EDindices[20][id_p][1],id_p]/D, 'vb', label='Depositions', markerfacecolor='none')
+# legend_added = False
+# for t in t_ver[EDindices[20][id_p][0]]:
+#     if not legend_added:
+#         plt.axvline(x=t, color='k', linestyle='--', linewidth=1, label='Mobile intervals (start)')
+#         legend_added = True  # Set flag to True after first legend entry
+#     else:
+#         plt.axvline(x=t, color='k', linestyle='--', linewidth=1)
+# legend_added = False
+# for t in t_ver[EDindices[20][id_p][1]]:
+#     if not legend_added:
+#         plt.axvline(x=t, color='k', linestyle=':', linewidth=1, label='Mobile intervals (end)')
+#         legend_added = True  # Set flag to True after first legend entry
+#     else:
+#         plt.axvline(x=t, color='k', linestyle=':', linewidth=1)
+# plt.plot(t_ver[Par[20][id_p][2][:,0]], Z[20][Par[20][id_p][2][:,0],id_p]/D, 'Dr', label='Impacts', markerfacecolor='none')
+# plt.plot(t_ver[Par[20][id_p][2][:,1]], Z[20][Par[20][id_p][2][:,1],id_p]/D, 'sr', label='Rebounds', markerfacecolor='none')
+# index_example2 = np.where(t_ver == 1.54)[0][0]
+# plt.axvline(t_ver[139],color='b', linestyle='-', label='An example cross-zero interval')
+# plt.axvline(t_ver[index_example2],color='b', linestyle='-')
+# plt.xlabel(r'$t$ [s]', fontsize=14)
+# plt.ylabel(r'$Z_\mathrm{p}/d$ [-]',fontsize=14)
+# plt.xlim(0,5)
+# plt.text(0.02, 0.92, '(a)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
+# plt.legend(fontsize=10)
+# plt.subplot(2,1,2)
+# plt.plot(t_ver, VZ[20][id_p], linestyle='-', marker='.', color='k', markersize=3, linewidth=1)
+# plt.plot(t_ver[Par[20][id_p][2][:, 0]], VZ[20][id_p][Par[20][id_p][2][:, 0]], 'Dr', label='Impacts',markerfacecolor='none')
+# plt.plot(t_ver[Par[20][id_p][2][:, 1]], VZ[20][id_p][Par[20][id_p][2][:, 1]], 'sr', label='Rebounds',markerfacecolor='none')
+# index_example2 = np.where(t_ver == 1.54)[0][0]
+# plt.axvline(t_ver[139],color='b', linestyle='-')
+# plt.axvline(t_ver[index_example2],color='b', linestyle='-')
+# legend_added = False
+# for t in t_ver[EDindices[20][id_p][0]]:
+#     if not legend_added:
+#         plt.axvline(x=t, color='k', linestyle='--', linewidth=1, label='Mobile intervals (start)')
+#         legend_added = True  # Set flag to True after first legend entry
+#     else:
+#         plt.axvline(x=t, color='k', linestyle='--', linewidth=1)
+# legend_added = False
+# for t in t_ver[EDindices[20][id_p][1]]:
+#     if not legend_added:
+#         plt.axvline(x=t, color='k', linestyle=':', linewidth=1, label='Mobile intervals (end)')
+#         legend_added = True  # Set flag to True after first legend entry
+#     else:
+#         plt.axvline(x=t, color='k', linestyle=':', linewidth=1)  
+# plt.axhline(0, color='grey', linestyle='-', linewidth=0.5)
+# plt.xlabel(r'$t$ [s]',fontsize=14)
+# plt.ylabel(r'$U_\mathrm{z}$ [m/s]',fontsize=14)
+# plt.xlim(0,5)
+# plt.text(0.02, 0.92, '(b)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
 # plt.tight_layout()
-# plt.show()     
-
-# # A_fit[0], B_fit[0] = 68, 250
-# # # Generate smooth curve for plotting
-# Omega_smooth = np.linspace(min(Omega_tbfit), max(Omega_tbfit), 100)
-# a1_opt, b1_opt, n1_opt = 0.2682, 0.05, 0.15
-# A_fit_smooth = power_law(Omega_smooth, a1_opt, b1_opt, n1_opt)
-# plt.figure()
-# plt.plot(Omega_tbfit, A_fit, 'o', label= 'Original data')
-# plt.plot(Omega_smooth, A_fit_smooth, '--', label='Power-law fit')
-# plt.xlabel('omega')
-# plt.ylabel('A_fit')
-# alpha = a1_opt - b1_opt * Omega_tbfit ** n1_opt
-# print(rf"$\alpha$ = {a1_opt:.2f} - {b1_opt:.2f} * $\Omega$ ** {n1_opt:.2f}")
-
-# plt.figure()
-# plt.plot(Omega_tbfit, B_fit, 'o', label= 'Original data')
-# plt.xlabel('omega')
-# plt.ylabel('B_fit')
-# beta = np.mean(B_fit)
-# print(rf"$\beta$ = {beta:.4f}")
-
-# # # Combine all data from the 5 moisture levels
-# Uinc_fit_new = np.linspace(min(Uthetaincplot/constant), max(Uthetaincplot/constant), 100)
-# Theta_fit_new = defaultdict()
-# # Loop over each element in alpha and multiply with U_fit_new
-# for i in range(5):
-#     Theta_fit_new[i] = arcsin_exp(Uinc_fit_new, alpha[i], beta)
-
-# #plot the fit using the global function
-# # Plot original data
-# plt.figure(figsize=(12,9))
-# plt.subplot(2,2,1)
-# for i in range(5):
-#     plt.errorbar(Uthetaplot/constant, mean_thetaim[i], yerr=stderr_thetaim[i], fmt='o', capsize=5, label=rf'$\Omega$={Omega[i]}%', color=colors[i])
-#     plt.xlabel(r'$U_\mathrm{im}/\sqrt{gd}$ [-]', fontsize=14)
-# plt.ylabel(r'$\theta_\mathrm{im}$ [$^\circ$]', fontsize=14)
-# plt.xlim(0,265)
-# plt.ylim(4,18)
-# plt.text(0.02, 0.94, '(a)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
-# plt.legend(fontsize=12)
-# plt.subplot(2,2,2)
-# for i in range(5):
-#     plt.errorbar(UthetaDplot/constant, mean_thetaD[i], yerr=stderr_thetaD[i], fmt='o', capsize=5, label=rf'$\Omega$={Omega[i]}%', color=colors[i])
-#     plt.xlabel(r'$U_\mathrm{D}/\sqrt{gd}$ [-]', fontsize=14)
-# plt.ylabel(r'$\theta_\mathrm{D}$ [$^\circ$]', fontsize=14)
-# plt.xlim(0,265)
-# plt.ylim(4,18)
-# plt.text(0.02, 0.94, '(b)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
-# plt.subplot(2,2,3)
-# for i in range(5):
-#     plt.errorbar(Uthetaincplot/constant, mean_thetainc[i], yerr=stderr_thetainc[i], fmt='o', capsize=5, label=rf'$\Omega$={Omega[i]}%', color=colors[i])
-# # Plot fitted hyperbolic curve
-# for i in range(5):
-#     plt.plot(Uinc_fit_new, np.degrees(Theta_fit_new[i]), '--', color=colors[i])
-# plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
-# plt.ylabel(r'$\theta_\mathrm{inc}$ [$^\circ$]', fontsize=14)
-# plt.xlim(0,265)
-# plt.ylim(4,18)
-# plt.text(0.02, 0.94, '(c)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
-# # to check the real event based relation
-# plt.subplot(2,2,4)
-# for i in range(5):
-#     plt.scatter(Vim_all_Omega[i]/constant, Thetaim_all_Omega[i], color=colors[i], alpha=0.1, marker='.')
-#     plt.scatter(VD_all_Omega[i]/constant, ThetaD_all_Omega[i], color=colors[i], alpha=0.1, marker='.')
-#     plt.plot(Uinc_fit_new, np.degrees(Theta_fit_new[i]), '-', color=colors[i])
-# plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
-# plt.ylabel(r'$\theta_\mathrm{inc}$ [$^\circ$]', fontsize=14)
-# plt.scatter([], [], color='black', marker='.', label=r"Data points")
-# plt.plot([], [], color='black', label=r"Fitted relations in (c)")
-# plt.xlim(0,265)
-# plt.text(0.02, 0.94, '(d)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
-# plt.legend()
-# plt.tight_layout(fontsize=12)
-# plt.show()     
-
-# #calculate R^2
-# all_theta_ori, all_theta_fit_resampled, weight_theta_all = [],[],[]
-# for i in range(5):
-#     # Create interpolator from 100-point fit
-#     interpolator = interp1d(Uinc_fit_new, Theta_fit_new[i], kind='linear', fill_value='extrapolate')
-#     # Evaluate fit at the same x-values as Uthetaplot
-#     # --- Remove NaN values before fitting ---
-#     valid_indices = ~np.isnan(mean_thetainc[i])  # Get boolean mask where theta_all is NOT NaN
-#     U_clean = Uthetaincplot[valid_indices]/constant       # Keep only valid U values
-#     theta_clean = np.deg2rad(mean_thetainc[i])[valid_indices]# Keep only valid theta values
-#     stderr = np.deg2rad(stderr_thetainc[i])[valid_indices]
-#     valid_mask = np.where(~np.isnan(stderr))[0]
-#     # 用该掩码过滤所有列表
-#     U_clean = U_clean[valid_mask]
-#     theta_clean = theta_clean[valid_mask]
-#     stderr = stderr[valid_mask]
-#     theta_fit_resampled = interpolator(U_clean)
-#     all_theta_ori.append(theta_clean)
-#     all_theta_fit_resampled.append(theta_fit_resampled)
-#     N_Uinc_clean=np.array(N_Uinc[i])[valid_indices]
-#     weight_theta_all.append(1/(stderr**2))
-    
-# y_theta_all = np.concatenate(all_theta_ori)
-# y_predtheta_all = np.concatenate(all_theta_fit_resampled)
-# weight_theta_glo = np.concatenate(weight_theta_all)
-# # Now compute R²
-# R2_theta = weighted_r2(y_theta_all, y_predtheta_all, weights=weight_theta_glo)#weights=weight_theta_glo)
-# print('R2_thetainc=',R2_theta)
-
-# plt.figure(figsize=(6,5))
-# for i in range(5):
-#     plt.errorbar(Uthetareplot/constant, mean_thetare[i], yerr=stderr_thetare[i], fmt='o', capsize=5, label=rf'$\Omega$={Omega[i]}%', color=colors[i])
-# plt.xlabel(r'$U_\mathrm{re}/\sqrt{gd}$ [-]', fontsize=14)
-# plt.ylabel(r'$\theta_\mathrm{re}$ [$^\circ$]', fontsize=14)
-# plt.xlim(left=0)
-# plt.legend(fontsize=12)
-# plt.tight_layout()
-# plt.show()   
-    
-
-# validation dry
-#empirical data
-Hcr = 1.5
-UIM_UE_prin = np.linspace(0,190, 100)
-thetaim_prin = np.arcsin(39.21/(UIM_UE_prin+105.73))
-NE_prin = (-0.001*Hcr + 0.012)*UIM_UE_prin
-VE_prin = (0.0538*Hcr + 1.0966)*np.sqrt(UIM_UE_prin)
-COR_emp = 0.7469*np.exp(0.1374*Hcr)*(UIM_UE_prin)**(-0.0741*np.exp(0.214*Hcr))#Jiang et al. (2024) JGR
-Pr_emp = 0.9945*Hcr**(-0.0166)*(1-np.exp(-0.1992*Hcr**(-0.8686)*UIM_UE_prin))
-Thetare_emp = 24.56*np.ones(len(UIM_UE_prin))
-ThetaE_emp = 0.2*UIM_UE_prin-1.4714*Hcr + 24.2
-#anderson
-Pr_and = 0.95*(1-np.exp(-2*UIM_UE_prin*constant))
-# #Chen 2019
-# COR_Chen = 0.62 + 0.0084*Uimplot - 0.63*np.sin(Theta_mean_all/180*np.pi)
-NE_Chen = np.exp(-0.2 + 1.35*np.log(UIM_UE_prin*constant)-0.01*thetaim_prin/180*np.pi)
-VE_Chen = np.exp(-1.48 + 0.082*UIM_UE_prin*constant-0.003*thetaim_prin/180*np.pi)/constant
-#beladijne et al 2007
-VE_Bel = 1.18*UIM_UE_prin**0.25
-thetare_Bel = np.degrees(np.arcsin((0.3-0.15*np.sin(thetaim_prin))/(0.87-0.72*np.sin(thetaim_prin))))
-thetaE_Bel = np.degrees(np.pi/2 + 0.1*(thetaim_prin-np.pi/2))
-#exp data Jiang 2024; Hcr = 1.5D
-Unsexp = [15, 35, 55, 75, 95, 125]
-Nsexp = [0.05, 0.25, 0.65, 0.625, 1.1, 1.25]
-CORexp_mean = [0.7, 0.7, 0.6, 0.65, 0.5, 0.6]
-CORexp_std = [0.4, 0.3, 0.2, 0.15, 0.25, 0.3]
-thetareexp = [25, 26, 24, 24, 34, 37]
-thetareexp_std = [15, 20, 30, 28, 18, 27]
-Prexp = [0.85, 0.94, 0.98, 0.99, 1.0, 1.0]
-Uvsexp = [25, 45, 70, 95, 125]
-Usexp = [5, 7, 8, 12.5, 6]
-Usexp_std = [3, 4.5, 3.4, 5, 1]
-thetaEexp = [28, 33, 35, 28, 20]
-thetaEexp_std = [24, 24, 26, 15, 8]
-error_hor = np.full(6,4.5)
-#exp data Selmani 2024
-UNE_Selmani = [20, 25, 55, 72, 100]
-NE_Selmani = [0.5, 1, 3, 5, 10]
-
-# plt.close("all")
-plt.figure(figsize=(12,13.5))
-plt.subplot(3,2,1)
-line1 = plt.errorbar(Uimplot_Omega[0]/constant, CORmean_Omega[0], yerr=CORstd_Omega[0], fmt='o', capsize=5, label='This study', color='#3776ab') 
-line2 = plt.errorbar(Unsexp, CORexp_mean, yerr=CORexp_std, fmt='x', capsize=5, label='Jiang et al. (2024)', color='k')
-line3 = plt.plot(UIM_UE_prin, COR_emp, 'k-', label='Jiang et al. (2024)')
-plt.xlim(0,190)
-plt.ylim(0,2.25)
-plt.xlabel(r'$U_\mathrm{im}/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylabel(r'$e$ [-]', fontsize=14)
-plt.legend([line2[0],line3[0], line1],['Jiang et al. (2024)','Jiang et al. (2024)', 'This study'], fontsize=12)
-plt.text(0.02, 0.92, '(a)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
-plt.subplot(3,2,2)
-line1 = plt.errorbar(Uimplot_Omega[0]/constant, Thetaremean_Omega[0], yerr=Thetarestd_Omega[0], fmt='o', capsize=5, label='This study', color='#3776ab')
-line2 = plt.errorbar(Unsexp, thetareexp, yerr=thetareexp_std, fmt='x', capsize=5, label='Jiang et al. (2024)', color='k')
-line3 = plt.plot(UIM_UE_prin, Thetare_emp, 'k-')
-line4 = plt.plot(UIM_UE_prin, thetare_Bel, 'k:', label='Beladjine et al. (2007)')
-plt.ylim(-8,120)
-plt.xlim(0,190)
-plt.legend([line2[0],line3[0], line4[0], line1[0]],['Jiang et al. (2024)','Jiang et al. (2024)', 'Beladjine et al. (2007)', 'This study'], loc='upper left', bbox_to_anchor=(0.08, 0.99), fontsize=12)
-plt.xlabel(r'$U_\mathrm{im}/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylabel(r'$\theta_\mathrm{re}$ [$^\circ$]', fontsize=14)
-plt.text(0.02, 0.92, '(b)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
-plt.subplot(3,2,3)
-#plot Pr - Uim 
-plt.scatter(Uplot_Omega[0]/constant, Pr_Omega[0], s=np.sqrt(N_Princ[0])*3, label='This study', color='#3776ab')
-plt.plot(UIM_UE_prin, Pr_emp, label='Jiang et al. (2024)',color='k')
-plt.plot(Unsexp, Prexp, 'x', label='Jiang et al. (2024)', color='k')
-plt.plot(UIM_UE_prin, Pr_and, 'k-.', label='Anderson & Haff (1991)')
-plt.ylim(0,1.05)
-plt.xlim(0,190)
-plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylabel(r'$\mathrm{Pr}$ [-]', fontsize=14)
-plt.legend(fontsize=12)
-plt.text(0.02, 0.92, '(c)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
-plt.subplot(3,2,4)
-#plot \bar{NE} - Uim
-plt.scatter(Uplot_NE_Omega[0]/constant, NE_mean_Omega[0], s=np.sqrt(N_Einc[0])*3, label='This study', color='#3776ab')
-plt.plot(UIM_UE_prin, NE_prin, 'k-', label='Jiang et al. (2024)')
-plt.plot(Unsexp, Nsexp,'x', label='Jiang et al. (2024)',color='k')
-plt.plot(UNE_Selmani, NE_Selmani, 'dk', label='Selmani et al. (2024)')
-plt.plot(UIM_UE_prin, NE_Chen, 'k-.', label='Chen et al. (2019)')
-plt.ylim(0,20)
-plt.xlim(0,190)
-plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylabel(r'$N_\mathrm{E}$ [-]', fontsize=14)
-plt.legend(loc='upper left', bbox_to_anchor=(0.08, 0.99), fontsize=12)
-plt.text(0.02, 0.92, '(d)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
-plt.subplot(3,2,5)
-#plot \bar{UE} - Uim
-line1 = plt.errorbar(Uplot_NE_Omega[0]/constant, UE_mean_Omega[0]/constant, yerr=UE_std_Omega[0]/constant, fmt='o', capsize=5, label='This study', color='#3776ab')
-line2 = plt.errorbar(Uvsexp, Usexp, yerr=Usexp_std, fmt='x', capsize=5, label='Jiang et al. (2024)', color='k')
-line3 = plt.plot(UIM_UE_prin, VE_prin, 'k-')
-line4 = plt.plot(UIM_UE_prin, VE_Chen, 'k-.')
-line5 = plt.plot(UIM_UE_prin, VE_Bel, 'k:', label='Beladijne et al. (2007)')
-plt.ylim(0,32.5)
-plt.xlim(0,190)
-plt.legend([line2[0],line3[0], line4[0], line5[0], line1[0]],['Jiang et al. (2024)','Jiang et al. (2024)', 'Chen et al. (2019)', 'Beladjine et al. (2007)', 'This study'], loc='upper left', bbox_to_anchor=(0.08, 0.99), fontsize=12)
-plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylabel(r'$U_\mathrm{E}/\sqrt{gd}$ [-]', fontsize=14)
-plt.text(0.02, 0.92, '(e)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
-plt.subplot(3,2,6)
-line1 = plt.errorbar(Uplot_NE_Omega[0]/constant, ThetaE_mean_Omega[0], yerr=ThetaE_std_Omega[0], fmt='o', capsize=5, label='This study', color='#3776ab')
-line2 = plt.errorbar(Uvsexp, thetaEexp, yerr=thetaEexp_std, fmt='x', capsize=5, label='Jiang et al. (2024)', color='k')
-line3 = plt.plot(UIM_UE_prin, ThetaE_emp, 'k-')
-line4 = plt.plot(UIM_UE_prin, thetaE_Bel, 'k:', label='Beladjine et al. (2007)')
-plt.ylim(-10,140)
-plt.xlim(0,190)
-plt.legend([line2[0],line3[0], line4[0], line1[0]],['Jiang et al. (2024)','Jiang et al. (2024)', 'Beladjine et al. (2007)', 'This study'], loc='upper left', bbox_to_anchor=(0.08, 0.99), fontsize=12)
-plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylabel(r'$\theta_\mathrm{E}$ [$^\circ$]', fontsize=14)
-plt.text(0.02, 0.92, '(f)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
-plt.tight_layout()
-plt.show()
-
-# #trajectory and vertical velocity
-id_p = 2700
-plt.figure(figsize=(10,8))
-plt.subplot(2,1,1)
-plt.plot(t_ver, Z[20][:,id_p]/D, linestyle='-', marker='.', color='k', markersize=3, linewidth=1)
-plt.plot(t_ver[EDindices[20][id_p][0]], Z[20][EDindices[20][id_p][0],id_p]/D, 'ob', label='Ejections', markerfacecolor='none')
-plt.plot(t_ver[EDindices[20][id_p][1]], Z[20][EDindices[20][id_p][1],id_p]/D, 'vb', label='Depositions', markerfacecolor='none')
-legend_added = False
-for t in t_ver[EDindices[20][id_p][0]]:
-    if not legend_added:
-        plt.axvline(x=t, color='k', linestyle='--', linewidth=1, label='Mobile intervals (start)')
-        legend_added = True  # Set flag to True after first legend entry
-    else:
-        plt.axvline(x=t, color='k', linestyle='--', linewidth=1)
-legend_added = False
-for t in t_ver[EDindices[20][id_p][1]]:
-    if not legend_added:
-        plt.axvline(x=t, color='k', linestyle=':', linewidth=1, label='Mobile intervals (end)')
-        legend_added = True  # Set flag to True after first legend entry
-    else:
-        plt.axvline(x=t, color='k', linestyle=':', linewidth=1)
-plt.plot(t_ver[Par[20][id_p][2][:,0]], Z[20][Par[20][id_p][2][:,0],id_p]/D, 'Dr', label='Impacts', markerfacecolor='none')
-plt.plot(t_ver[Par[20][id_p][2][:,1]], Z[20][Par[20][id_p][2][:,1],id_p]/D, 'sr', label='Rebounds', markerfacecolor='none')
-index_example2 = np.where(t_ver == 1.54)[0][0]
-plt.axvline(t_ver[139],color='b', linestyle='-', label='An example cross-zero interval')
-plt.axvline(t_ver[index_example2],color='b', linestyle='-')
-plt.xlabel(r'$t$ [s]', fontsize=14)
-plt.ylabel(r'$Z_\mathrm{p}/d$ [-]',fontsize=14)
-plt.xlim(0,5)
-plt.text(0.02, 0.92, '(a)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
-plt.legend(fontsize=10)
-plt.subplot(2,1,2)
-plt.plot(t_ver, VZ[20][id_p], linestyle='-', marker='.', color='k', markersize=3, linewidth=1)
-plt.plot(t_ver[Par[20][id_p][2][:, 0]], VZ[20][id_p][Par[20][id_p][2][:, 0]], 'Dr', label='Impacts',markerfacecolor='none')
-plt.plot(t_ver[Par[20][id_p][2][:, 1]], VZ[20][id_p][Par[20][id_p][2][:, 1]], 'sr', label='Rebounds',markerfacecolor='none')
-index_example2 = np.where(t_ver == 1.54)[0][0]
-plt.axvline(t_ver[139],color='b', linestyle='-')
-plt.axvline(t_ver[index_example2],color='b', linestyle='-')
-legend_added = False
-for t in t_ver[EDindices[20][id_p][0]]:
-    if not legend_added:
-        plt.axvline(x=t, color='k', linestyle='--', linewidth=1, label='Mobile intervals (start)')
-        legend_added = True  # Set flag to True after first legend entry
-    else:
-        plt.axvline(x=t, color='k', linestyle='--', linewidth=1)
-legend_added = False
-for t in t_ver[EDindices[20][id_p][1]]:
-    if not legend_added:
-        plt.axvline(x=t, color='k', linestyle=':', linewidth=1, label='Mobile intervals (end)')
-        legend_added = True  # Set flag to True after first legend entry
-    else:
-        plt.axvline(x=t, color='k', linestyle=':', linewidth=1)  
-plt.axhline(0, color='grey', linestyle='-', linewidth=0.5)
-plt.xlabel(r'$t$ [s]',fontsize=14)
-plt.ylabel(r'$U_\mathrm{z}$ [m/s]',fontsize=14)
-plt.xlim(0,5)
-plt.text(0.02, 0.92, '(b)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
-plt.tight_layout()
-plt.show()
+# plt.show()
