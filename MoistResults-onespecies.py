@@ -1167,7 +1167,7 @@ plt.plot([], [], color='black', label=r"Fitted relations in (c)")
 plt.xlim(0,265)
 plt.text(0.02, 0.94, '(d)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
 plt.legend()
-plt.tight_layout(fontsize=12)
+plt.tight_layout()
 plt.show()     
 
 #calculate R^2
@@ -1199,15 +1199,15 @@ weight_theta_glo = np.concatenate(weight_theta_all)
 R2_theta = weighted_r2(y_theta_all, y_predtheta_all, weights=weight_theta_glo)#weights=weight_theta_glo)
 print('R2_thetainc=',R2_theta)
 
-plt.figure(figsize=(6,5))
-for i in range(5):
-    plt.errorbar(Uthetareplot/constant, mean_thetare[i], yerr=stderr_thetare[i], fmt='o', capsize=5, label=rf'$\Omega$={Omega[i]}%', color=colors[i])
-plt.xlabel(r'$U_\mathrm{re}/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylabel(r'$\theta_\mathrm{re}$ [$^\circ$]', fontsize=14)
-plt.xlim(left=0)
-plt.legend(fontsize=12)
-plt.tight_layout()
-plt.show()   
+# plt.figure(figsize=(6,5))
+# for i in range(5):
+#     plt.errorbar(Uthetareplot/constant, mean_thetare[i], yerr=stderr_thetare[i], fmt='o', capsize=5, label=rf'$\Omega$={Omega[i]}%', color=colors[i])
+# plt.xlabel(r'$U_\mathrm{re}/\sqrt{gd}$ [-]', fontsize=14)
+# plt.ylabel(r'$\theta_\mathrm{re}$ [$^\circ$]', fontsize=14)
+# plt.xlim(left=0)
+# plt.legend(fontsize=12)
+# plt.tight_layout()
+# plt.show()   
     
 
 # # validation dry
@@ -1348,8 +1348,8 @@ plt.show()
 # plt.plot(t_ver[Par[20][id_p][2][:,0]], Z[20][Par[20][id_p][2][:,0],id_p]/D, 'Dr', label='Impacts', markerfacecolor='none')
 # plt.plot(t_ver[Par[20][id_p][2][:,1]], Z[20][Par[20][id_p][2][:,1],id_p]/D, 'sr', label='Rebounds', markerfacecolor='none')
 # index_example2 = np.where(t_ver == 1.54)[0][0]
-# plt.axvline(t_ver[139],color='b', linestyle='-', label='An example cross-zero interval')
-# plt.axvline(t_ver[index_example2],color='b', linestyle='-')
+# plt.axvline(t_ver[139],color='c', linestyle='-', label='An example cross-zero interval')
+# plt.axvline(t_ver[index_example2],color='c', linestyle='-')
 # plt.xlabel(r'$t$ [s]', fontsize=14)
 # plt.ylabel(r'$Z_\mathrm{p}/d$ [-]',fontsize=14)
 # plt.xlim(0,5)
@@ -1360,8 +1360,8 @@ plt.show()
 # plt.plot(t_ver[Par[20][id_p][2][:, 0]], VZ[20][id_p][Par[20][id_p][2][:, 0]], 'Dr', label='Impacts',markerfacecolor='none')
 # plt.plot(t_ver[Par[20][id_p][2][:, 1]], VZ[20][id_p][Par[20][id_p][2][:, 1]], 'sr', label='Rebounds',markerfacecolor='none')
 # index_example2 = np.where(t_ver == 1.54)[0][0]
-# plt.axvline(t_ver[139],color='b', linestyle='-')
-# plt.axvline(t_ver[index_example2],color='b', linestyle='-')
+# plt.axvline(t_ver[139],color='c', linestyle='-')
+# plt.axvline(t_ver[index_example2],color='c', linestyle='-')
 # legend_added = False
 # for t in t_ver[EDindices[20][id_p][0]]:
 #     if not legend_added:
