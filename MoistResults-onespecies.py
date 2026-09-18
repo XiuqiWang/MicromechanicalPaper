@@ -976,62 +976,200 @@ Thetaim_per = compute_percentiles_by_omega(Thetaim_all_Omega, percentiles)
 percentile_thetaim = np.array(Thetaim_per)
 p10_thetaim, p25_thetaim, p50_thetaim, p75_thetaim, p90_thetaim = percentile_thetaim.T
 
-plt.figure(figsize=(12, 9))
-# Plot PDF of U_im/sqrt(gd)
-plt.subplot(2, 2, 1)
+from matplotlib.lines import Line2D
+
+def plot_pdf_step(ax, data, bins=50, **kwargs):
+    counts, bin_edges = np.histogram(data, bins=bins, density=True)
+
+    # Add one value so that x and y have matching lengths.
+    step_values = np.r_[counts, counts[-1]]
+
+    ax.step(
+        bin_edges,
+        step_values,
+        where='post',
+        **kwargs
+    )
+
+fig, axs = plt.subplots(2, 2, figsize=(12, 9))
+ax_a, ax_b, ax_c, ax_d = axs.flat
+
+# ---------------- Shared legend handles ----------------
+moisture_handles = [
+    Line2D(
+        [0], [0],
+        color=colors[i],
+        linewidth=2,
+        label=rf'$\Omega={Omega[i]}\%$'
+    )
+    for i in range(5)
+]
+
+quantity_handles = [
+    Line2D(
+        [0], [0],
+        color='black',
+        linewidth=2,
+        linestyle='-',
+        label=r'$U_{\mathrm{im}},\,\theta_{\mathrm{im}}$'
+    ),
+    Line2D(
+        [0], [0],
+        color='black',
+        linewidth=2,
+        linestyle=':',
+        label=r'$U_{\mathrm{D}},\,\theta_{\mathrm{D}}$'
+    )
+]
+
+# ---------------- Panel (a) ----------------
 for i in range(5):
-    # Calculate histogram (density=True for probability density)
-    counts, bin_edges = np.histogram(Vim_all_Omega[i], bins=50, density=True)
-    plt.step(bin_edges[:-1], counts, where='mid', color=colors[i], label=f"$\\Omega$={Omega[i]}%")
-# UD
+    plot_pdf_step(
+        ax_a,
+        Vim_all_Omega[i],
+        color=colors[i],
+        linewidth=1.5,
+        linestyle='-'
+    )
+
+    plot_pdf_step(
+        ax_a,
+        VD_all_Omega[i],
+        color=colors[i],
+        linewidth=2,
+        linestyle=':'
+    )
+
+ax_a.set_xlabel(r'$U_{\mathrm{inc}}$ [m/s]', fontsize=14)
+ax_a.set_ylabel(r'Probability density [-]', fontsize=14)
+ax_a.set_xlim(left=0)
+ax_a.set_ylim(bottom=0)
+ax_a.text(
+    0.03, 0.94, '(a)',
+    transform=ax_a.transAxes,
+    fontsize=16,
+    fontweight='bold'
+)
+
+# ---------------- Panel (b) ----------------
 for i in range(5):
-    counts, bin_edges = np.histogram(VD_all_Omega[i], bins=50, density=True)
-    plt.step(bin_edges[:-1], counts, where='mid', linestyle=':', linewidth=2, color=colors[i])
-plt.plot([], [], color='black', label=r"$U_\mathrm{im}$")
-plt.plot([], [], ':', color='black', label=r"$U_\mathrm{D}$")
-plt.xlabel(r'$U_\mathrm{inc}$ [m/s]', fontsize=14)
-plt.ylabel('Probability Density [-]', fontsize=14)
-plt.xlim(left=0)
-plt.ylim(bottom=0)
-plt.legend(fontsize=12)
-plt.text(0.03, 0.94, '(a)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
-# Plot PDF of theta_im
-plt.subplot(2, 2, 2)
-for i in range(5):
-    # Calculate histogram (density=True for probability density)
-    counts, bin_edges = np.histogram(Thetaim_all_Omega[i], bins=50, density=True)
-    # Create the step plot
-    plt.step(bin_edges[:-1], counts, where='mid', color=colors[i], label=f"$\\Omega$={Omega[i]}%")
-for i in range(5):    
-    counts, bin_edges = np.histogram(ThetaD_all_Omega[i], bins=50, density=True)
-    plt.step(bin_edges[:-1], counts, where='mid', linestyle=':', linewidth=2, color=colors[i])
-plt.plot([], [], color='black', label=r"$\theta_\mathrm{im}$")
-plt.plot([], [], ':', color='black', label=r"$\theta_\mathrm{D}$")
-plt.legend(fontsize=12)
-plt.xlim(left=0)
-plt.ylim(bottom=0)
-plt.xlabel(r'$\theta_\mathrm{inc}$ [$^\circ$]', fontsize=14)
-plt.ylabel('Probability Density [-]', fontsize=14)
-plt.text(0.03, 0.94, '(b)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
-plt.subplot(2, 2, 3)
-# plt.errorbar(Omega, Vim_mean_glo, yerr=Vim_std_glo, fmt='o', capsize=5, color='#3776ab')
-plt.errorbar(Omega,p50_Vim,yerr=[p50_Vim - p25_Vim, p75_Vim - p50_Vim],fmt='ko',capsize=5, label=r'$U_\mathrm{im}$')
-plt.errorbar(Omega,p50_VD,yerr=[p50_VD - p25_VD, p75_VD - p50_VD],fmt='o',capsize=5, label=r'$U_\mathrm{D}$')
-plt.legend(loc='upper right', fontsize=12)
-plt.ylim(0,5.5)
-plt.xlabel(r'$\Omega$ [$\%$]', fontsize=14)
-plt.ylabel(r'$U_\mathrm{inc}$ [m/s]', fontsize=14)
-plt.text(0.03, 0.94, '(c)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
-plt.subplot(2, 2, 4)
-# plt.errorbar(Omega, Thetaim_mean_glo, yerr=Thetaim_std_glo, fmt='o', capsize=5, color='#3776ab')
-plt.errorbar(Omega,p50_thetaim,yerr=[p50_thetaim - p25_thetaim, p75_thetaim - p50_thetaim],fmt='ko',capsize=5, label=r'$\theta_\mathrm{im}$')
-plt.errorbar(Omega,p50_ThetaD,yerr=[p50_ThetaD - p25_ThetaD, p75_ThetaD - p50_ThetaD],fmt='o',capsize=5, label=r'$\theta_\mathrm{D}$')
-plt.ylim(0,30)
-plt.legend(loc='upper right', fontsize=12)
-plt.xlabel(r'$\Omega$ [$\%$]', fontsize=14)
-plt.ylabel(r'$\theta_\mathrm{inc}$ [$\circ$]', fontsize=14)
-plt.text(0.03, 0.94, '(d)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
-plt.tight_layout()
+    plot_pdf_step(
+        ax_b,
+        Thetaim_all_Omega[i],
+        color=colors[i],
+        linewidth=1.5,
+        linestyle='-'
+    )
+
+    plot_pdf_step(
+        ax_b,
+        ThetaD_all_Omega[i],
+        color=colors[i],
+        linewidth=2,
+        linestyle=':'
+    )
+
+ax_b.set_xlabel(r'$\theta_{\mathrm{inc}}$ [$^\circ$]', fontsize=14)
+ax_b.set_ylabel(r'Probability density [-]', fontsize=14)
+ax_b.set_xlim(left=0)
+ax_b.set_ylim(bottom=0)
+ax_b.text(
+    0.03, 0.94, '(b)',
+    transform=ax_b.transAxes,
+    fontsize=16,
+    fontweight='bold'
+)
+
+# ---------------- Panel (c) ----------------
+ax_c.errorbar(
+    Omega,
+    p50_Vim,
+    yerr=[p50_Vim - p25_Vim, p75_Vim - p50_Vim],
+    fmt='o',
+    color='black',
+    capsize=5,
+    label=r'$U_{\mathrm{im}}$'
+)
+
+ax_c.errorbar(
+    Omega,
+    p50_VD,
+    yerr=[p50_VD - p25_VD, p75_VD - p50_VD],
+    fmt='s',
+    color='tab:blue',
+    capsize=5,
+    label=r'$U_{\mathrm{D}}$'
+)
+
+ax_c.set_ylim(0, 5.5)
+ax_c.set_xlabel(r'$\Omega$ [$\%$]', fontsize=14)
+ax_c.set_ylabel(r'$U_{\mathrm{inc}}$ [m/s]', fontsize=14)
+ax_c.legend(loc='upper right', fontsize=12)
+ax_c.text(
+    0.03, 0.94, '(c)',
+    transform=ax_c.transAxes,
+    fontsize=16,
+    fontweight='bold'
+)
+
+# ---------------- Panel (d) ----------------
+ax_d.errorbar(
+    Omega,
+    p50_thetaim,
+    yerr=[p50_thetaim - p25_thetaim,
+          p75_thetaim - p50_thetaim],
+    fmt='o',
+    color='black',
+    capsize=5,
+    label=r'$\theta_{\mathrm{im}}$'
+)
+
+ax_d.errorbar(
+    Omega,
+    p50_ThetaD,
+    yerr=[p50_ThetaD - p25_ThetaD,
+          p75_ThetaD - p50_ThetaD],
+    fmt='s',
+    color='tab:blue',
+    capsize=5,
+    label=r'$\theta_{\mathrm{D}}$'
+)
+
+ax_d.set_ylim(0, 30)
+ax_d.set_xlabel(r'$\Omega$ [$\%$]', fontsize=14)
+ax_d.set_ylabel(r'$\theta_{\mathrm{inc}}$ [$^\circ$]', fontsize=14)
+ax_d.legend(loc='upper right', fontsize=12)
+ax_d.text(
+    0.03, 0.94, '(d)',
+    transform=ax_d.transAxes,
+    fontsize=16,
+    fontweight='bold'
+)
+
+# ---------------- Shared legends ----------------
+fig.legend(
+    handles=moisture_handles,
+    title='Moisture content',
+    loc='upper center',
+    bbox_to_anchor=(0.38, 1.01),
+    ncol=5,
+    fontsize=12,
+    title_fontsize=12,
+    frameon=False
+)
+
+fig.legend(
+    handles=quantity_handles,
+    title='Line style',
+    loc='upper center',
+    bbox_to_anchor=(0.82, 1.01),
+    ncol=2,
+    fontsize=12,
+    title_fontsize=12,
+    frameon=False
+)
+
+fig.tight_layout(rect=[0, 0, 1, 0.92])
 plt.show()
 
 # # theta_inc = f(Uinc)
@@ -1122,6 +1260,48 @@ Theta_fit_new = defaultdict()
 # Loop over each element in alpha and multiply with U_fit_new
 for i in range(5):
     Theta_fit_new[i] = arcsin_exp(Uinc_fit_new, alpha[i], beta)
+    
+# Quantiles of incident angle in each incident-speed bin
+theta_quantiles = defaultdict(list)
+
+for i in range(5):
+    U_all = np.asarray(
+        Vim_all_Omega[i] + VD_all_Omega[i],
+        dtype=float
+    )
+    theta_all = np.asarray(
+        Thetaim_all_Omega[i] + ThetaD_all_Omega[i],
+        dtype=float
+    )
+
+    # Assign each event to the same speed bins used for the mean statistics
+    bin_index = np.digitize(U_all, Vimde_bin) - 1
+
+    # Include values exactly equal to the final bin boundary
+    bin_index[U_all == Vimde_bin[-1]] = len(Vimde_bin) - 2
+
+    for j in range(len(Vimde_bin) - 1):
+        values = theta_all[
+            (bin_index == j)
+            & np.isfinite(theta_all)
+            & np.isfinite(U_all)
+        ]
+
+        if values.size:
+            q05, q25, q50, q75, q95 = np.percentile(
+                values, [5, 25, 50, 75, 95]
+            )
+
+            theta_quantiles[i].append({
+                'bin': j,
+                'mean': np.mean(values),
+                'med': q50,
+                'q1': q25,
+                'q3': q75,
+                'whislo': q05,
+                'whishi': q95,
+                'fliers': []
+            })    
 
 #plot the fit using the global function
 # Plot original data
@@ -1155,20 +1335,171 @@ plt.xlim(0,265)
 plt.ylim(4,18)
 plt.text(0.02, 0.94, '(c)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
 # to check the real event based relation
-plt.subplot(2,2,4)
-for i in range(5):
-    plt.scatter(Vim_all_Omega[i]/constant, Thetaim_all_Omega[i], color=colors[i], alpha=0.1, marker='.')
-    plt.scatter(VD_all_Omega[i]/constant, ThetaD_all_Omega[i], color=colors[i], alpha=0.1, marker='.')
-    plt.plot(Uinc_fit_new, np.degrees(Theta_fit_new[i]), '-', color=colors[i])
-plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
-plt.ylabel(r'$\theta_\mathrm{inc}$ [$^\circ$]', fontsize=14)
-plt.scatter([], [], color='black', marker='.', label=r"Data points")
-plt.plot([], [], color='black', label=r"Fitted relations in (c)")
-plt.xlim(0,265)
-plt.text(0.02, 0.94, '(d)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
-plt.legend()
-plt.tight_layout()
-plt.show()     
+# plt.subplot(2,2,4)
+# for i in range(5):
+#     plt.scatter(Vim_all_Omega[i]/constant, Thetaim_all_Omega[i], color=colors[i], alpha=0.1, marker='.')
+#     plt.scatter(VD_all_Omega[i]/constant, ThetaD_all_Omega[i], color=colors[i], alpha=0.1, marker='.')
+#     plt.plot(Uinc_fit_new, np.degrees(Theta_fit_new[i]), '-', color=colors[i])
+# plt.xlabel(r'$U_\mathrm{inc}/\sqrt{gd}$ [-]', fontsize=14)
+# plt.ylabel(r'$\theta_\mathrm{inc}$ [$^\circ$]', fontsize=14)
+# plt.scatter([], [], color='black', marker='.', label=r"Data points")
+# plt.plot([], [], color='black', label=r"Fitted relations in (c)")
+# plt.xlim(0,265)
+# plt.text(0.02, 0.94, '(d)', transform=plt.gca().transAxes, fontsize=16, fontweight='bold')
+# plt.legend()
+# plt.tight_layout()
+# plt.show()    
+# Panel (d): binned distributions and fitted relations
+ax_d = plt.subplot(2, 2, 4)
+x_centers = np.asarray(Uthetaincplot) / constant
+n_moisture = len(Omega)
+# Horizontal spacing between neighboring speed bins
+dx = np.min(np.diff(np.unique(x_centers)))
+# Width and offsets for grouped box plots
+box_width = 0.12 * dx
+offsets = (np.arange(n_moisture) - (n_moisture - 1) / 2) * 1.25 * box_width
+for i in range(n_moisture):
+    stats = theta_quantiles[i]
+
+    # Retain only bins that contain data
+    valid_stats = [
+        item for item in stats
+        if item['bin'] < len(x_centers)
+    ]
+
+    positions = np.array([
+        x_centers[item['bin']] + offsets[i]
+        for item in valid_stats
+    ])
+
+    box_stats = [
+        {
+            'med': item['med'],
+            'q1': item['q1'],
+            'q3': item['q3'],
+            'whislo': item['whislo'],
+            'whishi': item['whishi'],
+            'fliers': []
+        }
+        for item in valid_stats
+    ]
+
+    means = np.array([
+        item['mean'] for item in valid_stats
+    ])
+
+    # Quantile boxes
+    ax_d.bxp(
+        box_stats,
+        positions=positions,
+        widths=0.9 * box_width,
+        showfliers=False,
+        patch_artist=True,
+        manage_ticks=False,
+        boxprops={
+            'facecolor': colors[i],
+            'edgecolor': colors[i],
+            'alpha': 0.35,
+            'linewidth': 1
+        },
+        whiskerprops={
+            'color': colors[i],
+            'linewidth': 1
+        },
+        capprops={
+            'color': colors[i],
+            'linewidth': 1
+        },
+        medianprops={
+            'color': 'black',
+            'linewidth': 1
+        }
+    )
+
+    # Arithmetic means used to obtain the fitted relationship
+    ax_d.scatter(
+        positions,
+        means,
+        marker='x',
+        s=25,
+        linewidth=1.2,
+        color=colors[i],
+        zorder=4
+    )
+
+    # Global fitted relationship
+    ax_d.plot(
+        Uinc_fit_new,
+        np.degrees(Theta_fit_new[i]),
+        color=colors[i],
+        linestyle='--',
+        linewidth=1.5
+    )
+
+ax_d.set_xlabel(
+    r'$U_{\mathrm{inc}}/\sqrt{gd}$ [-]',
+    fontsize=14
+)
+ax_d.set_ylabel(
+    r'$\theta_{\mathrm{inc}}$ [$^\circ$]',
+    fontsize=14
+)
+ax_d.set_xlim(0, 265)
+ax_d.set_ylim(bottom=0)
+
+ax_d.text(
+    0.02, 0.94, '(d)',
+    transform=ax_d.transAxes,
+    fontsize=16,
+    fontweight='bold'
+)
+
+# Explanatory legend
+legend_handles = [
+    Line2D(
+        [0], [0],
+        marker='s',
+        markersize=8,
+        markerfacecolor='lightgray',
+        markeredgecolor='gray',
+        linestyle='none',
+        label='25th–75th percentiles'
+    ),
+    Line2D(
+        [0], [0],
+        color='black',
+        linewidth=1.5,
+        label='Median'
+    ),
+    Line2D(
+        [0], [0],
+        color='gray',
+        linewidth=1,
+        marker='_',
+        markersize=8,
+        label='5th–95th percentiles'
+    ),
+    Line2D(
+        [0], [0],
+        color='black',
+        marker='x',
+        linestyle='none',
+        label='Bin mean'
+    ),
+    Line2D(
+        [0], [0],
+        color='black',
+        linewidth=1.5,
+        linestyle='--',
+        label='Fitted relation'
+    )
+]
+
+ax_d.legend(
+    handles=legend_handles,
+    loc='upper right',
+    fontsize=10
+) 
 
 #calculate R^2
 all_theta_ori, all_theta_fit_resampled, weight_theta_all = [],[],[]
